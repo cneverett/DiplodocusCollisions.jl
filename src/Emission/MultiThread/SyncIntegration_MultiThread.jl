@@ -63,11 +63,12 @@ function SpectraEvaluateMultiThreadEmission(userInputEmissionMultiThread::Tuple{
         if nThreads == 1
             scale = 1.0
         else
-            scale = [range(0.0,1.0,length=10);]
+            #scale = [range(0.0,1.0,length=10);]
+            scale = [0.0;]
         end
 
 for (ii,scale_val) in enumerate(scale)
-numT = round(Int,numTiterPerThread/10)
+numT = round(Int,numTiterPerThread/length(scale))
 
         println("")
         println("scale = $scale_val, itteration = $ii out of $(length(scale))")
@@ -99,6 +100,7 @@ numT = round(Int,numTiterPerThread/10)
         GainMatrix3 = GainTotal3 ./ GainTally3
         LossMatrix1 = LossTotal1 ./ LossTally1
 
+        println("")
         println("Applying Momentum Space Factors")
 
         # Angle / Momentum Ranges
@@ -151,6 +153,7 @@ finish!(prog)
         write(f,"Parameters",Parameters)
         close(f) =#
 
+        println("")
         println("Saving Arrays")
 
         f = jldopen(filePath,"w") # creates file and overwrites previous file if one existed

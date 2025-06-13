@@ -253,7 +253,7 @@ function WeightedFactors2(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,
     #    println("w3 = $w3")
     #    println("E1/E2 = $(log(E1/E2))")
     #end
-    w4::Float64 = w4Limit+scale*(wC*wScale) 
+    w4::Float64 = w4Limit+scale*(wC+wScale) 
 
     return (w3,w4,tC,hC)
     

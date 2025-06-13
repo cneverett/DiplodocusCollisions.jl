@@ -146,9 +146,9 @@ function SValue3(p3v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float64},
     Es3s::Float64 = Es3/p3
     E3::Float64 = Es3 + m3
 
-    ctheta12::Float64 = (ct1*ct2+ch1h2*st1*st2)
-    ctheta13::Float64 = (ct3*ct1+ch3h1*st3*st1)
-    ctheta23::Float64 = (ct3*ct2+ch3h2*st3*st2)
+    ctheta12::Float64 = ct1*ct2+ch1h2*st1*st2
+    ctheta13::Float64 = ct3*ct1+ch3h1*st3*st1
+    ctheta23::Float64 = ct3*ct2+ch3h2*st3*st2
     
     deltacorrect::Float64 = Es1*p3 - Es3*p1*ctheta13
     deltacorrect += m1*p3 - m3*p1*ctheta13
@@ -265,9 +265,9 @@ function SValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float64},
     Es4s::Float64 = Es4/p4
     E4::Float64 = Es4 + m4
 
-    ctheta12::Float64 = (ct1*ct2+ch1h2*st1*st2)
-    ctheta14::Float64 = (ct4*ct1+ch4h1*st4*st1)
-    ctheta24::Float64 = (ct4*ct2+ch4h2*st4*st2)
+    ctheta12::Float64 = ct1*ct2+ch1h2*st1*st2
+    ctheta14::Float64 = ct4*ct1+ch4h1*st4*st1
+    ctheta24::Float64 = ct4*ct2+ch4h2*st4*st2
 
     deltacorrect::Float64 = Es1*p4 - Es4*p1*ctheta14
     deltacorrect += m1*p4 - m4*p1*ctheta14

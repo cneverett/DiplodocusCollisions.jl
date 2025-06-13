@@ -146,7 +146,7 @@ function STMonteCarlo_MultiThread_Debug!(GainTotal3::Array{Float64,9},GainTotal4
                 # === p3 === #
 
                 # Calculate p3 value
-                (p_physical,pp_physical,NumStates) = Momentum3Value2!(p3v,p3pv,p1v,p2v,m1,m2,m3,m4)
+                (p_physical,pp_physical,NumStates) = Momentum3Value2!(p3v,p3pv,p1v,p2v,m1,m2,m3,m4,p3_low,p3_up)
 
                 # S Array Tallies
                 # For each u3,h3 sampled, p3 will be + or -ve, corresponding to a change in sign of u3 and a rotation of h3 by pi i.e. mod(h3+1,2). Therefore by sampling one u3,h3 we are actually sampling u3 and -u3 and h3, mod(h3+1,2) with one or both having valid p3 states.
@@ -186,7 +186,7 @@ function STMonteCarlo_MultiThread_Debug!(GainTotal3::Array{Float64,9},GainTotal4
                 # === p4 === #
 
                 # Calculate p4 value
-                (p_physical,pp_physical,NumStates) = Momentum3Value2!(p4v,p4pv,p2v,p1v,m2,m1,m4,m3)
+                (p_physical,pp_physical,NumStates) = Momentum3Value2!(p4v,p4pv,p2v,p1v,m2,m1,m4,m3,p4_low,p4_up)
 
                 # S Array Tallies
                 # For each u3,h4 sampled, p4 will be + or -ve, corresponding to a change in sign of u3 and a shift in h4 by pi i.e. Mod(h4+1,2). Therefore by sampling one u3 we are actually sampling u3/h4 and -u3/mod(h4+1,2) with one or both having valid p4 states.
@@ -194,7 +194,7 @@ function STMonteCarlo_MultiThread_Debug!(GainTotal3::Array{Float64,9},GainTotal4
                 h4loc = location(h_low,h_up,h4_num,p4v[3],h4_grid)
                 #u4locMirror = location(u_low,u_up,u4_num,-p4v[2],u4_grid)
                 #h4locMirror = location(h_low,h_up,h4_num,mod(p4v[3]+1e0,2e0),h4_grid)
-                LocalGainTally4[end,u4loc,h4loc] += UInt32(NumStates) #UInt32(1)
+                LocalGainTally4[end,u4loc,h4loc] += UInt32(1) #UInt32(NumStates)
                 #LocalGainTally4[end,u4locMirror,h4locMirror] += UInt32(1)
 
                 # Calculate S Array totals

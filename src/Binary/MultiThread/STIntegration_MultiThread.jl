@@ -162,7 +162,7 @@ function SpectraEvaluateMultiThread(userInputMultiThread::Tuple{Tuple{String,Str
 
         prog = Progress(numTiterPerThread)
 
-        scale = [range(0.0,1.0,length=10);]
+        scale = [range(0.0,1.0,length=100);]
         #scale = [1.0]
         #scale = rand(Float64,20)
 

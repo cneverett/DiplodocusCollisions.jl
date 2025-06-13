@@ -3,24 +3,22 @@
 
 Returns the emission rate for a single photon ``p3v`` state emitted by a charged particle in state ``p1v`` with charge ``z1`` relative to the fundamental charge and mass ``m1`` relative to the mass of the electron, in a uniform magnetic field ``B``.
 """
-function SyncKernel(p3v,p1v,m1,z1,B)
+function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Float64,B::Float64)
 
     # p3is Photon
     # p1 is Charged Particle
 
-    p3 = p3v[1]
-    p1 = p1v[1]
-    ct3 = p3v[2]
-    ct1 = p1v[2]
-    st3 = sqrt(1-ct3^2)
-    st1 = sqrt(1-ct1^2)
+    p3::Float64 = p3v[1]
+    p1::Float64 = p1v[1]
+    st1::Float64,ct1::Float64 = sincospi(p1v[4])
+    st3::Float64,ct3::Float64 = sincospi(p3v[4])
     
-    E1 = sqrt(p1^2 + m1^2)
+    E1::Float64 = sqrt(p1^2 + m1^2)
 
     Jfactor1 = (E1*ct3-p1*ct1)/(st3) # code breaks if st3 = 0 FIX
     Jfactor2 = p1*st1
 
-    n = abs((mEle^2*c^2)/(z1*ħ*q*B)) * p3* (E1-p1*ct3*ct1)
+    n = abs((mEle^2*c^2)/(z1*ħ*q*B)) * p3 * (E1-p1*ct3*ct1)
     #println(n)
 
     y = p1 * st1 *st3 / (E1-p1*ct1*ct3) # y=x/n

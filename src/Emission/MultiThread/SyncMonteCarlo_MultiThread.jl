@@ -32,7 +32,11 @@ function EmissionMonteCarloAxi_MultiThread!(GainTotal2::Array{Float64,6},GainTal
     p2v::Vector{Float64} = zeros(Float64,4)
     p3v::Vector{Float64} = zeros(Float64,4)
     Sval::Float64 = 0e0
-    WeightFactors::Tuple{Float64,Float64,Float64} = (0e0,0e0,0e0)
+    prob::Float64 = 0e0
+    #WeightFactors::Tuple{Float64,Float64,Float64} = (0e0,0e0,0e0)
+    w::Float64 = 0e0
+    t::Float64 = 0e0
+    h::Float64 = 0e0
 
     p1_grid::GridType = Grid_String_to_Type(p1_grid_st)
     p2_grid::GridType = Grid_String_to_Type(p2_grid_st)
@@ -54,7 +58,7 @@ function EmissionMonteCarloAxi_MultiThread!(GainTotal2::Array{Float64,6},GainTal
     h2loc::Int64 = 0
     h3loc::Int64 = 0
 
-    SmallParameters = (p3_low,p3_up,p3_num,p3_grid,u3_num,u3_grid,h3_num,h3_grid,m1,m2,m3,z1,z2,z3,BMag)
+    #SmallParameters = (p3_low,p3_up,p3_num,p3_grid,u3_num,u3_grid,h3_num,h3_grid,m1,m2,m3,z1,z2,z3,BMag)
 
     localGainTotal2::Array{Float64,3} = zeros(Float64,size(GainTotal2)[1:3])
     localGainTally2::Array{UInt32,3} = zeros(UInt32,size(GainTally2)[1:3])
@@ -70,14 +74,30 @@ function EmissionMonteCarloAxi_MultiThread!(GainTotal2::Array{Float64,6},GainTal
         u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
         h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
 
-        WeightFactors = WeightedFactorsEmission(p1v,m1,scale)
+        #WeightFactors = WeightedFactorsEmission(p1v,m1,scale)
+        (w,t,h) = WeightedFactorsEmission(p1v,m1,scale)
 
         fill!(localGainTotal3,Float64(0))
         fill!(localGainTally3,UInt32(0))
 
         for _ in 1:numSiter
 
-            ImportanceSamplingSync!(p1v,p3v,localGainTally3,localGainTotal3,SmallParameters,WeightFactors)
+            #ImportanceSamplingSync!(p1v,p3v,localGainTally3,localGainTotal3,SmallParameters,WeightFactors)
+
+            prob = RPointSphereWeighted!(p3v,w) # sample angles aligned to p1v
+            RotateToLab!(p3v,t,h)   # rotate to z aligned
+            RPointLogMomentum!(p3v,p3_low,p3_up,p3_num)
+
+            # calculate S value
+            Sval = SyncKernel(p3v,p1v,m1,z1,BMag)
+
+            # find S array location 
+            p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)
+            u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
+            h3loc = location(h_low,h_up,h3_num,p3v[3],h3_grid)
+
+            localGainTally3[p3loc,u3loc,h3loc] += UInt32(1)
+            localGainTotal3[p3loc,u3loc,h3loc] += Sval/prob
 
 #=             # generate p1v (photon)
             RPointSphereCosTheta!(p1v)
