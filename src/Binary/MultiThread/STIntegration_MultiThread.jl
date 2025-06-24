@@ -162,7 +162,7 @@ function SpectraEvaluateMultiThread(userInputMultiThread::Tuple{Tuple{String,Str
 
         prog = Progress(numTiterPerThread)
 
-        scale = [range(0.0,1.0,length=100);]
+        scale = [range(0.0,1.0,length=21);]
         #scale = [1.0]
         #scale = rand(Float64,20)
 
@@ -283,6 +283,14 @@ finish!(prog)
 
     # ===================================== #
 
+    # ============= Error Estimates ======= # 
+
+        println("Calculating Noise Corrected Arrays")
+
+        CorrectedGainMatrix3, CorrectedGainMatrix4 =  GainCorrection(Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)
+
+    # ===================================== #
+
     # ========== Save Arrays ============== #
 
         println("Saving Arrays")
@@ -300,6 +308,9 @@ finish!(prog)
 
         write(f,"Parameters",Parameters)
         write(f,"ErrorEstimates",ErrorOutput)
+
+        write(f,"CorrectedGainMatrix3",CorrectedGainMatrix3)
+        write(f,"CorrectedGainMatrix4",CorrectedGainMatrix4)
         close(f)
 
     # ===================================== #

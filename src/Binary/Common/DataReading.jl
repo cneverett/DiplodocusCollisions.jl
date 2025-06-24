@@ -64,8 +64,7 @@ function fload_All(fileLocation::String,fileName::String)
         GainTally4 = f["GainTally4"];
         LossMatrix1 = f["LossMatrix1"];
         LossTally = f["LossTally"];
-        LossMatrix2 = f["LossMatrix2"];
-        close(f)  
+        LossMatrix2 = f["LossMatrix2"];  
 
         close(f)  
     else
@@ -525,6 +524,98 @@ function DoesConserve2(Output::Tuple{Tuple{String, String, String, String, Float
         return nothing
     end 
     
+end
+
+"""
+    GainCorrection(Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2)
+
+MC sampling introduces noise that can lead to poor number conservation. `GainCorrection` weights each element of the `GainMatrix3` and `GainMatrix4` by the ratio of their sum over the output states to `LossMatrix1` and `LossMatrix2` values of the input state, thereby correcting the gain and loss matrices to ensure number conservation. If there is no GainMatrix element then the value of the LossMatrix is applied to the same bin as the input state (if they are identical particles).
+"""
+function GainCorrection(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::Array{Float64, 9}, GainMatrix4::Array{Float64, 9}, LossMatrix1::Array{Float64, 6}, LossMatrix2::Array{Float64, 6})
+
+    # Function that applies the correct phase space factors to SMatrix and TMatrix derived from Stotal and Ttotal arrays
+
+    (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
+
+    CorrectedGainMatrix3 = similar(GainMatrix3)
+    CorrectedGainMatrix4 = similar(GainMatrix4)
+
+    p1_r = bounds(p1_low,p1_up,p1_num,p1_grid);
+    p1_d = deltaVector(p1_r);
+    u1_r = bounds(u_low,u_up,u1_num,u1_grid);
+    u1_d = deltaVector(u1_r);
+
+    p2_r = bounds(p2_low,p2_up,p2_num,p2_grid);
+    p2_d = deltaVector(p2_r);
+    u2_r = bounds(u_low,u_up,u2_num,u2_grid);
+    u2_d = deltaVector(u2_r);
+
+    p3_r = bounds(p3_low,p3_up,p3_num,p3_grid);
+    p3_d = deltaVector(p3_r);
+    u3_r = bounds(u_low,u_up,u3_num,u3_grid);
+    u3_d = deltaVector(u3_r);
+
+    p4_r = bounds(p4_low,p4_up,p4_num,p4_grid);
+    p4_d = deltaVector(p4_r);
+    u4_r = bounds(u_low,u_up,u4_num,u4_grid);
+    u4_d = deltaVector(u4_r);
+
+    #=     for k in axes(SMatrix3,3), l in axes(SMatrix3, 4), m in axes(SMatrix3,5), n in axes(SMatrix3,6)
+        SsumN3 = zero(T)
+        SsumN4 = zero(T)
+        TsumN1 = zero(T)
+        TsumN2 = zero(T)
+        for i in axes(SMatrix3,1), j in axes(SMatrix3,2) 
+            SsumN3 += SMatrix3[i,j,k,l,m,n]*p3_d_full[i]*u3_d[j]
+        end
+        for i in axes(SMatrix4,1), j in axes(SMatrix4,2) 
+            SsumN4 += SMatrix4[i,j,k,l,m,n]*p4_d_full[i]*u4_d[j]
+        end
+        TsumN1 += TMatrix1[k,l,m,n]*p1_d_full[k]*u1_d[l]
+        TsumN2 += TMatrix2[m,n,k,l]*p2_d_full[m]*u2_d[n]
+        SCor = (TsumN1+TsumN2)/(SsumN3+SsumN4)
+        @view(SMatrix3[:,:,k,l,m,n]) .*= SCor
+        @view(SMatrix4[:,:,k,l,m,n]) .*= SCor
+    end =#
+
+
+    for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
+        
+        GainSumN3 = zero(Float64)
+        GainSumN4 = zero(Float64)
+        LossSumN1 = LossMatrix1[p1,u1,h1,p2,u2,h2]
+        LossSumN2 = LossMatrix2[p2,u2,h2,p1,u1,h1]
+        
+        for p3 in axes(GainMatrix3,1), u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
+            GainSumN3 += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]
+        end
+        for p4 in axes(GainMatrix4,1), u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
+            GainSumN4 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]
+        end
+
+        if name1 == name3
+            if GainSumN3 != 0e0
+                Correction = LossSumN1/GainSumN3
+                @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .*= Correction
+            else
+                CorrectedGainMatrix3[p1,u1,h1,p1,u1,h1,p2,u2,h2] += LossSumN1
+            end
+            
+        end
+
+        if name2 == name4
+            if GainSumN4 != 0e0
+                Correction = LossSumN2/GainSumN4
+                @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .*= Correction
+            else
+                CorrectedGainMatrix4[p2,u2,h2,p1,u1,h1,p2,u2,h2] += LossSumN2
+            end
+        end
+
+    end
+
+    return CorrectedGainMatrix3, CorrectedGainMatrix4
+
 end
 
 

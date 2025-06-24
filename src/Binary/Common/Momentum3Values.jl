@@ -214,13 +214,20 @@ function Momentum3Value2!(p3v::Vector{Float64},p3pv::Vector{Float64},p1v::Vector
     p1::Float64 = p1v[1]
     p2::Float64 = p2v[1]
 
-    st1::Float64,ct1::Float64 = sincospi(p1v[4])
-    st2::Float64,ct2::Float64 = sincospi(p2v[4])
-    st3::Float64,ct3::Float64 = sincospi(p3v[4])
+    h1::Float64 = p1v[3]
+    h2::Float64 = p2v[3]
+    h3::Float64 = p3v[3]
+    t1::Float64 = p1v[4]
+    t2::Float64 = p2v[4]
+    t3::Float64 = p3v[4]
 
-    ch3h1::Float64 = cospi(p3v[3]-p1v[3])
-    ch3h2::Float64 = cospi(p3v[3]-p2v[3])
-    ch1h2::Float64 = cospi(p1v[3]-p2v[3])
+    st1::Float64,ct1::Float64 = sincospi(t1)
+    st2::Float64,ct2::Float64 = sincospi(t2)
+    st3::Float64,ct3::Float64 = sincospi(t3)
+
+    ch3h1::Float64 = cospi(h3-h1)
+    ch3h2::Float64 = cospi(h3-h2)
+    ch1h2::Float64 = cospi(h1-h2)
 
     m32::Float64 = m3^2
     m42::Float64 = m4^2
@@ -237,6 +244,16 @@ function Momentum3Value2!(p3v::Vector{Float64},p3pv::Vector{Float64},p1v::Vector
     ctheta13::Float64 = ct3*ct1 + ch3h1*st3*st1
     ctheta23::Float64 = ct3*ct2 + ch3h2*st3*st2
 
+    if (ctheta13 >= 1e0) || (ctheta23 >= 1e0)
+
+        ctheta13 = min(ctheta13,1e0)
+        ctheta23 = min(ctheta23,1e0)
+        # exceed float precision 
+        #return false, false, 0
+    end
+    #stheta13::Float64 = sqrt(1e0-ctheta13^2)
+    #stheta23::Float64 = sqrt(1e0-ctheta23^2)
+
     # E1 = A1 + m1
     # E2 = A2 + m2
     #A1::Float64 = p12/(E1+m1)
@@ -250,11 +267,14 @@ function Momentum3Value2!(p3v::Vector{Float64},p3pv::Vector{Float64},p1v::Vector
     p3v[1] = 0e0 
     p3pv[1] = 0e0
 
-    C3sqr::Float64 = (E1+E2)^2*((m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)^2-4*m32*((E1+E2)^2-(p1*ctheta13+p2*ctheta23)^2))
+    C3sqr::Float64 = (m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)^2-4*m32*((E1+E2)^2-(p1*ctheta13+p2*ctheta23)^2)
+
+    #C3sqr::Float64 = (m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)^2-4*m32*(m12+m22+2*E1*E2+p1^2*stheta13^2+p2^2*stheta23^2-2*p1*p2*ctheta13*ctheta23)
 
     C2::Float64 = -4*(p1*ctheta13+p2*ctheta23)*(m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)
 
     C4::Float64 = -8*((E1+E2)^2-(p1*ctheta13+p2*ctheta23)^2)
+    #C4::Float64 = -8*(m12+m22+2*E1*E2+p1^2*stheta13^2+p2^2*stheta23^2-2*p1*p2*ctheta13*ctheta23)
 
     # C3sqr == 0 was causing issues with SValue calculation often leading to deltacorrect = 0 so we are going to ignore this point and tread it as if p3 were complex.
     #=if C3sqr == 0 # only one state and p3 cannot equal zero
@@ -285,7 +305,7 @@ function Momentum3Value2!(p3v::Vector{Float64},p3pv::Vector{Float64},p1v::Vector
         #p3_physical = false
         #p3p_physical = false
 
-        C3 = 4*sqrt(C3sqr)
+        C3 = 4*(E1+E2)*sqrt(C3sqr)
         p3 = (C2-C3)/C4
 
         if (p3 <= 0e0 || p3 < 10.0^p3_low || p3 > 10.0^p3_up) # no negative or under or overflow
@@ -538,6 +558,13 @@ function pVector!(p4v::Vector{Float64},p3v::Vector{Float64},p1v::Vector{Float64}
     p42::Float64 = a+b+c+d # making this one line seems to cause -ve values??
     #p42 = p1^1+p2^2+p3^2+2*p1*p2*(ct1*ct2+ch1h2*st1*st2)-2*p1*p3*(ct1*ct3+ch3h1*st1*st3)-2*p2*p3*(ct2*ct3+ch3h2*st2*st3)
 
+    m1 = 1e0
+    m2 = 0e0
+    m3 = 1e0
+    m4 = 0e0
+
+    p42 = (-sqrt(p3^2+m3^2)+sqrt(p1^2+m1^2)+sqrt(p2^2+m2^2))^2-m4^2
+    #p42 = p1^2+m1^2+p2^2+m2^2+p3^2+m3^2+2*sqrt(p1^2+m1^2)*sqrt(p2^2+m2^2)-2*sqrt(p1^2+m1^2)*sqrt(p3^2+m3^2)-2*sqrt(p2^2+m2^2)*sqrt(p3^2+m3^2)-m4^2
     if p42 >= 0e0
         p4v[1] = sqrt(p42)
     else
@@ -551,13 +578,24 @@ function pVector!(p4v::Vector{Float64},p3v::Vector{Float64},p1v::Vector{Float64}
         println("$d")
         error("$p42")
     end
+    
+    p4v[2] = (p1*ct1-p3*ct3+p2*ct2)/p4v[1]
 
-    p4v[2] = (p1*ct1+p2*ct2-p3*ct3)/p4v[1]
-
-    if p4v[2] > 1e0
+    if p4v[2] > 1e0 || p4v[2] < -1e0
         ct4 = p4v[2]
         println("p4v[2] $ct4")
+        println("p1 = $p1, p2 = $p2, p3 = $p3")
+        println("ct1 = $ct1, ct2 = $ct2, ct3 = $ct3")
+        println("p4 = $(p4v[1])")
+        println("$(sqrt(p1^2+1e0)+sqrt(p2^2+0e0)-sqrt(p3^2+1e0))")
+        println("$(p4v[1]-(p1*ct1-p3*ct3+p2*ct2)), $(p4v[1]+(p1*ct1-p3*ct3+p2*ct2))")
+        println("$((p4v[1]-(p1*ct1-p3*ct3+p2*ct2))/(p4v[1]+(p1*ct1-p3*ct3+p2*ct2)))")
     end
+
+    p4v[4] = acos((p1*ct1+p2*ct2-p3*ct3)/p4v[1])/pi
+    #p4v[2] = cospi(p4v[4])
+
+    
 
     x = p1*st1*ch1+p2*st2*ch2-p3*st3*ch3 
     y = p1*st1*sh1+p2*st2*sh2-p3*st3*sh3

@@ -204,15 +204,36 @@ function WeightedFactors2(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,
     s::Float64 = sBig + sSmol
     E1::Float64 = sqrt(p1v[1]^2+m1^2)
     E2::Float64 = sqrt(p2v[1]^2+m2^2)
-    z::Float64 = sqrt(p1^2+p2^2+2*p1*p2*(ct1*ct2+ch1h2*st1*st2))
-    x::Float64 = p1*st1*ch1 + p2*st2*ch2
-    y::Float64 = p1*st1*sh1 + p2*st2*sh2
 
     # COM frame vector and angles
     γC::Float64 = (E1+E2)/sqrt(s)
     wC::Float64 = acosh(γC)
-    tC::Float64 = acos((p1*ct1+p2*ct2)/z)/pi
-    hC::Float64 = mod(atan(y,x)/pi,2)
+    if (pSmol::Float64 = p2/p1) < 1e-6
+        #z = sqrt(1e0+pSmol^2+2*pSmol*(ct1*ct2+ch1h2*st1*st2))
+        a = (ct1*ct2+ch1h2*st1*st2)
+        b = ct1
+        c = ct2 
+        # 1/sqrt(1+smol^2) approx 1-smol^2/2
+        val =  b + (-a*b+c)*pSmol + ((-1+3*a^2)*b/2-a*c)*pSmol^2 + (3*a*b/2-5*a^3*b/2-c+3*a^2*c/2)*pSmol^3 
+        x = st1*ch1 + pSmol*st2*ch2
+        y = st1*sh1 + pSmol*st2*sh2
+    elseif (pSmol = p1/p2) < 1e-6
+        #z = sqrt(1e0+pSmol^2+2*pSmol*(ct1*ct2+ch1h2*st1*st2))
+        a = (ct1*ct2+ch1h2*st1*st2)
+        b = ct1
+        c = ct2 
+        # 1/sqrt(1+smol^2) approx 1-smol^2/2
+        val =  c + (-a*c+b)*pSmol + ((-1+3*a^2)*c/2-a*b)*pSmol^2 + (-b+3*a*c/2-5*a^3*c/2+3*a^2*b/2)*pSmol^3 
+        x = pSmol*st1*ch1 + st2*ch2
+        y = pSmol*st1*sh1 + st2*sh2
+    else
+        z = sqrt(p1^2+p2^2+2*p1*p2*(ct1*ct2+ch1h2*st1*st2))
+        x = p1*st1*ch1 + p2*st2*ch2
+        y = p1*st1*sh1 + p2*st2*sh2
+        val  = (p1*ct1+p2*ct2)/z
+    end 
+    tC::Float64 = acos(val)/pi
+    hC::Float64 = mod(atan(y,x)/pi,2)   
 
     # outgoing COM frame momentum
     pC::Float64 = InvariantFluxSmall(sSmol,m3,m4)/sqrt(s)
@@ -227,7 +248,12 @@ function WeightedFactors2(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,
         w4Limit = 0e0
         tmp =  pC/(m3*sinh(wC))
         if tmp < 1e0 
-            w3Limit = min(atanh(sqrt(1-tmp^2)),18.7e0) # for tmp < 1e-8 sqrt=0 due to float precision, 18.7e0 is maximum value of w3 to this precision
+            if tmp > 1e-7
+                w3Limit = atanh(sqrt(1-tmp^2))
+            else # small tmp
+                w3Limit = log(2e0)-log(tmp)-tmp^2/4
+            end
+            #w3Limit = min(atanh(sqrt(1-tmp^2)),18.7e0) # for tmp < 1e-8 sqrt=0 due to float precision, 18.7e0 is maximum value of w3 to this precision
         else
             w3Limit = 0e0
         end
@@ -235,7 +261,12 @@ function WeightedFactors2(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,
         w3Limit = 0e0
         tmp = pC/(m4*sinh(wC))
         if tmp < 1e0
-            w4Limit = min(atanh(sqrt(1-tmp^2)),18.7e0)
+            if tmp > 1e-7
+                w4Limit = atanh(sqrt(1-tmp^2))
+            else # small tmp
+                w4Limit = log(2e0)-log(tmp)-tmp^2/4
+            end
+            #w4Limit = min(atanh(sqrt(1-tmp^2)),18.7e0)
         else
             w4Limit = 0e0
         end
@@ -248,12 +279,18 @@ function WeightedFactors2(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,
 
     #w3::Float64 = min(w3Limit+wC+scale*wScale,18e0)
     #w4::Float64 = min(w4Limit+wC+scale*wScale,18e0)
-    w3::Float64 = w3Limit+scale*(wC+wScale)
-    #if p1v[1] < 2.0e0 && p2v[1] < 2.0e-10
-    #    println("w3 = $w3")
-    #    println("E1/E2 = $(log(E1/E2))")
-    #end
-    w4::Float64 = w4Limit+scale*(wC+wScale) 
+    if w3Limit != 0e0
+        w3 = w3Limit + scale
+    else
+        w3 = scale*wC+scale*wScale
+    end
+    if w4Limit != 0e0
+        w4 = w4Limit + scale
+    else
+        w4 = scale*wC+scale*wScale
+    end
+    #w3::Float64 = w3Limit#+scale*wC #+scale*(wScale)
+    #w4::Float64 = w4Limit#+scale*wC #+scale*(wScale) 
 
     return (w3,w4,tC,hC)
     
@@ -293,7 +330,7 @@ function RPointSphereWeighted!(a::Vector{Float64},w::Float64)
 
     #costBdiv2sqr::Float64 = v
     #sintBdiv2sqr::Float64 = 1-v
-    tantBdiv2::Float64 = sqrt((1-v)/v)
+    tantBdiv2::Float64 = sqrt((1e0-v)/v)
 
 
     h::Float64 = 2*rand(Float64) # phi points are normalised by pi

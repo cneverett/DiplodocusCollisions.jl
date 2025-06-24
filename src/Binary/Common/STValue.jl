@@ -125,7 +125,7 @@ function SValue3(p3v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float64},
     ch1h2::Float64 = cospi(p1v[3]-p2v[3])
 
     p3::Float64 = p3v[1]
-    (st3::Float64,ct3::Float64) = sincospi(p3v[4])
+    st3::Float64,ct3::Float64 = sincospi(p3v[4])
     ch3h1::Float64 = cospi(p3v[3]-p1v[3])
     ch3h2::Float64 = cospi(p3v[3]-p2v[3])
 
