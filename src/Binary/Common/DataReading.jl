@@ -28,7 +28,7 @@ Returns a tuple of the data stored in the file. The fields are as follows:
 - `TConv` : A 4D matrix of the convergence of the absorption spectrum compared to the previous run with given `Parameters`.
 
 """
-function fload_All(fileLocation::String,fileName::String)
+function fload_All(fileLocation::String,fileName::String;corrected::Bool=false)
         
     filePath = fileLocation*"\\"*fileName
     fileExist = isfile(filePath)
@@ -58,9 +58,14 @@ function fload_All(fileLocation::String,fileName::String)
         TConv = f["TConverge"]; =#
 
         Parameters = f["Parameters"]
-        GainMatrix3 = f["GainMatrix3"];
+        if corrected
+            GainMatrix3 = f["CorrectedGainMatrix3"];
+            GainMatrix4 = f["CorrectedGainMatrix4"];
+        else
+            GainMatrix3 = f["GainMatrix3"];
+            GainMatrix4 = f["GainMatrix4"];
+        end
         GainTally3 = f["GainTally3"];
-        GainMatrix4 = f["GainMatrix4"];
         GainTally4 = f["GainTally4"];
         LossMatrix1 = f["LossMatrix1"];
         LossTally = f["LossTally"];
@@ -97,7 +102,7 @@ Returns a tuple of the data stored in the file. The fields are as follows:
 If initial or final particles are identical then only one of the SMatrices or TMatrices will be returned for that state.
 
 """
-function fload_Matrix(fileLocation::String,fileName::String)
+function fload_Matrix(fileLocation::String,fileName::String;corrected::Bool=false)
         
     filePath = fileLocation*"\\"*fileName
     fileExist = isfile(filePath)
@@ -105,8 +110,13 @@ function fload_Matrix(fileLocation::String,fileName::String)
     if fileExist
         f = jldopen(filePath,"r+");
         Parameters = f["Parameters"]
-        GainMatrix3 = f["GainMatrix3"];
-        GainMatrix4 = f["GainMatrix4"];
+        if corrected
+            GainMatrix3 = f["CorrectedGainMatrix3"];
+            GainMatrix4 = f["CorrectedGainMatrix4"];
+        else
+            GainMatrix3 = f["GainMatrix3"];
+            GainMatrix4 = f["GainMatrix4"];
+        end
         LossMatrix1 = f["LossMatrix1"];
         LossMatrix2 = f["LossMatrix2"];
         close(f)  
