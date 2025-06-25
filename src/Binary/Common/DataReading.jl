@@ -606,7 +606,7 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
         if name1 == name3
             if GainSumN3 != 0e0
                 Correction = LossSumN1/GainSumN3
-                @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .*= Correction
+                @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])
             else
                 CorrectedGainMatrix3[p1,u1,h1,p1,u1,h1,p2,u2,h2] += LossSumN1
             end
@@ -616,7 +616,7 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
         if name2 == name4
             if GainSumN4 != 0e0
                 Correction = LossSumN2/GainSumN4
-                @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .*= Correction
+                @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
             else
                 CorrectedGainMatrix4[p2,u2,h2,p1,u1,h1,p2,u2,h2] += LossSumN2
             end
