@@ -228,20 +228,19 @@ numT = round(Int,numTiterPerThread/length(scale))
                 @. @view(GainMatrix3[i,:,:,:,:,:,:,:,:]) = @view(GainTotal3[i,:,:,:,:,:,:,:,:]) / GainTally3_N
             end
             replace!(GainMatrix3,NaN=>0e0); # remove NaN caused by / 0
-            if m3 == m4 
-                @. GainMatrix4 = GainMatrix3
-            else
-                fill!(GainMatrix4,Float64(0))
-            end
         else
             for i in axes(GainTotal3,1)
                 @. @view(GainMatrix3[i,:,:,:,:,:,:,:,:]) = @view(GainTotal3[i,:,:,:,:,:,:,:,:]) / GainTally3_N
             end
             replace!(GainMatrix3,NaN=>0e0); # remove NaN caused by /0e0
-            for i in axes(GainTotal4,1)
+            if m3 == m4
+                @. GainMatrix4 = GainMatrix3
+            else
+                for i in axes(GainTotal4,1)
                 @. @view(GainMatrix4[i,:,:,:,:,:,:,:,:]) = @view(GainTotal4[i,:,:,:,:,:,:,:,:]) / GainTally4_N
+                end
+                replace!(GainMatrix4,NaN=>0e0); # remove NaN caused by /0e0
             end
-            replace!(GainMatrix4,NaN=>0e0); # remove NaN caused by /0e0
         end
         @. LossMatrix1 = LossTotal / LossTally;
         replace!(LossMatrix1,NaN=>0e0);

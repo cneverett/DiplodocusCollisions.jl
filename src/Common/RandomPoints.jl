@@ -207,6 +207,9 @@ function WeightedFactors2(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,
 
     # COM frame vector and angles
     γC::Float64 = (E1+E2)/sqrt(s)
+    if γC < 1.0
+        γC = 1.0 # avoid numerical issues
+    end
     wC::Float64 = acosh(γC)
     if (pSmol::Float64 = p2/p1) < 1e-6
         #z = sqrt(1e0+pSmol^2+2*pSmol*(ct1*ct2+ch1h2*st1*st2))

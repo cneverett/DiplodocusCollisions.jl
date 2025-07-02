@@ -2,6 +2,7 @@ module DiplodocusCollisions
 
 export SpectraEvaluateSerial, SpectraEvaluateMultiThread, fload_All, DoesConserve, fload_Matrix, fload_Matrix_ISO
 export SyncEvaluateSerial, SpectraEvaluateMultiThreadEmission, fload_All_Sync, fload_Matrix_Sync, fload_Matrix_SyncISO
+export UserBinaryParameters 
 
     using JLD2
     using Base.Threads
@@ -13,6 +14,7 @@ export SyncEvaluateSerial, SpectraEvaluateMultiThreadEmission, fload_All_Sync, f
         include("Common/Constants.jl")
         include("Common/RandomPoints.jl")
         include("Common/Location.jl")
+        include("Common/UserParameters.jl")
 
     # include Binary files
         include("Binary/Common/Structs.jl")
