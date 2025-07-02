@@ -2,7 +2,7 @@ function UserBinaryParameters()
 
     name1::String = eval(Symbol("name1"))
 
-    name1::String = getfield(Main,Symbol("name1"))
+    #name1::String = getfield(Main,Symbol("name1"))
     name2::String = getfield(Main,Symbol("name2"))
     name3::String = getfield(Main,Symbol("name3"))
     name4::String = getfield(Main,Symbol("name4"))
