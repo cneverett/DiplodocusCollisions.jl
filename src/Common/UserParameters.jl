@@ -1,5 +1,5 @@
 function UserBinaryParameters()
-    p1_low::Float64 = getfield(Main,Symbol("p_low_"*name1))
+    p1_low::Float64 = Symbol("p_low_"*name1)
     p1_up::Float64 = getfield(Main,Symbol("p_up_"*name1))
     p1_grid::String = getfield(Main,Symbol("p_grid_"*name1))
     p1_num::Int64 = getfield(Main,Symbol("p_num_"*name1))
