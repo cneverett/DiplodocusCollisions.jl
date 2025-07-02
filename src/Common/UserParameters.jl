@@ -1,4 +1,10 @@
 function UserBinaryParameters()
+
+    name1::String = getfield(Main,Symbol("name1"))
+    name2::String = getfield(Main,Symbol("name2"))
+    name3::String = getfield(Main,Symbol("name3"))
+    name4::String = getfield(Main,Symbol("name4"))
+    
     p1_low::Float64 = Symbol("p_low_"*name1)
     p1_up::Float64 = getfield(Main,Symbol("p_up_"*name1))
     p1_grid::String = getfield(Main,Symbol("p_grid_"*name1))
