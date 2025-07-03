@@ -258,18 +258,18 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
         ELossMatrix2[p1,u1,h1,p2,u2,h2] += LossMatrix2[p2,u2,h2,p1,u1,h1]*E2_d[p2]
     end
 
-    NErrMatrix1 = (NGainMatrix3 .- NLossMatrix1) ./ NLossMatrix1
+    NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
     #EErrMatrix1 = (EGainMatrix3 .- ELossMatrix1) ./ ELossMatrix1
-    meanNErr1 = sum(abs.(NErrMatrix1)) / length(NLossMatrix1)
+    meanNErr = sum(abs.(NErrMatrix)) / length(NLossMatrix1)
     #meanEErr1 = sum(abs.(EErrMatrix1)) / length(NLossMatrix1)
-    stdN1 = sqrt(sum((NErrMatrix1 .- meanNErr1).^2)/length(NLossMatrix1))
+    stdN = sqrt(sum((NErrMatrix .- meanNErr).^2)/length(NLossMatrix1))
     #stdE1 = sqrt(sum((EErrMatrix1 .- meanEErr1).^2)/length(NLossMatrix1))
 
-    NErrMatrix2 = (NGainMatrix4 .- NLossMatrix2) ./ NLossMatrix2
+    #NErrMatrix2 = (NGainMatrix4 .- NLossMatrix2) ./ NLossMatrix2
     #EErrMatrix2 = (EGainMatrix4 .- ELossMatrix2) ./ ELossMatrix2
-    meanNErr2 = sum(abs.(NErrMatrix2)) / length(NLossMatrix2)
+    #meanNErr2 = sum(abs.(NErrMatrix2)) / length(NLossMatrix2)
     #meanEErr2 = sum(abs.(EErrMatrix2)) / length(NLossMatrix2)
-    stdN2 = sqrt(sum((NErrMatrix2 .- meanNErr2).^2)/length(NLossMatrix2))
+    #stdN2 = sqrt(sum((NErrMatrix2 .- meanNErr2).^2)/length(NLossMatrix2))
     #stdE2 = sqrt(sum((EErrMatrix2 .- meanEErr2).^2)/length(NLossMatrix2))
 
     EErrMatrix = (EGainMatrix3 .+ EGainMatrix4 .- ELossMatrix1 .- ELossMatrix2) ./ (ELossMatrix1 .+ ELossMatrix2)
@@ -304,13 +304,13 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
     println("ratioE = "*string(SsumE/TsumE))
 
     println("#")
-    println("mean error in N1 = $meanNErr1")
-    println("std of error in  N1 = $stdN1")
+    println("mean error in N = $meanNErr")
+    println("std of error in  N = $stdN")
     #println("mean error in E = $meanEErr1")
     #println("std of error in E = $stdE1")
-    println("#")
-    println("mean error in N2 = $meanNErr2")
-    println("std of error in  N2 = $stdN2")
+    #println("#")
+    #println("mean error in N2 = $meanNErr2")
+    #println("std of error in  N2 = $stdN2")
     #println("mean error in E = $meanEErr2")
     #println("std of error in E = $stdE2")
     println("#")
@@ -318,7 +318,7 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
     println("std of error in E = $stdE")
 
     if Tuple_Output == true
-        return NGainMatrix3, NLossMatrix1, NErrMatrix1,NGainMatrix4, NLossMatrix2, NErrMatrix2
+        return NGainMatrix3, NLossMatrix1, NErrMatrix,NGainMatrix4, NLossMatrix2
     else
         return nothing
     end
@@ -426,42 +426,44 @@ function DoesConserve(Output::Tuple{Tuple{String, String, String, String, Float6
         ELossMatrix2[p1,u1,h1,p2,u2,h2] += LossMatrix2[p2,u2,h2,p1,u1,h1]*E2_d[p2]
     end
 
-    NErrMatrix1 = (NGainMatrix3 .- NLossMatrix1) ./ NLossMatrix1
+    NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
     #EErrMatrix1 = (EGainMatrix3 .- ELossMatrix1) ./ ELossMatrix1
-    meanNErr1 = sum(abs.(NErrMatrix1)) / length(NLossMatrix1)
+    meanNErr = sum(abs.(NErrMatrix)) / length(NLossMatrix1)
     #meanEErr1 = sum(abs.(EErrMatrix1)) / length(NLossMatrix1)
-    stdN1 = sqrt(sum((NErrMatrix1 .- meanNErr1).^2)/length(NLossMatrix1))
+    stdN = sqrt(sum((NErrMatrix .- meanNErr).^2)/length(NLossMatrix1))
     #stdE1 = sqrt(sum((EErrMatrix1 .- meanEErr1).^2)/length(NLossMatrix1))
 
-    NErrMatrix2 = (NGainMatrix4 .- NLossMatrix2) ./ NLossMatrix2
+    #NErrMatrix2 = (NGainMatrix4 .- NLossMatrix2) ./ NLossMatrix2
     #EErrMatrix2 = (EGainMatrix4 .- ELossMatrix2) ./ ELossMatrix2
-    meanNErr2 = sum(abs.(NErrMatrix2)) / length(NLossMatrix2)
+    #meanNErr2 = sum(abs.(NErrMatrix2)) / length(NLossMatrix2)
     #meanEErr2 = sum(abs.(EErrMatrix2)) / length(NLossMatrix2)
-    stdN2 = sqrt(sum((NErrMatrix2 .- meanNErr2).^2)/length(NLossMatrix2))
+    #stdN2 = sqrt(sum((NErrMatrix2 .- meanNErr2).^2)/length(NLossMatrix2))
     #stdE2 = sqrt(sum((EErrMatrix2 .- meanEErr2).^2)/length(NLossMatrix2))
 
     EErrMatrix = (EGainMatrix3 .+ EGainMatrix4 .- ELossMatrix1 .- ELossMatrix2) ./ (ELossMatrix1 .+ ELossMatrix2)
     meanEErr = sum(abs.(EErrMatrix)) / length(NLossMatrix1)
     stdE = sqrt(sum((EErrMatrix .- meanEErr).^2)/length(NLossMatrix1))
 
-    println("sumSN3 = "*string(SsumN3))
-    println("sumSN4 = "*string(SsumN4))
-    println("sumTN1 = "*string(TsumN1))    
-    println("sumTN2 = "*string(TsumN2)) 
+    println("sumGainN3 = "*string(SsumN3))
+    println("sumGainN4 = "*string(SsumN4))
+    println("sumLossN1 = "*string(TsumN1))    
+    println("sumLossN2 = "*string(TsumN2)) 
     SsumN = SsumN3 + SsumN4
-    println("sumSN = "*string(SsumN))
+    println("sumGainN = "*string(SsumN))
     TsumN = TsumN1 + TsumN2
-    println("sumTN = "*string(TsumN))
+    println("sumLossN = "*string(TsumN))
+
     println("#")
 
-    println("sumSE3 = "*string(SsumE3))
-    println("sumSE4 = "*string(SsumE4))
-    println("sumTE1 = "*string(TsumE1))  
-    println("sumTE2 = "*string(TsumE2))
+    println("sumGainE3 = "*string(SsumE3))
+    println("sumGainE4 = "*string(SsumE4))
+    println("sumLossE1 = "*string(TsumE1))  
+    println("sumLossE2 = "*string(TsumE2))
     SsumE = SsumE3 + SsumE4
-    println("sumSE = "*string(SsumE))
+    println("sumGainE = "*string(SsumE))
     TsumE = TsumE1 + TsumE2
-    println("sumTE = "*string(TsumE))
+    println("sumLossE = "*string(TsumE))
+
     println("#")
 
     println("errN = "*string(SsumN-TsumN))
@@ -470,23 +472,21 @@ function DoesConserve(Output::Tuple{Tuple{String, String, String, String, Float6
     println("ratioE = "*string(SsumE/TsumE))
 
     println("#")
-    println("mean error in N1 = $meanNErr1")
-    println("std of error in  N1 = $stdN1")
+    println("mean error in N = $meanNErr")
+    println("std of error in  N = $stdN")
     #println("mean error in E = $meanEErr1")
     #println("std of error in E = $stdE1")
-
-    println("#")
-    println("mean error in N2 = $meanNErr2")
-    println("std of error in  N2 = $stdN2")
+    #println("#")
+    #println("mean error in N2 = $meanNErr2")
+    #println("std of error in  N2 = $stdN2")
     #println("mean error in E = $meanEErr2")
     #println("std of error in E = $stdE2")
-
     println("#")
     println("mean error in E = $meanEErr")
     println("std of error in E = $stdE")
 
     if Tuple_Output == true
-        return NGainMatrix3, NLossMatrix1, NErrMatrix1,NGainMatrix4, NLossMatrix2, NErrMatrix2, GainSamples3, GainSamples4, LossSamples1, LossSamples2
+        return NGainMatrix3, NLossMatrix1, NErrMatrix,NGainMatrix4, NLossMatrix2, GainSamples3, GainSamples4, LossSamples1, LossSamples2
     else
         return nothing
     end 
