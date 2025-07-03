@@ -1,6 +1,6 @@
 module DiplodocusCollisions
 
-export SpectraEvaluateSerial, SpectraEvaluateMultiThread, fload_All, DoesConserve, fload_Matrix, fload_Matrix_ISO
+export BinaryInteractionIntegration, BinaryFileLoad_All, DoesConserve, BinaryFileLoad_Matrix #, BinaryFileLoad_Matrix_ISO
 export SyncEvaluateSerial, SpectraEvaluateMultiThreadEmission, fload_All_Sync, fload_Matrix_Sync, fload_Matrix_SyncISO
 export UserBinaryParameters 
 
@@ -17,25 +17,20 @@ export UserBinaryParameters
         include("Common/UserParameters.jl")
 
     # include Binary files
-        include("Binary/Common/Structs.jl")
-        include("Binary/Common/Arrays.jl")
-        include("Binary/Common/Averaging.jl")
-        include("Binary/Common/DifferentialCrossSectionFunctions.jl")
-        include("Binary/Common/Momentum3Values.jl")
-        include("Binary/Common/MandelstramChecks.jl")
-        include("Binary/Common/STValue.jl")
-        include("Binary/Common/UsefulGridValueFunctions.jl")
-        include("Binary/Common/MomentumSpaceFactors.jl")
-        include("Binary/Common/Sampling.jl")
-        # include serial methods
-        include("Binary/Serial/STIntegration_Serial.jl")
-        include("Binary/Serial/STMonteCarlo_Serial.jl")
-        #include parallel methods
-        include("Binary/MultiThread/STIntegration_MultiThread.jl")
-        include("Binary/MultiThread/STMonteCarlo_MultiThread.jl")       
-        include("Binary/MultiThread/STMonteCarlo_MultiThread_Debug.jl")   
-        # include data reading functions for export
-        include("Binary/Common/DataReading.jl")
+        #include("Binary/Structs.jl")
+        include("Binary/Arrays.jl")
+        include("Binary/Averaging.jl")
+        include("Binary/DifferentialCrossSectionFunctions.jl")
+        include("Binary/MomentumValues.jl")
+        include("Binary/MandelstramChecks.jl")
+        include("Binary/GainLossValue.jl")
+        include("Binary/UsefulGridValueFunctions.jl")
+        include("Binary/MomentumSpaceFactors.jl")
+        include("Binary/Sampling.jl")
+        include("Binary/BinaryInteractionIntegration.jl")
+        include("Binary/BinaryMonteCarlo.jl")       
+        include("Binary/BinaryMonteCarlo_Debug.jl")   
+        include("Binary/DataReading.jl")
         
     # include Synchrotron functions
         include("Emission/Common/Arrays.jl")

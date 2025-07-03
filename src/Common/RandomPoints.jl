@@ -156,41 +156,11 @@ end
 
 
 """
-    WeightedFactors!(p1v,p2v,m1,m2,scale)
+    WeightedFactors(p1v,p2v,m1,m2,scale)
 
-Returns the weighting rapidity `w` and the direction an angles `t` and `h` for rotations on a sphere. Weighting rapidity can be scaled by `scale`. Weight is dependant on the ratio of the energies of the two particles `p1v` and `p2v`. With angles `t` and `h` being the angles of the particle with the higher energy. 
+Returns the weighting rapidities `w3` and `w4` and the direction an angles `t` and `h` for rotations on a sphere. Weighting rapidity can be scaled by `scale`. `t` and `h` are the angles of the COM velocity direction, and the weights `w3` and `w4` are rapidities based on the expected angular spread of the particles 3 and 4 due to the incoming states of particles 1 and 2. 
 """
-function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m2::Float64,sBig::Float64,sSmol::Float64,scale::Float64) 
-
-    E1::Float64 = sqrt(p1v[1]^2+m1^2)
-    E2::Float64 = sqrt(p2v[1]^2+m2^2)
-    ratio::Float64 = E1/E2
-    gammaCOM::Float64 = (E1+E2)/sqrt(sBig+sSmol)
-
-    if ratio > 1e2 # p1 has higher energy
-        w3 = scale*log(ratio)
-        t = p1v[4]
-        h = p1v[3]
-        # set w4 using (sBig+sSmol)/sBig i.e. how relativistic is the interaction is
-        w4 = scale*log(gammaCOM)*4 # sqrt
-    elseif ratio < 1e-2 # p2 has higher energy
-        w4 = scale*log(1/ratio)
-        t = p2v[4]
-        h = p2v[3]
-        # set w3 using (sBig+sSmol)/sBig i.e. how relativistic is the interaction is
-        w3 = scale*log(gammaCOM)*4
-    else # no weighting as uniform does well
-        w3 = 0e0
-        w4 = 0e0
-        t = 0e0
-        h = 0e0
-    end
-
-    return (w3,w4,t,h)
-    
-end
-
-function WeightedFactors2(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m2::Float64,m3::Float64,m4::Float64,sBig::Float64,sSmol::Float64,scale::Float64) 
+function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m2::Float64,m3::Float64,m4::Float64,sBig::Float64,sSmol::Float64,scale::Float64) 
 
     p1::Float64 = p1v[1]
     p2::Float64 = p2v[1]
@@ -235,8 +205,8 @@ function WeightedFactors2(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,
         y = p1*st1*sh1 + p2*st2*sh2
         val  = (p1*ct1+p2*ct2)/z
     end 
-    tC::Float64 = acos(val)/pi
-    hC::Float64 = mod(atan(y,x)/pi,2)   
+    t::Float64 = acos(val)/pi
+    h::Float64 = mod(atan(y,x)/pi,2)   
 
     # outgoing COM frame momentum
     pC::Float64 = InvariantFluxSmall(sSmol,m3,m4)/sqrt(s)
@@ -295,7 +265,7 @@ function WeightedFactors2(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,
     #w3::Float64 = w3Limit#+scale*wC #+scale*(wScale)
     #w4::Float64 = w4Limit#+scale*wC #+scale*(wScale) 
 
-    return (w3,w4,tC,hC)
+    return (w3,w4,t,h)
     
 end
 

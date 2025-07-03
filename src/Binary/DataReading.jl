@@ -1,61 +1,29 @@
 """
-    fload_All(fileLocation,fileName)
+    BinaryFileLoad_All(fileLocation,fileName;corrected=false)
 
-Loads all the data stored in `fileName` stored at `fileLocation`.
+Loads all the data stored in `fileName` stored at `fileLocation`. If `corrected` is set to `true` then the corrected gain and loss matrices will be loaded, otherwise the uncorrected matrices will be loaded.
 
 # Example
 ```julia-repl
-    (Parameters,SAtot3,SAtot4,TAtot,SAtal3,SAtal4,TAtal,SMatrix3,SMatrix4,TMatrix1,TMatrix2,p3Max,p4Max,u3MinMax,u4MinMax,SConv3,SConv4,TConv) = fload_All(fileLocation,fileName);
+    (Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2,GainTally3,GainTally4,LossTally) = BinaryFileLoad_All(fileLocation,fileName);
 ```
 Returns a tuple of the data stored in the file. The fields are as follows:
 - `Parameters` : A tuple of the parameters used in the evaluation.
-- `Stot3` : A 6D matrix totalling all the emission spectrum values sampled for 12->34 interaction.
-- `Stot4` : A 6D matrix totalling all the emission spectrum values sampled for 12->43 interaction.
-- `Ttot` : A 4D matrix totalling all the absorption spectrum values sampled.
-- `Stal3` : A 5D matrix of tallies of the number of emission spectrum values sampled for 12->34 interaction.
-- `Stal4` : A 5D matrix of tallies of the number of emission spectrum values sampled for 12->43 interaction.
-- `Ttal` : A 4D matrix of tallies of the number of absorption spectrum values sampled.
-- `SMatrix3` : A 6D matrix of the emission spectrum for 12->34 interaction.
-- `SMatrix4` : A 6D matrix of the emission spectrum for 12->43 interaction.
-- `TMatrix1` : A 4D matrix of the absorption spectrum for 12->34 interaction.
-- `TMatrix2` : A 4D matrix of the absorption spectrum for 21->34 interaction i.e. by permutation of TMatrix1 and correct application of phase space factors if species 1 != species 2.
-- `p3Max` : The maximum value of the momentum space variable p3 sampled for each bin. (Useful for correcting numerical diffusion)
-- `u3MinMax` : The minimum and maximum values of the momentum space variable t3 sampled for each bin. (Useful for correcting numerical diffusion)
-- `p4Max` : The maximum value of the momentum space variable p4 sampled for each bin. (Useful for correcting numerical diffusion)
-- `u4MinMax` : The minimum and maximum values of the momentum space variable t4 sampled for each bin. (Useful for correcting numerical diffusion)
-- `SConv3` : A 6D matrix of the convergence of the emission spectrum compared to the previous run with given `Parameters` for 12->34 interaction.
-- `SConv4` : A 6D matrix of the convergence of the emission spectrum compared to the previous run with given `Parameters` for 12->43 interaction.
-- `TConv` : A 4D matrix of the convergence of the absorption spectrum compared to the previous run with given `Parameters`.
-
+- `GainTally3` : A 8D matrix of tallies of the number of emission spectrum values sampled for 12->34 interaction.
+- `GainTally4` : A 8D matrix of tallies of the number of emission spectrum values sampled for 12->43 interaction.
+- `LossTally` : A 6D matrix of tallies of the number of absorption spectrum values sampled.
+- `GainMatrix3` : A 9D matrix of the emission spectrum for 12->34 interaction.
+- `GainMatrix4` : A 9D matrix of the emission spectrum for 12->43 interaction.
+- `LossMatrix1` : A 6D matrix of the absorption spectrum for 12->34 interaction.
+- `LossMatrix2` : A 6D matrix of the absorption spectrum for 21->34 interaction i.e. by permutation of GainMatrix1 and correct application of phase space factors if species 1 != species 2.
 """
-function fload_All(fileLocation::String,fileName::String;corrected::Bool=false)
+function BinaryFileLoad_All(fileLocation::String,fileName::String;corrected::Bool=false)
         
     filePath = fileLocation*"\\"*fileName
     fileExist = isfile(filePath)
 
     if fileExist
         f = jldopen(filePath,"r+");
-#=         Parameters = f["Parameters"]
-
-        SAtot3 = f["STotal3"];
-        SAtal3 = f["STally3"];
-        SMatrix3 = f["SMatrix3"];
-        SConv3 = f["SConverge3"];
-        p3Max = f["p3Max"];
-        u3MinMax = f["u3MinMax"];
-
-        SAtot4 = f["STotal4"];
-        SAtal4 = f["STally4"];
-        SMatrix4 = f["SMatrix4"];
-        SConv4 = f["SConverge4"];
-        p4Max = f["p4Max"];
-        u4MinMax = f["u4MinMax"];
-
-        TAtot = f["TTotal"];
-        TAtal = f["TTally"];
-        TMatrix1 = f["TMatrix1"];
-        TMatrix2 = f["TMatrix2"];
-        TConv = f["TConverge"]; =#
 
         Parameters = f["Parameters"]
         if corrected
@@ -76,33 +44,27 @@ function fload_All(fileLocation::String,fileName::String;corrected::Bool=false)
         error("no file with name $fileName found at location $fileLocation")
     end
 
-    #return (Parameters,SAtot3,SAtot4,TAtot,SAtal3,SAtal4,TAtal,SMatrix3,SMatrix4,TMatrix1,TMatrix2,p3Max,p4Max,u3MinMax,u4MinMax,SConv3,SConv4,TConv);
-
     return (Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2,GainTally3,GainTally4,LossTally)
 
 end
 
-
 """
-    fload_Matrix(fileLocation,fileName)
+    BinaryFileLoad_Matrix(fileLocation,fileName;corrected=false)
 
-Loads just the Gain and Loss Matrices stored in `fileName` stored at `fileLocation`.
+Loads just the Gain and Loss Matrices stored in `fileName` stored at `fileLocation`. If `corrected` is set to `true` then the corrected gain and loss matrices will be loaded, otherwise the uncorrected matrices will be loaded.
 
 # Example
 ```julia-repl
-    Matrices = fload_All(fileLocation,fileName);
+    (Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = BinaryFileLoad_Matrix(fileLocation,fileName);
 ```
 Returns a tuple of the data stored in the file. The fields are as follows:
 - `Parameters` : A tuple of the parameters used in the evaluation.
 - `GainMatrix3` : A 9D matrix of the emission spectrum for 12->34 interaction.
 - `GainMatrix4` : A 9D matrix of the emission spectrum for 12->43 interaction.
 - `LossMatrix1` : A 6D matrix of the absorption spectrum for 12->34 interaction.
-- `LossMatrix2` : A 6D matrix of the absorption spectrum for 21->34 interaction.
-
-If initial or final particles are identical then only one of the SMatrices or TMatrices will be returned for that state.
-
+- `LossMatrix2` : A 6D matrix of the absorption spectrum for 21->34 interaction i.e. by permutation of GainMatrix1 and correct application of phase space factors if species 1 != species 2.
 """
-function fload_Matrix(fileLocation::String,fileName::String;corrected::Bool=false)
+function BinaryFileLoad_Matrix(fileLocation::String,fileName::String;corrected::Bool=false)
         
     filePath = fileLocation*"\\"*fileName
     fileExist = isfile(filePath)
@@ -123,11 +85,6 @@ function fload_Matrix(fileLocation::String,fileName::String;corrected::Bool=fals
     else
         error("no file with name $fileName found at location $fileLocation")
     end
-
-    (name1,name2,name3,name4,mu1,mu2,mu3,mu4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
-
-    # old format
-    #(name1,name2,name3,name4,mu1,mu2,mu3,mu4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num) = Parameters
 
     return (Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2)
 
