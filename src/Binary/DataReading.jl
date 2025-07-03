@@ -276,25 +276,25 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
     meanEErr = sum(abs.(EErrMatrix)) / length(NLossMatrix1)
     stdE = sqrt(sum((EErrMatrix .- meanEErr).^2)/length(NLossMatrix1))
 
-    println("sumSN3 = "*string(SsumN3))
-    println("sumSN4 = "*string(SsumN4))
-    println("sumTN1 = "*string(TsumN1))    
-    println("sumTN2 = "*string(TsumN2)) 
+    println("sumGainN3 = "*string(SsumN3))
+    println("sumGainN4 = "*string(SsumN4))
+    println("sumLossN1 = "*string(TsumN1))    
+    println("sumLossN2 = "*string(TsumN2)) 
     SsumN = SsumN3 + SsumN4
-    println("sumSN = "*string(SsumN))
+    println("sumGainN = "*string(SsumN))
     TsumN = TsumN1 + TsumN2
-    println("sumTN = "*string(TsumN))
+    println("sumLossN = "*string(TsumN))
 
     println("#")
 
-    println("sumSE3 = "*string(SsumE3))
-    println("sumSE4 = "*string(SsumE4))
-    println("sumTE1 = "*string(TsumE1))  
-    println("sumTE2 = "*string(TsumE2))
+    println("sumGainE3 = "*string(SsumE3))
+    println("sumGainE4 = "*string(SsumE4))
+    println("sumLossE1 = "*string(TsumE1))  
+    println("sumLossE2 = "*string(TsumE2))
     SsumE = SsumE3 + SsumE4
-    println("sumSE = "*string(SsumE))
+    println("sumGainE = "*string(SsumE))
     TsumE = TsumE1 + TsumE2
-    println("sumTE = "*string(TsumE))
+    println("sumLossE = "*string(TsumE))
 
     println("#")
 
