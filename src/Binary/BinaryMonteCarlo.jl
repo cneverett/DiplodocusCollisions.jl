@@ -215,6 +215,4 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
 
     end # Thread spawn 
 
-    return nothing
-
 end # function 
