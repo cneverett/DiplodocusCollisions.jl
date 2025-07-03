@@ -84,9 +84,9 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
             if numThreads == 1
                 # Run in serial if only one thread, easier to use for debugging
-                STMonteCarlo_MultiThread_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,1)
+                BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,1)
             else
-                workers = [STMonteCarlo_MultiThread!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
+                workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
                 wait.(workers) # Allow all workers to finish
             end
     
@@ -167,7 +167,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
         println("Calculating Error Estimates")
 
-        ErrorOutput =  DoesConserve2((Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2))
+        ErrorOutput =  DoesConserve((Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2))
 
     # ===================================== #
 
