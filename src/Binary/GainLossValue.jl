@@ -31,7 +31,7 @@ returns `LossVal` based on initial momentum states `p1v` and `p2v` and cross sec
 Loss_\\text{val} = \\frac{1}{p^0_1p^0_2}\\sigma(s)F_12(s)
 ```
 If initial state fails `sCheck`, i.e. cannot generate a physical output state, LossVal is set to 0e0. 
-Assumes f(x,p,u,ϕ)=f(x,vec{p})/p^2=constant over bin
+Assumes f(x,p,u,ϕ)=f(x,vec{p})p^2=constant over bin
 """
 function LossValue(p1v::Vector{Float64},p2v::Vector{Float64},sigma::Function,m1::Float64,m2::Float64,m3::Float64,m4::Float64)
 
@@ -100,7 +100,7 @@ Returns `GainVal` based on initial momentum states `p1v` and `p2v` and final sta
 ```math
 Gain_\\text{val}=\\frac{\\mathrm{d}\\sigma_{12|34}}{\\mathrm{d}t}\\frac{\\mathcal{F}_{12}^2}{\\pi\\left|p^0_3(p_1\\cos\\Theta_{31}+p_2\\cos\\Theta_{32})-p_3(p^0_1+p^0_2)\\right|}\frac{p_3^2}{p^0_1p^0_2}.
 ``` 
-Assumes f(x,p,u,ϕ)=f(x,vec{p})/p^2=constant over bin
+Assumes f(x,p,u,ϕ)=f(x,vec{p})p^2=constant over bin
 """
 function GainValue3(p3v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float64},sBig::Float64,sSmol::Float64,dsigmadt::Function,m1::Float64,m2::Float64,m3::Float64,m4::Float64)
 

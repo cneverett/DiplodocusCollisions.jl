@@ -142,7 +142,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             h4val = bounds(h_low,h_up,h4_num,h4_grid).*pi
 
             # Momentum space volume elements
-            MomentumSpaceFactorsNewBinary!(GainMatrix3,GainMatrix4,u3val,h3val,u4val,h4val,Indistinguishable_12)
+            MomentumSpaceFactorsBinary!(GainMatrix3,GainMatrix4,u3val,h3val,u4val,h4val,Indistinguishable_12)
                                         
             println("Weighting average of New and Old Sampling Arrays")
 
