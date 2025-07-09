@@ -9,7 +9,7 @@ This defines the differential/total cross section function and its normalisation
 """
     dsigmadt_SphSphSphSph(sSmol,sBig,tSmol,tBig,uSmol,uBig)
 
-returns the differential cross section for the binary interaction of hard spheres with normalised masses ``m_1,m_2,m_3,m_4=m_{\\text{Sph}}``. Normalised by ``πR_{Sph}^2``.
+returns the differential cross section for the binary interaction of hard spheres with normalised masses ``m_1,m_2,m_3,m_4=m_{\\text{Sph}}``. Normalised by ``πR_{Sph}^2=\\sigma_{T}``.
 
 ```math
 \\frac{dσ}{dt} = \\frac{1}{s-4m_{\\text{Sph}}^2}
@@ -37,7 +37,7 @@ end
 """
     sigma_SphSphSphSph(sSmol,sBig)
 
-returns the total cross section for the binary interaction of hard spheres with normalised masses (wrt electron mass) ``m_1,m_2,m_3,m_4=m_\\text{Sph}``. Normalised by ``πR_{Sph}^2``.
+returns the total cross section for the binary interaction of hard spheres with normalised masses (wrt electron mass) ``m_1,m_2,m_3,m_4=m_\\text{Sph}``. Normalised by ``πR_{Sph}^2=\\sigma_{T}``.
 
 ```math
 σ = \\frac{1}{2}
