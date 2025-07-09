@@ -19,11 +19,11 @@ julia> location(0e0,10e0,9,2e0,"u")
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,spacing::String)
     # function for generating position in array. Bins MUST be uniform
     if spacing == "u" # uniform spacing
-        return val != low_bound ? ceil(Int64,Float64(num)*(val-low_bound)/(up_bound-low_bound)) : Int64(1) 
+        return val != low_bound ? ceil(Int64,num*(val-low_bound)/(up_bound-low_bound)) : Int64(1) 
     elseif spacing == "l" # log spacing
         logval = log10(val)
-        loc = logval != low_bound ? ceil(Int64,Float64(num)*(logval-low_bound)/(up_bound-low_bound)) : Int64(1) 
-        return 1 <= loc <= num ? loc : loc>num ? num+1 : 1 # assigns 1 for under, num+1 for over and loc for in range
+        loc = logval != low_bound ? ceil(Int64,num*(logval-low_bound)/(up_bound-low_bound)) : Int64(1) 
+        return loc 
     elseif spacing == "b" # binary (2^n) fractional spacing
         logval = log(1/2,1-abs(val))
         num_half = Int64((num-1)/2)
