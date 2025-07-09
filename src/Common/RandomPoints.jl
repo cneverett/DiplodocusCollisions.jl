@@ -248,7 +248,8 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
         w4Limit = 0e0
     end
 
-    wScale::Float64 = asinh(sqrt(sSmol/sBig)) # rough measure
+    sCOMrest = max((m1+m2)^2,(m3+m4)^2)
+    wScale::Float64 = asinh(sqrt(sSmol/(sCOMrest))) # rough measure of how energetic the interaction is over the COM frame energy
 
     #w3::Float64 = min(w3Limit+wC+scale*wScale,18e0)
     #w4::Float64 = min(w4Limit+wC+scale*wScale,18e0)
@@ -321,6 +322,7 @@ function RPointSphereWeighted!(a::Vector{Float64},w::Float64)
     #prob::Float64 = (ew*costBdiv2sqr+sintBdiv2sqr/ew)^2
     prob::Float64 = (ew*v+(1-v)/ew)^2
 
+    
     a[2] = cospi(t)
     a[3] = h
     a[4] = t
