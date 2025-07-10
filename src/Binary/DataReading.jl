@@ -259,22 +259,18 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
     end
 
     NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
-    #EErrMatrix1 = (EGainMatrix3 .- ELossMatrix1) ./ ELossMatrix1
-    meanNErr = sum(abs.(NErrMatrix)) / length(NLossMatrix1)
-    #meanEErr1 = sum(abs.(EErrMatrix1)) / length(NLossMatrix1)
-    stdN = sqrt(sum((NErrMatrix .- meanNErr).^2)/length(NLossMatrix1))
-    #stdE1 = sqrt(sum((EErrMatrix1 .- meanEErr1).^2)/length(NLossMatrix1))
-
-    #NErrMatrix2 = (NGainMatrix4 .- NLossMatrix2) ./ NLossMatrix2
-    #EErrMatrix2 = (EGainMatrix4 .- ELossMatrix2) ./ ELossMatrix2
-    #meanNErr2 = sum(abs.(NErrMatrix2)) / length(NLossMatrix2)
-    #meanEErr2 = sum(abs.(EErrMatrix2)) / length(NLossMatrix2)
-    #stdN2 = sqrt(sum((NErrMatrix2 .- meanNErr2).^2)/length(NLossMatrix2))
-    #stdE2 = sqrt(sum((EErrMatrix2 .- meanEErr2).^2)/length(NLossMatrix2))
+    NErrList = filter(!isnan, NErrMatrix)
+    #meanNErr = sum(abs.(NErrMatrix)) / length(NErrMatrix)
+    meanNErr = sum(abs.(NErrList)) / length(NErrList)
+    #stdN = sqrt(sum((NErrMatrix .- meanNErr).^2)/length(NLossMatrix1))
+    stdN = sqrt(sum((NErrList .- meanNErr).^2)/length(NErrList))
 
     EErrMatrix = (EGainMatrix3 .+ EGainMatrix4 .- ELossMatrix1 .- ELossMatrix2) ./ (ELossMatrix1 .+ ELossMatrix2)
-    meanEErr = sum(abs.(EErrMatrix)) / length(NLossMatrix1)
-    stdE = sqrt(sum((EErrMatrix .- meanEErr).^2)/length(NLossMatrix1))
+    EErrList = filter(!isnan, EErrMatrix)
+    #meanEErr = sum(abs.(EErrMatrix)) / length(NErrMatrix)
+    meanEErr = sum(abs.(EErrList)) / length(EErrList)
+    #stdE = sqrt(sum((EErrMatrix .- meanEErr).^2)/length(NLossMatrix1))
+    stdE = sqrt(sum((EErrList .- meanEErr).^2)/length(EErrList))
 
     println("sumGainN3 = "*string(SsumN3))
     println("sumGainN4 = "*string(SsumN4))
