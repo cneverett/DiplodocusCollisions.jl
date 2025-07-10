@@ -261,14 +261,14 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
     NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
     NErrList = filter(!isnan, NErrMatrix)
     #meanNErr = sum(abs.(NErrMatrix)) / length(NErrMatrix)
-    meanNErr = sum(abs.(NErrList)) / length(NErrList)
+    meanNErr = sum(NErrList) / length(NErrList)
     #stdN = sqrt(sum((NErrMatrix .- meanNErr).^2)/length(NLossMatrix1))
     stdN = sqrt(sum((NErrList .- meanNErr).^2)/length(NErrList))
 
     EErrMatrix = (EGainMatrix3 .+ EGainMatrix4 .- ELossMatrix1 .- ELossMatrix2) ./ (ELossMatrix1 .+ ELossMatrix2)
     EErrList = filter(!isnan, EErrMatrix)
     #meanEErr = sum(abs.(EErrMatrix)) / length(NErrMatrix)
-    meanEErr = sum(abs.(EErrList)) / length(EErrList)
+    meanEErr = sum(EErrList) / length(EErrList)
     #stdE = sqrt(sum((EErrMatrix .- meanEErr).^2)/length(NLossMatrix1))
     stdE = sqrt(sum((EErrList .- meanEErr).^2)/length(EErrList))
 
