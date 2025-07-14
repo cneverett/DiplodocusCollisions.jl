@@ -147,7 +147,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             println("Weighting average of New and Old Sampling Arrays")
 
             # old arrays are modified in this process
-            WeightedAverageGainBinary!(GainMatrix3,OldGainMatrix3,GainTally3_K,GainTally_N,OldGainWeights3,GainMatrix4,OldGainMatrix4,GainTally4_K,GainTally_N,OldGainWeights4)
+            WeightedAverageGainBinary!(GainMatrix3,OldGainMatrix3,GainTally3_K,GainTally3_N,OldGainWeights3,GainMatrix4,OldGainMatrix4,GainTally4_K,GainTally4_N,OldGainWeights4)
             WeightedAverageLossBinary!(LossMatrix1,OldLossMatrix1,LossTally,OldLossTally)
 
         end # scale loop 
