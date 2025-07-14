@@ -13,10 +13,10 @@ function WeightedAverageGainBinary!(GainMatrix3::Array{Float64,9},OldGainMatrix3
     NewGainWeights3 = similar(OldGainWeights3)
     NewGainWeights4 = similar(OldGainWeights4)
     for i in axes(GainTally3_K,1)
-        @. NewGainWeights3[i,:,:,:,:,:,:,:,:] = GainTally3_K[i,:,:,:,:,:,:,:,:] / GainTally3_N
+        @. NewGainWeights3[i,:,:,:,:,:,:,:,:] = GainTally3_K[i,:,:,:,:,:,:,:,:]^2 / GainTally3_N
     end
     for i in axes(GainTally4_K,1)
-        @. NewGainWeights4[i,:,:,:,:,:,:,:,:] = GainTally4_K[i,:,:,:,:,:,:,:,:] / GainTally4_N
+        @. NewGainWeights4[i,:,:,:,:,:,:,:,:] = GainTally4_K[i,:,:,:,:,:,:,:,:]^2 / GainTally4_N
     end
 
     # weighted average
