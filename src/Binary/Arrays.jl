@@ -37,18 +37,18 @@ function OldMonteCarloArraysBinary(Parameters::Tuple{String,String,String,String
 
     if fileExist
         f = jldopen(filePath,"r+");
-        OldGainTally3 = f["GainTally3"];
+        OldGainWeights3 = f["GainWeights3"];
         OldGainMatrix3 = f["GainMatrix3"];
-        OldGainTally4 = f["GainTally4"];
+        OldGainWeights4 = f["GainWeights4"];
         OldGainMatrix4 = f["GainMatrix4"];
         OldLossTally = f["LossTally"];
         OldLossMatrix1 = f["LossMatrix1"];
         OldLossMatrix2 = f["LossMatrix2"];
         close(f)
     else
-        # GainTally have first dimension elements [k1,k2,k3,...,kn], N is not needed to be saved
-        OldGainTally3::Array{UInt32,9} = zeros(UInt32,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
-        OldGainTally4::Array{UInt32,9} = zeros(UInt32,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
+        # GainWeights have first dimension elements [w1,w2,w3,...,wn]
+        OldGainWeights3::Array{UInt32,9} = zeros(UInt32,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
+        OldGainWeights4::Array{UInt32,9} = zeros(UInt32,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
         OldLossTally::Array{UInt32,6} = zeros(UInt32,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
         OldGainMatrix3::Array{Float64,9} = zeros(Float64,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
         OldGainMatrix4::Array{Float64,9} = zeros(Float64,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
@@ -56,6 +56,6 @@ function OldMonteCarloArraysBinary(Parameters::Tuple{String,String,String,String
         OldLossMatrix2::Array{Float64,6} = zeros(Float64,p2_num,u2_num,h2_num,p1_num,u1_num,h1_num);
     end
 
-    return (OldGainTally3,OldGainTally4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)
+    return (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)
 
 end

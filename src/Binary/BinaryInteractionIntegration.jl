@@ -55,7 +55,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 
         filePath = fileLocation*"\\"*fileName
 
-        (OldGainTally3,OldGainTally4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)  = OldMonteCarloArraysBinary(Parameters,filePath)
+        (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)  = OldMonteCarloArraysBinary(Parameters,filePath)
 
         (GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = MonteCarloArraysBinary(Parameters)
 
@@ -147,7 +147,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             println("Weighting average of New and Old Sampling Arrays")
 
             # old arrays are modified in this process
-            WeightedAverageGainBinary!(GainMatrix3,OldGainMatrix3,GainTally3_K,OldGainTally3,GainMatrix4,OldGainMatrix4,GainTally4_K,OldGainTally4)
+            WeightedAverageGainBinary!(GainMatrix3,OldGainMatrix3,GainTally3_K,GainTally_N,OldGainWeights3,GainMatrix4,OldGainMatrix4,GainTally4_K,GainTally_N,OldGainWeights4)
             WeightedAverageLossBinary!(LossMatrix1,OldLossMatrix1,LossTally,OldLossTally)
 
         end # scale loop 
@@ -184,10 +184,10 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
         println("Saving Arrays")
 
         f = jldopen(filePath,"w") # creates file and overwrites previous file if one existed
-        write(f,"GainTally3",OldGainTally3)
+        write(f,"GainWeights3",OldGainWeights3)
         write(f,"GainMatrix3",OldGainMatrix3)
 
-        write(f,"GainTally4",OldGainTally4)
+        write(f,"GainWeights4",OldGainWeights4)
         write(f,"GainMatrix4",OldGainMatrix4)
 
         write(f,"LossTally",OldLossTally)
