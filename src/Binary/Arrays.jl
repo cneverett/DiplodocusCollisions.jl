@@ -47,8 +47,8 @@ function OldMonteCarloArraysBinary(Parameters::Tuple{String,String,String,String
         close(f)
     else
         # GainWeights have first dimension elements [w1,w2,w3,...,wn]
-        OldGainWeights3::Array{UInt32,9} = zeros(UInt32,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
-        OldGainWeights4::Array{UInt32,9} = zeros(UInt32,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
+        OldGainWeights3::Array{Float64,9} = zeros(UInt32,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
+        OldGainWeights4::Array{Float64,9} = zeros(UInt32,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
         OldLossTally::Array{UInt32,6} = zeros(UInt32,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
         OldGainMatrix3::Array{Float64,9} = zeros(Float64,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
         OldGainMatrix4::Array{Float64,9} = zeros(Float64,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);

@@ -7,7 +7,7 @@ Computes the integral estimate by weighted average of the old and new gain matri
 ```
 where `I1` and `I1` are the old and new gain matrix element estimates and `w1` and `w2` are the corresponding weights. Here the weights are taken to be `w=k/N`
 """
-function WeightedAverageGainBinary!(GainMatrix3::Array{Float64,9},OldGainMatrix3::Array{Float64,9},GainTally3_K::AbstractArray{UInt32,9},GainTally3_N::AbstractArray{UInt32,8},OldGainWeights3::Array{UInt32,9},GainMatrix4::Array{Float64,9},OldGainMatrix4::Array{Float64,9},GainTally4_K::AbstractArray{UInt32,9},GainTally4_N::AbstractArray{UInt32,8},OldGainWeights4::Array{UInt32,9})
+function WeightedAverageGainBinary!(GainMatrix3::Array{Float64,9},OldGainMatrix3::Array{Float64,9},GainTally3_K::AbstractArray{UInt32,9},GainTally3_N::AbstractArray{UInt32,8},OldGainWeights3::Array{Float64,9},GainMatrix4::Array{Float64,9},OldGainMatrix4::Array{Float64,9},GainTally4_K::AbstractArray{UInt32,9},GainTally4_N::AbstractArray{UInt32,8},OldGainWeights4::Array{Float64,9})
 
     # new weights k/N
     NewGainWeights3 = similar(OldGainWeights3)
