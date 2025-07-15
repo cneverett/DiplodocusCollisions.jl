@@ -19,10 +19,10 @@
 - Take random points (p1,p2,t1,t2) and calculate Synchrotron emissivity
 - Find position in S arrays and allocated tallies and totals accordingly.
 """
-function EmissionMonteCarloAxi_MultiThread!(GainTotal2::Array{Float64,6},GainTally2::Array{UInt32,6},GainTotal3::Array{Float64,6},GainTally3::Array{UInt32,6},LossTotal1::Array{Float64,3},LossTally1::Array{UInt32,3},ArrayOfLocks,Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64},numTiter::Int64,numSiter::Int64,nThreads::Int64,scale::Float64,prog::Progress,thread_id::Int64)
+function EmissionMonteCarlo!(GainTotal2::Array{Float64,6},GainTally2::Array{UInt32,6},GainTotal3::Array{Float64,6},GainTally3::Array{UInt32,6},LossTotal1::Array{Float64,3},LossTally1::Array{UInt32,3},ArrayOfLocks,EmissionKernel::Function,Parameters::Tuple{String,String,String,String,Float64,Float64,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Vector{Float64}},numLoss::Int64,numGain::Int64,scale::Float64,prog::Progress,thread_id::Int64)
 
     # Set Parameters
-    (name1,name2,name3,type,m1,m2,m3,z1,z2,z3,p1_low,p1_up,p1_grid_st,p1_num,u1_grid_st,u1_num,h1_grid_st,h1_num,p2_low,p2_up,p2_grid_st,p2_num,u2_grid_st,u2_num,h2_grid_st,h2_num,p3_low,p3_up,p3_grid_st,p3_num,u3_grid_st,u3_num,h3_grid_st,h3_num,BMag) = Parameters
+    (name1,name2,name3,type,m1,m2,m3,z1,z2,z3,p1_low,p1_up,p1_grid_st,p1_num,u1_grid_st,u1_num,h1_grid_st,h1_num,p2_low,p2_up,p2_grid_st,p2_num,u2_grid_st,u2_num,h2_grid_st,h2_num,p3_low,p3_up,p3_grid_st,p3_num,u3_grid_st,u3_num,h3_grid_st,h3_num,Ext) = Parameters
 
     # Set up workers
     Threads.@spawn begin
@@ -65,7 +65,7 @@ function EmissionMonteCarloAxi_MultiThread!(GainTotal2::Array{Float64,6},GainTal
     localGainTotal3::Array{Float64,3} = zeros(Float64,size(GainTotal3)[1:3])
     localGainTally3::Array{UInt32,3} = zeros(UInt32,size(GainTotal3)[1:3])
 
-    for _ in 1:numTiter
+    for _ in 1:numLoss
 
         # generate p1v (emitting particle)
         RPointSphereCosThetaPhi!(p1v)
@@ -80,7 +80,7 @@ function EmissionMonteCarloAxi_MultiThread!(GainTotal2::Array{Float64,6},GainTal
         fill!(localGainTotal3,Float64(0))
         fill!(localGainTally3,UInt32(0))
 
-        for _ in 1:numSiter
+        for _ in 1:numGain
 
             #ImportanceSamplingSync!(p1v,p3v,localGainTally3,localGainTotal3,SmallParameters,WeightFactors)
 
@@ -89,7 +89,7 @@ function EmissionMonteCarloAxi_MultiThread!(GainTotal2::Array{Float64,6},GainTal
             RPointLogMomentum!(p3v,p3_low,p3_up,p3_num)
 
             # calculate S value
-            Sval = SyncKernel(p3v,p1v,m1,z1,BMag)
+            Sval = EmissionKernel(p3v,p1v,m1,z1,Ext)
 
             # find S array location 
             p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)

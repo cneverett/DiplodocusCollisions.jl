@@ -3,10 +3,12 @@
 
 Returns the emission rate for a single photon ``p3v`` state emitted by a charged particle in state ``p1v`` with charge ``z1`` relative to the fundamental charge and mass ``m1`` relative to the mass of the electron, in a uniform magnetic field ``B``.
 """
-function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Float64,B::Float64)
+function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Float64,Ext::Vector{Float64})
 
     # p3is Photon
-    # p1 is Charged Particle
+    # p1 is Charged Particl
+    
+    B::Float64 = Ext[1] # B field in Tesla
 
     p3::Float64 = p3v[1]
     p1::Float64 = p1v[1]
