@@ -20,42 +20,40 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
     Jfactor1 = (E1*ct3-p1*ct1)/(st3) # code breaks if st3 = 0 FIX
     Jfactor2 = p1*st1
 
-    n = abs((mEle^2*c^2)/(z1*ħ*q*B)) * p3 * (E1-p1*ct3*ct1)
-    #println(n)
+    n::Float64 = abs((mEle^2*c^2)/(z1*ħ*q*B)) * p3 * (E1-p1*ct3*ct1)
+    if n > 1e16 
+        return 0.0 # n too large there will be no emission at this high frequency
+    else
+        n_int::Int64 = round(Int64,n)
+    end
 
     y = p1 * st1 *st3 / (E1-p1*ct1*ct3) # y=x/n
     #println(y)
 
     # characteristic frequency
-    ω0 = abs((z1*q*B))/(E1*mEle)
+    #ω0 = abs((z1*q*B))/(E1*mEle)
     #println("critical photon momentum: "*string(ħ*ω0/(mEle*c^2)*E1^3))
 
 
-    if n > 1e2 #&& 1-y < 0.01
+    if n < 1e0 || (err = abs(n-n_int)/n_int) > 2e-2 # omega < omega0 or n not close to an integer, therefore no synchrotron radiation
+        J1 = 0e0
+        J2 = 0e0
+    elseif n > 1e4 && y - 1 < 1e-2 # large argument approximation
         # approximation for J's to second order 
         e = 1-y^2
         K13 = besselk(1/3,n*e^(3/2)/3)
         K23 = besselk(2/3,n*e^(3/2)/3)
-        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 +(e/10)*(K13-2*n*e^(3/2)*K23))
-        #println(K23)
-        J2 = (e/(pi*sqrt(3)))*(K23 + (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13))
-    elseif n < 1e0
-        # omega < omega0 therefore no synchrotron radiation
-        J1 = 0e0
-        J2 = 0e0
+        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 #=+(e/10)*(K13-2*n*e^(3/2)*K23)=#)
+        J2 = (e/(pi*sqrt(3)))*(K23 #=+ (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13)=#)    
+    elseif n < 1e2
+        # exact J's where n is expected to be close to an integer
+        J1 = besselj(n_int,n_int*y)
+        J2 = 1/2 * (besselj(n_int-1,n_int*y) - besselj(n_int+1,n_int*y))
     else
-        # exact J's where n is expected to be close to an integer 
-        err = abs(n-round(n))
-        if err < 1e-5
-            n = round(n)
-            #println("n = $n")
-            #println("y = $y")
-            J1 = besselj(n,n*y)
-            J2 = 1/2 * (besselj(n-1,n*y) - besselj(n+1,n*y))
-        else
-            J1 = 0e0
-            J2 = 0e0
-        end
+        #J1 = (n*y/2)^n/Bessels.Gamma(n+1)
+        #J2 = (1/2)*(n*y/2)^(n-1)/Bessels.Gamma(n)
+        J1 = besselj(n,n*y)
+        J2 = 1/2 * (besselj(n-1,n*y) - besselj(n+1,n*y))
     end
 
     val = (p3/E1)*((Jfactor1*J1)^2+(Jfactor2*J2)^2)

@@ -75,8 +75,6 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
                 wait.(workers) # Allow all workers to finish
             end
 
-            wait.(workers) # Allow all workers to finish
-
     # ===================================== #
 
 
