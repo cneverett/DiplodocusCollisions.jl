@@ -69,7 +69,7 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
 
             #workers  = [EmissionMonteCarloAxi_MultiThread!(SAtotal,SAtally,ArrayOfLocks,Parameters,numT,numSiterPerThread,nThreads,prog,thread) for thread in 1:nThreads]
             if numThreads == 1
-                EmissionMonteCarlo_Debug!(GainTotal2,GainTally2,GainTotal3,GainTally3,LossTotal1,LossTally1,ArrayOfLocks,kernel,Parameters,numT,numGain,scale_val,prog,thread)
+                EmissionMonteCarlo_Debug!(GainTotal2,GainTally2,GainTotal3,GainTally3,LossTotal1,LossTally1,ArrayOfLocks,EmissionKernel,Parameters,numT,numGain,scale_val,prog,1)
             else 
                 workers  = [EmissionMonteCarlo!(GainTotal2,GainTally2,GainTotal3,GainTally3,LossTotal1,LossTally1,ArrayOfLocks,EmissionKernel,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
                 wait.(workers) # Allow all workers to finish

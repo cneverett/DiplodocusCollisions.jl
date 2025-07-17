@@ -299,6 +299,21 @@ function RPointSphereWeighted!(a::Vector{Float64},w::Float64)
     # phi points are normalised by pi
     # prob is then the probability of sampling the random points on the sphere given the doppler boosting.
 
+    #=
+        Angle transformations, where u is in lab frame and uB is in the boosted frame (and uniformly sampled with uB = 2v-1):
+            u = (cosh(w)*uB+sinh(w))/(cosh(w)+sinh(w)*uB)
+            phi = phiB
+        This can be re-written as: 
+            t = 2*atan(exp(-w)*tan(tB/2))
+            where t = acos(u)
+
+        Probability of sampling
+            P(u) = 1/(cosh(w)-sinh(w)u)^2 = (cosh(w)+sinh(w)*uB)^2 = Doppler^2 i.e. solid angle element transformation dOmega = Doppler^2 dOmegaB
+        Putting uB = 2v-1 for uniform sampling 
+            P(u) = (e^w*v+(1-v)/e^w)^2
+
+    =#
+
     v::Float64 = rand(Float64)
     #tB::Float64 = acos(2*v-1)/pi # "boosted" theta
 

@@ -36,17 +36,26 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
         e = 1-y^2
         K13 = besselk(1/3,n*e^(3/2)/3)
         K23 = besselk(2/3,n*e^(3/2)/3)
-        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 #=+(e/10)*(K13-2*n*e^(3/2)*K23)=#)
+        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 +(e/10)*(K13-2*n*e^(3/2)*K23))
         #println(K23)
-        J2 = (e/(pi*sqrt(3)))*(K23 #=+ (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13)=#)
+        J2 = (e/(pi*sqrt(3)))*(K23 + (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13))
     elseif n < 1e0
         # omega < omega0 therefore no synchrotron radiation
         J1 = 0e0
         J2 = 0e0
     else
-        # exact J's
-        J1 = besselj(n,n*y)
-        J2 = 1/2 * (besselj(n-1,n*y) - besselj(n+1,n*y))
+        # exact J's where n is expected to be close to an integer 
+        err = abs(n-round(n))
+        if err < 1e-5
+            n = round(n)
+            #println("n = $n")
+            #println("y = $y")
+            J1 = besselj(n,n*y)
+            J2 = 1/2 * (besselj(n-1,n*y) - besselj(n+1,n*y))
+        else
+            J1 = 0e0
+            J2 = 0e0
+        end
     end
 
     val = (p3/E1)*((Jfactor1*J1)^2+(Jfactor2*J2)^2)

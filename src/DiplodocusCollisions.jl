@@ -33,19 +33,15 @@ export UserBinaryParameters, UserEmissionParameters
         include("Binary/BinaryDataReading.jl")
         
     # include Synchrotron functions
-        include("Emission/Common/Arrays.jl")
-        include("Emission/Common/Averaging.jl")
-        include("Emission/Common/EmissionKernels.jl")
-        include("Emission/Common/MomentumSpaceFactors.jl")
-        include("Emission/Common/Sampling.jl")
-        # include serial methods
-        include("Emission/Serial/SyncMonteCarlo_Serial.jl")
-        include("Emission/Serial/SyncIntegration_Serial.jl")
-        # include parallel methods
-        include("Emission/MultiThread/EmissionInteractionIntegration.jl")
-        include("Emission/MultiThread/EmissionMonteCarlo.jl")
-        # include data reading functions for export
-        include("Emission/Common/EmissionDataReading.jl")
+        include("Emission/Arrays.jl")
+        include("Emission/Averaging.jl")
+        include("Emission/EmissionKernels.jl")
+        include("Emission/MomentumSpaceFactors.jl")
+        include("Emission/Sampling.jl")
+        include("Emission/EmissionInteractionIntegration.jl")
+        include("Emission/EmissionMonteCarlo.jl")
+        include("Emission/EmissionMonteCarlo_Debug.jl")
+        include("Emission/EmissionDataReading.jl")
 
 end
 
