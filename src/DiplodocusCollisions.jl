@@ -1,7 +1,7 @@
 module DiplodocusCollisions
 
-export BinaryInteractionIntegration, BinaryFileLoad_All, DoesConserve, BinaryFileLoad_Matrix #, BinaryFileLoad_Matrix_ISO
-export EmissionInteractionIntegration, EmissionFileLoad_Matrix, EmissionFileLoad_All, fload_Matrix_Sync, fload_Matrix_SyncISO
+export BinaryInteractionIntegration, BinaryFileLoad_All, DoesConserve, BinaryFileLoad_Matrix
+export EmissionInteractionIntegration, EmissionFileLoad_Matrix, EmissionFileLoad_All
 export UserBinaryParameters, UserEmissionParameters
 
     using JLD2
