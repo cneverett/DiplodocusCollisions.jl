@@ -93,7 +93,7 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
 
             # Angle / Momentum Ranges
             p3val = bounds(p3_low,p3_up,p3_num,p3_grid)
-            u3val = bounds(u_low,u_up,u3_num,u3_grid).*pi
+            u3val = bounds(u_low,u_up,u3_num,u3_grid)
             h3val = bounds(h_low,h_up,h3_num,h3_grid).*pi
 
             # Apply Momentum space volume elements
