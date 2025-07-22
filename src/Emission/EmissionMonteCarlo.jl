@@ -86,7 +86,15 @@ function EmissionMonteCarlo!(GainTotal2::Array{Float64,6},GainTally2::Array{UInt
 
             prob = RPointSphereWeighted!(p3v,w) # sample angles aligned to p1v
             RotateToLab!(p3v,t,h)   # rotate to z aligned
-            RPointLogMomentum!(p3v,p3_low,p3_up,p3_num)
+            # weight the maximum and minimum momentum values based on critical momentum
+            ω0 = abs((z1*q*Ext[1]))/(p1v[1]*mEle)
+            log_pc = log10(ħ*ω0/(mEle*c^2)*(p1v[1]^3))
+
+            p3_low_weight = max(p3_low*(1-scale) + scale*(log_pc - 2.0),p3_low)
+            p3_up_weight = min(p3_up*(1-scale) + scale*(log_pc + 2.0),p3_up)
+
+            #RPointLogMomentum!(p3v,p3_low,p3_up,p3_num)
+            RPointLogMomentum!(p3v,p3_low_weight,p3_up_weight,p3_num)
 
             # calculate S value
             Sval = EmissionKernel(p3v,p1v,m1,z1,Ext)

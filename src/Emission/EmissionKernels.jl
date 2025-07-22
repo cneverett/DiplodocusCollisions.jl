@@ -5,8 +5,8 @@ Returns the emission rate for a single photon ``p3v`` state emitted by a charged
 """
 function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Float64,Ext::Vector{Float64})
 
-    # p3is Photon
-    # p1 is Charged Particl
+    # p3 is Photon
+    # p1 is Charged Particle
     
     B::Float64 = Ext[1] # B field in Tesla
 
