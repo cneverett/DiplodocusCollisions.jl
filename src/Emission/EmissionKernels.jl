@@ -21,7 +21,6 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
     Jfactor2 = p1*st1
 
     n::Float64 = abs((mEle^2*c^2)/(z1*ħ*q*B)) * p3 * (E1-p1*ct3*ct1)
-    println("n = $n")
     if n > 1e20 
         return 0.0 # n too large there will be no emission at this high frequency
     else
