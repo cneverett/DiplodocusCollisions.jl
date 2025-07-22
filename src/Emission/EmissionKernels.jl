@@ -32,12 +32,7 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
 
     # characteristic frequency
     #ω0 = abs((z1*q*B))/(E1*mEle)
-    #println("critical photon momentum: "*string(ħ*ω0/(mEle*c^2)*E1^3))
-
-
-    #if n < 1e0 || (err = abs(n-n_int)/n_int) > 2e-2 # omega < omega0 or n not close to an integer, therefore no synchrotron radiation
-
-    
+    #println("critical photon momentum: "*string(ħ*ω0/(mEle*c^2)*E1^3))   
         
     if n > 1e4 && y - 1 < 1e-2 # large argument approximation
         # approximation for J's to second order 
@@ -51,7 +46,7 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
         #J2 = (1/2)*(n*y/2)^(n-1)/Bessels.Gamma(n)
         J1 = besselj(n,n*y)
         J2 = 1/2 * (besselj(n-1,n*y) - besselj(n+1,n*y))
-    elseif 1e0 < n < 1e2 && abs(n-n_int)/n_int < tol # latter is always true for n > 1e2
+    elseif 1e0 < n < 1e2 && abs(n-n_int)/n_int < tol # latter is always true for n > 1e2 the former prevents n < 1 i.e. not synchrotron
         # exact J's where n is expected to be close to an integer
         J1 = besselj(n_int,n_int*y)
         J2 = 1/2 * (besselj(n_int-1,n_int*y) - besselj(n_int+1,n_int*y))
