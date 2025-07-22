@@ -9,6 +9,8 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
     # p1 is Charged Particle
     
     B::Float64 = Ext[1] # B field in Tesla
+    n_int::Int64 = 1
+    tol::Float64 = 5e-3
 
     p3::Float64 = p3v[1]
     p1::Float64 = p1v[1]
@@ -21,10 +23,8 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
     Jfactor2 = p1*st1
 
     n::Float64 = abs((mEle^2*c^2)/(z1*ħ*q*B)) * p3 * (E1-p1*ct3*ct1)
-    if n > 1e20 
-        return 0.0 # n too large there will be no emission at this high frequency
-    else
-        n_int::Int64 = round(Int64,n)
+    if n < 0.5/tol
+        n_int = round(Int64,n)
     end
 
     y = p1 * st1 *st3 / (E1-p1*ct1*ct3) # y=x/n
@@ -37,7 +37,7 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
 
     #if n < 1e0 || (err = abs(n-n_int)/n_int) > 2e-2 # omega < omega0 or n not close to an integer, therefore no synchrotron radiation
 
-    tol = 5e-3
+    
         
     if n > 1e4 && y - 1 < 1e-2 # large argument approximation
         # approximation for J's to second order 
