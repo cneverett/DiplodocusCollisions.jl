@@ -34,19 +34,19 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
     #ω0 = abs((z1*q*B))/(E1*mEle)
     #println("critical photon momentum: "*string(ħ*ω0/(mEle*c^2)*E1^3))   
         
-    if n > 1e4 && y - 1 < 1e-2 # large argument approximation
+    if n > 1e6 # || n > 1e6 && 1-y < 1e-3 # large argument approximation
         # approximation for J's to second order 
         e = 1-y^2
         K13 = besselk(1/3,n*e^(3/2)/3)
         K23 = besselk(2/3,n*e^(3/2)/3)
-        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 #=+(e/10)*(K13-2*n*e^(3/2)*K23)=#)
-        J2 = (e/(pi*sqrt(3)))*(K23 #=+ (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13)=#)    
+        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 +(e/10)*(K13-2*n*e^(3/2)*K23))
+        J2 = (e/(pi*sqrt(3)))*(K23 + (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13))    
     elseif n > 0.5/tol # for tol = 5e-3 this is n > 1e2 
         #J1 = (n*y/2)^n/Bessels.Gamma(n+1)
         #J2 = (1/2)*(n*y/2)^(n-1)/Bessels.Gamma(n)
         J1 = besselj(n,n*y)
         J2 = 1/2 * (besselj(n-1,n*y) - besselj(n+1,n*y))
-    elseif 1e0 < n < 1e2 && abs(n-n_int)/n_int < tol # latter is always true for n > 1e2 the former prevents n < 1 i.e. not synchrotron
+    elseif 1e0 < n < 0.5/tol && abs(n-n_int)/n_int < tol # latter is always true for n > 1e2 the former prevents n < 1 i.e. not synchrotron
         # exact J's where n is expected to be close to an integer
         J1 = besselj(n_int,n_int*y)
         J2 = 1/2 * (besselj(n_int-1,n_int*y) - besselj(n_int+1,n_int*y))
