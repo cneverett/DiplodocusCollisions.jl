@@ -19,6 +19,10 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
     
     E1::Float64 = sqrt(p1^2 + m1^2)
 
+    if st3 == 0.0
+        return 0.0 # to avoid division by zero
+    end
+
     Jfactor1 = (E1*ct3-p1*ct1)/(st3) # code breaks if st3 = 0 FIX
     Jfactor2 = p1*st1
 
@@ -36,7 +40,12 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
         
     if n > 1e6 # || n > 1e6 && 1-y < 1e-3 # large argument approximation
         # approximation for J's to second order 
-        e = 1-y^2
+        if y == 1.0 # y too close to 1 for numerical precision so calculate z=1-y as an approximation to first order in (t1-t3)
+            z = (E1-p1)/(E1-p1*ct1*ct3)
+            e = 2*z-z^2
+        else
+            e = 1-y^2
+        end
         K13 = besselk(1/3,n*e^(3/2)/3)
         K23 = besselk(2/3,n*e^(3/2)/3)
         J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 +(e/10)*(K13-2*n*e^(3/2)*K23))
