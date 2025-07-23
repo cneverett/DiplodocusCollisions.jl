@@ -43,7 +43,6 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
         if y == 1.0 # y too close to 1 for numerical precision so calculate z=1-y as an approximation to first order in (t1-t3)
             z = (E1-p1)/(E1-p1*ct1*ct3)
             e = 2*z-z^2
-            println("here")
         else
             e = 1-y^2
         end
