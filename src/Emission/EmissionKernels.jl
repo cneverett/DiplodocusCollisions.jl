@@ -9,7 +9,7 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
     # p1 is Charged Particle
     
     B::Float64 = Ext[1] # B field in Tesla
-    n_int::Int64 = 1
+    n_int::Int128 = 1
     tol::Float64 = 5e-3
 
     p3::Float64 = p3v[1]
@@ -28,7 +28,7 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
 
     n::Float64 = abs((mEle^2*c^2)/(z1*ħ*q*B)) * p3 * (E1-p1*ct3*ct1)
     if n < 0.5/tol
-        n_int = round(Int64,n)
+        n_int = round(Int128,n)
     end
 
     y = p1 * st1 *st3 / (E1-p1*ct1*ct3) # y=x/n
@@ -43,20 +43,17 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
         if y == 1.0 # y too close to 1 for numerical precision so calculate z=1-y as an approximation to first order in (t1-t3)
             z = (E1-p1)/(E1-p1*ct1*ct3)
             e = 2*z-z^2
+            println("here")
         else
             e = 1-y^2
         end
         K13 = besselk(1/3,n*e^(3/2)/3)
         K23 = besselk(2/3,n*e^(3/2)/3)
-        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 +(e/10)*(K13-2*n*e^(3/2)*K23))
-        J2 = (e/(pi*sqrt(3)))*(K23 + (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13))    
-    elseif n > 0.5/tol # for tol = 5e-3 this is n > 1e2 
+        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 #=+(e/10)*(K13-2*n*e^(3/2)*K23)=#)
+        J2 = (e/(pi*sqrt(3)))*(K23 #=+ (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13)=#)    
+    elseif n_int >= 1 && abs(n-n_int)/n_int < tol # for tol = 5e-3 this always true for n > 1e2 
         #J1 = (n*y/2)^n/Bessels.Gamma(n+1)
         #J2 = (1/2)*(n*y/2)^(n-1)/Bessels.Gamma(n)
-        J1 = besselj(n,n*y)
-        J2 = 1/2 * (besselj(n-1,n*y) - besselj(n+1,n*y))
-    elseif 1e0 < n < 0.5/tol && abs(n-n_int)/n_int < tol # latter is always true for n > 1e2 the former prevents n < 1 i.e. not synchrotron
-        # exact J's where n is expected to be close to an integer
         J1 = besselj(n_int,n_int*y)
         J2 = 1/2 * (besselj(n_int-1,n_int*y) - besselj(n_int+1,n_int*y))
     else
