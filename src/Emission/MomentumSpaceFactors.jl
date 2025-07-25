@@ -15,9 +15,9 @@ function GainLossSymmetryEmission!(GainTotal2,GainTotal3,GainTallyN2,GainTallyK2
     GainTotal3Mirror = @view(GainTotal3[:,end:-1:1,:,:,end:-1:1,:])
     LossTotal1Mirror = @view(LossTotal1[:,end:-1:1,:,:,end:-1:1,:])
 
-    GainTallyN2Mirror = @view(GainTally2[:,end:-1:1,:,:,end:-1:1,:])
-    GainTallyN3Mirror = @view(GainTally3[:,end:-1:1,:,:,end:-1:1,:])
-    LossTallyN1Mirror = @view(LossTally1[:,end:-1:1,:,:,end:-1:1,:])
+    GainTallyN2Mirror = @view(GainTallyN2[:,end:-1:1,:,:,end:-1:1,:])
+    GainTallyN3Mirror = @view(GainTallyN3[:,end:-1:1,:,:,end:-1:1,:])
+    LossTallyN1Mirror = @view(LossTallyN1[:,end:-1:1,:,:,end:-1:1,:])
 
     GainTallyK2Mirror = @view(GainTallyK2[:,end:-1:1,:,:,end:-1:1,:])
     GainTallyK3Mirror = @view(GainTallyK3[:,end:-1:1,:,:,end:-1:1,:])
