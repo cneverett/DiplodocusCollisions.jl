@@ -10,7 +10,7 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
     
     B::Float64 = Ext[1] # B field in Tesla
     n_int::Int128 = 1
-    tol::Float64 = 5e-3
+    tol::Float64 = 5e-4
 
     p3::Float64 = p3v[1]
     p1::Float64 = p1v[1]
@@ -38,7 +38,7 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
     #ω0 = abs((z1*q*B))/(E1*mEle)
     #println("critical photon momentum: "*string(ħ*ω0/(mEle*c^2)*E1^3))   
         
-    if n > 1e6 # || n > 1e6 && 1-y < 1e-3 # large argument approximation
+    if n > 1e3 # || n > 1e6 && 1-y < 1e-3 # large argument approximation
         # approximation for J's to second order 
         if y == 1.0 # y too close to 1 for numerical precision so calculate z=1-y as an approximation to first order in (t1-t3)
             z = (E1-p1)/(E1-p1*ct1*ct3)
@@ -48,9 +48,9 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
         end
         K13 = besselk(1/3,n*e^(3/2)/3)
         K23 = besselk(2/3,n*e^(3/2)/3)
-        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 #=+(e/10)*(K13-2*n*e^(3/2)*K23)=#)
-        J2 = (e/(pi*sqrt(3)))*(K23 #=+ (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13)=#)    
-    elseif n_int >= 1 && abs(n-n_int)/n_int < tol # for tol = 5e-3 this always true for n > 1e2 
+        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 +(e/10)*(K13-2*n*e^(3/2)*K23))
+        J2 = (e/(pi*sqrt(3)))*(K23 + (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13))    
+    elseif n_int >= 1 && abs(n-n_int)/n_int < tol # for tol = 5e-4 this always true for n > 1e3 
         #J1 = (n*y/2)^n/Bessels.Gamma(n+1)
         #J2 = (1/2)*(n*y/2)^(n-1)/Bessels.Gamma(n)
         J1 = besselj(n_int,n_int*y)
