@@ -53,11 +53,11 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
         prog = Progress(numLoss)
 
         for (ii,scale_val) in enumerate(scale)
-        numT = round(Int,numLoss/length(scale))
+            numT = round(Int,numLoss/length(scale))
 
-        println("")
-        println("scale = $scale_val, itteration = $ii out of $(length(scale))")
-        println("")
+            println("")
+            println("scale = $scale_val, itteration = $ii out of $(length(scale))")
+            println("")
 
             # reset new arrays
             fill!(LossTotal1,Float64(0))

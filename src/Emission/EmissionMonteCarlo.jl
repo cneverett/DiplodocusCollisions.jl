@@ -123,7 +123,7 @@ function EmissionMonteCarlo!(GainTotal2::Array{Float64,6},GainTallyN2::Array{UIn
         @lock ArrayOfLocks[p1loc] begin
             @view(GainTallyN3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTallyN3
             @view(GainTallyK3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTallyK3
-            @view(GainTotal3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTotalN3
+            @view(GainTotal3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTotal3
         end
 
         if thread_id == 1
