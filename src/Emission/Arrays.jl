@@ -11,16 +11,20 @@ function MonteCarloArraysEmission(Parameters::Tuple{String,String,String,String,
     GainTotal3::Array{Float64,6} = zeros(Float64,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num); 
     LossTotal1::Array{Float64,3} = zeros(Float64,p1_num,u1_num,h1_num);
 
-    GainTally2::Array{UInt32,6} = zeros(UInt32,p2_num,u2_num,h2_num,p1_num,u1_num,h1_num);
-    GainTally3::Array{UInt32,6} = zeros(UInt32,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num);
-    LossTally1::Array{UInt32,3} = zeros(UInt32,p1_num,u1_num,h1_num);
+    GainTallyN2::Array{UInt32,6} = zeros(UInt32,p2_num,u2_num,h2_num,p1_num,u1_num,h1_num);
+    GainTallyN3::Array{UInt32,6} = zeros(UInt32,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num);
+    LossTallyN1::Array{UInt32,3} = zeros(UInt32,p1_num,u1_num,h1_num);
+
+    GainTallyK2::Array{UInt32,6} = zeros(UInt32,p2_num,u2_num,h2_num,p1_num,u1_num,h1_num);
+    GainTallyK3::Array{UInt32,6} = zeros(UInt32,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num);
+    LossTallyK1::Array{UInt32,3} = zeros(UInt32,p1_num,u1_num,h1_num);
 
     GainMatrix2::Array{Float64,6} = zeros(Float64,p2_num,u2_num,h2_num,p1_num,u1_num,h1_num);
     GainMatrix3::Array{Float64,6} = zeros(Float64,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num);
     LossMatrix1::Array{Float64,3} = zeros(Float64,p1_num,u1_num,h1_num);
 
 
-    return (GainTotal2,GainTotal3,LossTotal1,GainTally2,GainTally3,LossTally1,GainMatrix2,GainMatrix3,LossMatrix1)
+    return (GainTotal2,GainTotal3,LossTotal1,GainTallyN2,GainTallyK2,GainTallyN3,GainTallyK3,LossTallyN1,LossTallyK1,GainMatrix2,GainMatrix3,LossMatrix1)
 
 end
 
@@ -38,19 +42,19 @@ function OldMonteCarloArraysEmission(Parameters::Tuple{String,String,String,Stri
     if fileExist
 
         f = jldopen(filePath,"r+");
-        OldGainTally2 = f["GainTally2"];
+        OldGainTally2 = f["GainTallyK2"];
         OldGainMatrix2 = f["GainMatrix2"];
-        OldGainTally3 = f["GainTally3"];
+        OldGainTally3 = f["GainTallyK3"];
         OldGainMatrix3 = f["GainMatrix3"];
-        OldLossTally1 = f["LossTally1"];
+        OldLossTally1 = f["LossTallyK1"];
         OldLossMatrix1 = f["LossMatrix1"];
         close(f)
 
     else
 
-        OldGainTally2::Array{UInt32,6} = zeros(UInt32,p2_num,u2_num,h2_num,p1_num,u1_num,h1_num);
-        OldGainTally3::Array{UInt32,6} = zeros(UInt32,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num);
-        OldLossTally1::Array{UInt32,3} = zeros(UInt32,p1_num,u1_num,h1_num);
+        OldGainTallyK2::Array{UInt32,6} = zeros(UInt32,p2_num,u2_num,h2_num,p1_num,u1_num,h1_num);
+        OldGainTallyK3::Array{UInt32,6} = zeros(UInt32,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num);
+        OldLossTallyK1::Array{UInt32,3} = zeros(UInt32,p1_num,u1_num,h1_num);
 
         OldGainMatrix2::Array{Float64,6} = zeros(Float64,p2_num,u2_num,h2_num,p1_num,u1_num,h1_num);
         OldGainMatrix3::Array{Float64,6} = zeros(Float64,p3_num,u3_num,h3_num,p1_num,u1_num,h1_num);
@@ -59,6 +63,6 @@ function OldMonteCarloArraysEmission(Parameters::Tuple{String,String,String,Stri
     end
 
 
-    return (OldGainTally2,OldGainTally3,OldLossTally1,OldGainMatrix2,OldGainMatrix3,OldLossMatrix1)
+    return (OldGainTallyK2,OldGainTallyK3,OldLossTallyK1,OldGainMatrix2,OldGainMatrix3,OldLossMatrix1)
 
 end
