@@ -42,11 +42,11 @@ function OldMonteCarloArraysEmission(Parameters::Tuple{String,String,String,Stri
     if fileExist
 
         f = jldopen(filePath,"r+");
-        OldGainTally2 = f["GainTallyK2"];
+        OldGainTallyK2 = f["GainTallyK2"];
         OldGainMatrix2 = f["GainMatrix2"];
-        OldGainTally3 = f["GainTallyK3"];
+        OldGainTallyK3 = f["GainTallyK3"];
         OldGainMatrix3 = f["GainMatrix3"];
-        OldLossTally1 = f["LossTallyK1"];
+        OldLossTallyK1 = f["LossTallyK1"];
         OldLossMatrix1 = f["LossMatrix1"];
         close(f)
 
