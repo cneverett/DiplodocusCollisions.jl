@@ -40,7 +40,7 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
         
         filePath = fileLocation*"\\"*fileName
 
-        (OldGainTallyK2,OldGainTallyK3,OldLossTallyK1,OldGainMatrix2,OldGainMatrix3,OldLossMatrix1) = OldMonteCarloArraysEmission(Parameters,filePath)
+        (OldGainTallyK2,OldGainTallyK3,OldLossTallyK1,OldGainTallyN2,OldGainTallyN3,OldLossTallyN1,OldGainMatrix2,OldGainMatrix3,OldLossMatrix1) = OldMonteCarloArraysEmission(Parameters,filePath)
 
         (GainTotal2,GainTotal3,LossTotal1,GainTallyN2,GainTallyK2,GainTallyN3,GainTallyK3,LossTallyN1,LossTallyK1,GainMatrix2,GainMatrix3,LossMatrix1) = MonteCarloArraysEmission(Parameters)
 
@@ -105,8 +105,8 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             println("Weighting average of New and Old Sampling Arrays")
 
             # old arrays are modified in this process 
-            WeightedAverageGainEmission!(GainMatrix2,OldGainMatrix2,GainTallyK2,OldGainTallyK2,GainMatrix3,OldGainMatrix3,GainTallyK3,OldGainTallyK3)
-            WeightedAverageLossEmission!(LossMatrix1,OldLossMatrix1,LossTallyK1,OldLossTallyK1)
+            WeightedAverageGainEmission!(GainMatrix2,OldGainMatrix2,GainTallyN2,OldGainTallyN2,GainMatrix3,OldGainMatrix3,GainTallyN3,OldGainTallyN3)
+            WeightedAverageLossEmission!(LossMatrix1,OldLossMatrix1,LossTallyN1,OldLossTallyN1)
 
         end # scale loop 
 
@@ -131,12 +131,15 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
 
         f = jldopen(filePath,"w") # creates file and overwrites previous file if one existed
         write(f,"GainTallyK2",OldGainTallyK2)
+        write(f,"GainTallyN2",OldGainTallyN2)
         write(f,"GainMatrix2",OldGainMatrix2)
 
         write(f,"GainTallyK3",OldGainTallyK3)
+        write(f,"GainTallyN3",OldGainTallyN3)
         write(f,"GainMatrix3",OldGainMatrix3)
 
         write(f,"LossTallyK1",OldLossTallyK1)
+        write(f,"LossTallyN1",OldLossTallyN1)
         write(f,"LossMatrix1",OldLossMatrix1)
 
         write(f,"Parameters",Parameters)
