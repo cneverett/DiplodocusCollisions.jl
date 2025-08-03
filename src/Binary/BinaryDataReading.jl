@@ -33,18 +33,18 @@ function BinaryFileLoad_All(fileLocation::String,fileName::String;corrected::Boo
             GainMatrix3 = f["GainMatrix3"];
             GainMatrix4 = f["GainMatrix4"];
         end
-        GainTally3 = f["GainTally3"];
-        GainTally4 = f["GainTally4"];
+        GainTally3 = f["GainWeights3"];
+        GainTally4 = f["GainWeights4"];
         LossMatrix1 = f["LossMatrix1"];
         LossTally = f["LossTally"];
-        LossMatrix2 = f["LossMatrix2"];  
+        LossMatrix2 = f["LossMatrix2"];  1
 
         close(f)  
     else
         error("no file with name $fileName found at location $fileLocation")
     end
 
-    return (Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2,GainTally3,GainTally4,LossTally)
+    return (Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2,GainWeights3,GainWeights4,LossTally)
 
 end
 
