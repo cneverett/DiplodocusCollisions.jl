@@ -33,11 +33,11 @@ function BinaryFileLoad_All(fileLocation::String,fileName::String;corrected::Boo
             GainMatrix3 = f["GainMatrix3"];
             GainMatrix4 = f["GainMatrix4"];
         end
-        GainTally3 = f["GainWeights3"];
-        GainTally4 = f["GainWeights4"];
+        GainWeights3 = f["GainWeights3"];
+        GainWeights4 = f["GainWeights4"];
         LossMatrix1 = f["LossMatrix1"];
         LossTally = f["LossTally"];
-        LossMatrix2 = f["LossMatrix2"];  1
+        LossMatrix2 = f["LossMatrix2"]; 
 
         close(f)  
     else
