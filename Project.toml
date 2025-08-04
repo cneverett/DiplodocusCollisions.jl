@@ -1,4 +1,4 @@
-name = "BoltzmannCollisionIntegral"
+name = "DiplodocusCollisions"
 uuid = "20179301-8dfd-43f5-a10b-08fddd2c788a"
 authors = ["Christopher Everett and contributors"]
 version = "2.2.4-dev"

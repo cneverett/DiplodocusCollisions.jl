@@ -11,18 +11,6 @@ function sCheck(sSmol::Float64,sBig::Float64,mu1::Float64,mu2::Float64,mu3::Floa
 
 end
 
-function sCheck(sSmol::Float64,sBig::Float64,P::BinaryParameters)
-    #returns true/false depending on if s is above minimum value
-    mu1 = P.mu1
-    mu2 = P.mu2
-    mu3 = P.mu3
-    mu4 = P.mu4
-    # s >= (m1+m2)^2 && s >= (m3+m4)^2
-    # sBig = (m1+m2)^2 in code
-    return ((sSmol>(mu1+mu2)^2-sBig) && (sSmol>(mu3+mu4)^2-sBig))  # = gives T value of zero
-
-end
-
 function tCheck(tSmol::Float64,tBig::Float64,mu1::Float64,mu2::Float64,mu3::Float64,mu4::Float64)
     #returns true/false depending on if t is above minimum value
     # t <= (m1-m3)^2 && t <= (m2-m4)^2

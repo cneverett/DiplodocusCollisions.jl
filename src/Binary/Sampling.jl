@@ -109,189 +109,107 @@ end
 
 Importance MC sampling of outgoing momentum states weighted towards the direction of the incoming particle with highest momentum.
 """
-function ImportanceSampling4!(pv::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float64},p3v::Vector{Float64},p4v::Vector{Float64},p3pv::Vector{Float64},p4pv::Vector{Float64},sBig::Float64,sSmol::Float64,dsigmadt::Function,SAtotalView3::AbstractArray{Float64,3},SAtotalView4::AbstractArray{Float64,3},SAtallyView3::AbstractArray{UInt32,3},SAtallyView4::AbstractArray{UInt32,3},SmallParameters::Tuple{Float64,Float64,Int64,GridType,Int64,GridType,Int64,GridType, Float64,Float64,Int64,GridType,Int64,GridType,Int64,GridType, Float64,Float64,Float64,Float64},WeightFactors::Tuple{Float64,Float64,Float64})
+function ImportanceSampling4!(p1v::Vector{Float64},p2v::Vector{Float64},p3v::Vector{Float64},p4v::Vector{Float64},p3pv::Vector{Float64},p4pv::Vector{Float64},sBig::Float64,sSmol::Float64,dsigmadt::Function,LocalGainTotal3::Array{Float64,3},LocalGainTotal4::Array{Float64,3},LocalGainTally3::Array{UInt32,3},LocalGainTally4::Array{UInt32,3},SmallParameters::Tuple{Float64,Float64,Int64,GridType,Int64,GridType,Int64,GridType, Float64,Float64,Int64,GridType,Int64,GridType,Int64,GridType, Float64,Float64,Float64,Float64},WeightFactors::Tuple{Float64,Float64,Float64,Float64})
+
 
     # Unpack parameters
     (p3_low,p3_up,p3_num,p3_grid,u3_num,u3_grid,h3_num,h3_grid,p4_low,p4_up,p4_num,p4_grid,u4_num,u4_grid,h4_num,h4_grid,m1,m2,m3,m4) = SmallParameters
 
     # weighting parameters
-    (w,t,h) = WeightFactors
+    (w3::Float64,w4::Float64,t::Float64,h::Float64) = WeightFactors
    
-    #y = (ratio^2-1)/(ratio^2+1)
-    #=if 1e-7 <= ratio <= 1e7
-        y = E1^2/(E1^2+E2^2) - E2^2/(E1^2+E2^2) # y = (p1v[1]^2-p2v[2]^2+m1^2-m2^2)/(p1v[1]^2+p2v[2]^2+m1^2+m2^2)
-    elseif ratio > 1e7
-        y = 1e0-1e-14 # hard limit
-    elseif ratio < 1e-7
-        y = -1e0+1e-14 # hard limit
-    end=#
-    #y = (p1v[1]^2-p2v[2]^2+m1^2-m2^2)/(p1v[1]^2+p2v[2]^2+m1^2+m2^2) 
-    #abs_y = abs(y)
+    prob3::Float64 = RPointSphereWeighted!(p3v,w3)    
+    prob4::Float64 = RPointSphereWeighted!(p4v,w4)
+    RotateToLab!(p3v,p4v,t,h)
+    @. p3pv = p3v
+    @. p4pv = p4v
 
-    #w = scale*atanh(abs_y) # rapidity for boosted angle sampling
-
-    prob = RPointSphereWeighted!(pv,w)
-
-    RotateToLab!(pv,t,h)
-
-    #= if w>=7e0 && p1v[1] <= 1e1
-        println("pv = $pv")
-        println("p1v = $p1v")
-        println("p2v = $p2v")
-    end =#
-
+    
     # === p3 === #
-    #set random p3 direction 
-    p3v .= pv
-    p3pv .= pv
 
     # Calculate p3 value
-    (p3_physical,p3p_physical,NumStates) = Momentum3Value2!(p3v,p3pv,p1v,p2v,m1,m2,m3,m4)
-    #(p3_physical,p3p_physical,NumStates) = Momentum3Value_NoSignChange!(p3v,p3pv,p1v,p2v,m1,m2,m3,m4)
+    (p_physical,pp_physical,NumStates) = Momentum3Value2!(p3v,p3pv,p1v,p2v,m1,m2,m3,m4)
+
 
     # S Array Tallies
     # For each u3,h3 sampled, p3 will be + or -ve, corresponding to a change in sign of u3 and a rotation of h3 by pi i.e. mod(h3+1,2). Therefore by sampling one u3,h3 we are actually sampling u3 and -u3 and h3, mod(h3+1,2) with one or both having valid p3 states.
     #if NumStates != 0
         u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
         h3loc = location(h_low,h_up,h3_num,p3v[3],h3_grid)
-        u3locMirror = location(u_low,u_up,u3_num,-p3v[2],u3_grid)
-        h3locMirror = location(h_low,h_up,h3_num,mod(p3v[3]+1e0,2e0),h3_grid)
-        SAtallyView3[end,u3loc,h3loc] += UInt32(1)
-        SAtallyView3[end,u3locMirror,h3locMirror] += UInt32(1)
+        LocalGainTally3[end,u3loc,h3loc] += UInt32(NumStates)# UInt32(1)
     #end
 
     # Calculate S Array totals
     if NumStates == 1
-        if p3_physical
+        if p_physical
             p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)
-            Sval = SValue3(p3v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob)
-            SAtotalView3[p3loc,u3loc,h3loc] += Sval/prob
-            SAtallyView3[p3loc,u3loc,h3loc] += UInt32(1)
-            if (Sval / prob) >= 1e13
-                println("w = $w")
-                println("p3v = $p3v")
-                println("p1v = $p1v")
-                println("p2v = $p2v")
-                println("prob = $prob")
-                println("Sval = $Sval")
-            end
-            println("here")
+            Sval = SValue3(p3v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob3)
+            LocalGainTotal3[p3loc,u3loc,h3loc] += Sval/prob3
+            LocalGainTally3[p3loc,u3loc,h3loc] += UInt32(1)
         end
     end
 
     if NumStates == 2
-        if p3_physical
+        if p_physical
             p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)
-            Sval = SValue3(p3v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob)
-            SAtotalView3[p3loc,u3loc,h3loc] += Sval/prob
-            SAtallyView3[p3loc,u3loc,h3loc] += UInt32(1)
-            if (Sval / prob) >= 1e13
-                println("w = $w")
-                println("p3v = $p3v")
-                println("p1v = $p1v")
-                println("p2v = $p2v")
-                println("prob = $prob")
-                println("Sval = $Sval")
-            end
+            Sval = SValue3(p3v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob3)
+            LocalGainTotal3[p3loc,u3loc,h3loc] += Sval/prob3
+            LocalGainTally3[p3loc,u3loc,h3loc] += UInt32(1)
         end
-        if p3p_physical
+        if pp_physical
             u3ploc = location(u_low,u_up,u3_num,p3pv[2],u3_grid)
             h3ploc = location(h_low,h_up,h3_num,p3pv[3],h3_grid)
             p3ploc = location(p3_low,p3_up,p3_num,p3pv[1],p3_grid)
-            Svalp = SValue3(p3pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob)
-            SAtotalView3[p3ploc,u3ploc,h3ploc] += Svalp/prob
-            SAtallyView3[p3ploc,u3ploc,h3ploc] += UInt32(1)
-            if (Svalp / prob) >= 1e13
-                println("w = $w")
-                println("p3pv = $p3pv")
-                println("p1v = $p1v")
-                println("p2v = $p2v")
-                println("prob = $prob")
-                println("Svalp = $Svalp")
-                println("Svalp/prob = $(Svalp/prob)")
-                println("")
-            end
+            Svalp = SValue3(p3pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob3)
+            LocalGainTotal3[p3ploc,u3ploc,h3ploc] += Svalp/prob3
+            LocalGainTally3[p3ploc,u3ploc,h3ploc] += UInt32(1)
         end
     end
 
     # === p4 === #
-    #set random p4 direction 
-    p4v .= pv
-    p4pv .= pv
 
     # Calculate p4 value
-    (p4_physical,p4p_physical,NumStates) = Momentum3Value2!(p4v,p4pv,p2v,p1v,m2,m1,m4,m3)
-    #(p4_physical,p4p_physical,NumStates) = Momentum3Value_NoSignChange!(p4v,p4pv,p2v,p1v,m2,m1,m4,m3)
+    (p_physical,pp_physical,NumStates) = Momentum3Value2!(p4v,p4pv,p2v,p1v,m2,m1,m4,m3)
 
     # S Array Tallies
     # For each u3,h4 sampled, p4 will be + or -ve, corresponding to a change in sign of u3 and a shift in h4 by pi i.e. Mod(h4+1,2). Therefore by sampling one u3 we are actually sampling u3/h4 and -u3/mod(h4+1,2) with one or both having valid p4 states.
     u4loc = location(u_low,u_up,u4_num,p4v[2],u4_grid)
     h4loc = location(h_low,h_up,h4_num,p4v[3],h4_grid)
-    u4locMirror = location(u_low,u_up,u4_num,-p4v[2],u4_grid)
-    h4locMirror = location(h_low,h_up,h4_num,mod(p4v[3]+1e0,2e0),h4_grid)
-    SAtallyView4[end,u4loc,h4loc] += UInt32(1)
-    SAtallyView4[end,u4locMirror,h4locMirror] += UInt32(1)
+    #u4locMirror = location(u_low,u_up,u4_num,-p4v[2],u4_grid)
+    #h4locMirror = location(h_low,h_up,h4_num,mod(p4v[3]+1e0,2e0),h4_grid)
+    LocalGainTally4[end,u4loc,h4loc] += UInt32(NumStates) #UInt32(1)
+    #LocalGainTally4[end,u4locMirror,h4locMirror] += UInt32(1)
 
     # Calculate S Array totals
     if NumStates == 1
-        if p4_physical
+        if p_physical
             p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
-            Sval = SValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob)
-            SAtotalView4[p4loc,u4loc,h4loc] += Sval/prob
-            SAtallyView4[p4loc,u4loc,h4loc] += UInt32(1)
-            if (Sval/prob) >= 1e5
-                println("w = $w")
-                println("p4v = $p4v")
-                println("pv = $pv")
-                println("p1v = $p1v")
-                println("p2v = $p2v")
-                println("prob = $prob")
-                println("Sval = $Sval")
-                println("Sval/prob = $(Sval/prob)")
-                println("")
-            end
+            Sval = SValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+            LocalGainTotal4[p4loc,u4loc,h4loc] += Sval/prob4
+            LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
         end
     end
 
     if NumStates == 2
-        if p4_physical
+        if p_physical
             p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
-            Sval = SValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob)
-            SAtotalView4[p4loc,u4loc,h4loc] += Sval/prob
-            SAtallyView4[p4loc,u4loc,h4loc] += UInt32(1)
-            if (Sval/prob) >= 1e5
-                println("w = $w")
-                println("p4v = $p4v")
-                println("pv = $pv")
-                println("p1v = $p1v")
-                println("p2v = $p2v")
-                println("prob = $prob")
-                println("Sval = $Sval")
-                println("Sval/prob = $(Sval/prob)")
-                println("")
-            end
+            Sval = SValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+            LocalGainTotal4[p4loc,u4loc,h4loc] += Sval/prob4
+            LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
         end
-        if p4p_physical
+        if pp_physical
             u4ploc = location(u_low,u_up,u4_num,p4pv[2],u4_grid)
             h4ploc = location(h_low,h_up,h4_num,p4pv[3],h4_grid)
             p4ploc = location(p4_low,p4_up,p4_num,p4pv[1],p4_grid)
-            Svalp = SValue4(p4pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob)
-            SAtotalView4[p4ploc,u4ploc,h4ploc] += Svalp/prob
-            SAtallyView4[p4ploc,u4ploc,h4ploc] += UInt32(1)
-            if (Svalp/prob) >= 1e5
-                println("w = $w")
-                println("p4pv = $p4pv")
-                println("pv = $pv")
-                println("p1v = $p1v")
-                println("p2v = $p2v")
-                println("prob = $prob")
-                println("Svalp = $Svalp")
-                println("Svalp/prob = $(Svalp/prob)")
-                println("")
-            end
+            Svalp = SValue4(p4pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+            LocalGainTotal4[p4ploc,u4ploc,h4ploc] += Svalp/prob4
+            LocalGainTally4[p4ploc,u4ploc,h4ploc] += UInt32(1)
         end
     end
 
+
+
+    return nothing
 end
 
 """
@@ -1599,58 +1517,51 @@ end
 
     Rotates the momentum vector `pv` from the centre of momentum vector aligned spherical coordinates to the spherical coordinates aligned with the lab frame. This is the inverse rotation from `RotateToCentre` The rotation angle is given by `t` theta from the lab z axis and `h` phi about the lab z axis.
 """
-function RotateToLab!(pv::Vector{Float64},tβ::Float64,hβ::Float64)
+function RotateToLab!(pv::Vector{Float64},t::Float64,h::Float64)
 
-    (stβ,ctβ) = sincospi(tβ)
+    (st,ct) = sincospi(t)
     (stv,ctv) = sincospi(pv[4])
-    (shv, chv) = sincospi(pv[3])
-    (shβ,chβ) = sincospi(hβ)
+    (shv,chv) = sincospi(pv[3])
+    (sh,ch) = sincospi(h)
     
     # theta 
-    pv[4] = acos(ctv*ctβ - stv*stβ*chv)/pi
+    pv[4] = acos(ctv*ct - stv*st*chv)/pi
     pv[2] = cospi(pv[4])
     # phi
-    x = -shβ*shv*stv+chβ*(chv*ctβ*stv+ctv*stβ)
-    y = chβ*shv*stv+shβ*(chv*ctβ*stv+ctv*stβ)
+    x = -sh*shv*stv+ch*(chv*ct*stv+ctv*st)
+    y = ch*shv*stv+sh*(chv*ct*stv+ctv*st)
     pv[3] = mod(atan(y,x)/pi,2)
 
     return nothing
 
 end
 
-"""
-    WeightedAverage!(GainMatrix3,OldGainMatrix3,GainTally3_K,OldGainTally3_K,GainMatrix4,OldGainMatrix4,GainTally4_K,OldGainTally4_K)
+function RotateToLab!(p3v::Vector{Float64},p4v::Vector{Float64},t::Float64,h::Float64)
 
-Computes the integral estimate by weighted average of the old and new gain matrices. Mutating the old gain and tally terms.
-"""
-function WeightedAverageGain!(GainMatrix3::Array{Float64,9},OldGainMatrix3::Array{Float64,9},GainTally3_K::AbstractArray{UInt32,9},OldGainTally3::Array{UInt32,9},GainMatrix4::Array{Float64,9},OldGainMatrix4::Array{Float64,9},GainTally4_K::AbstractArray{UInt32,9},OldGainTally4::Array{UInt32,9})
+    (st,ct) = sincospi(t)
+    (sh,ch) = sincospi(h)
+    (st3,ct3) = sincospi(p3v[4])
+    (sh3,ch3) = sincospi(p3v[3])
+    (st4,ct4) = sincospi(p4v[4])
+    (sh4,ch4) = sincospi(p4v[3])
 
-    # weighted average 
-    @. OldGainMatrix3 = (GainMatrix3*GainTally3_K+OldGainMatrix3*OldGainTally3)/(GainTally3_K+OldGainTally3)
-    @. OldGainMatrix4 = (GainMatrix4*GainTally4_K+OldGainMatrix4*OldGainTally4)/(GainTally4_K+OldGainTally4)
+    # theta3 
+    p3v[4] = acos(ct3*ct - st3*st*ch3)/pi
+    p3v[2] = cospi(p3v[4])
+    # phi3
+    x = -sh*sh3*st3+ch*(ch3*ct*st3+ct3*st)
+    y = ch*sh3*st3+sh*(ch3*ct*st3+ct3*st)
+    p3v[3] = mod(atan(y,x)/pi,2)
 
-    replace!(OldGainMatrix3,NaN=>0e0)
-    replace!(OldGainMatrix4,NaN=>0e0)
+    # theta4 
+    p4v[4] = acos(ct4*ct - st4*st*ch4)/pi
+    p4v[2] = cospi(p4v[4])
+    # phi4
+    x = -sh*sh4*st4+ch*(ch4*ct*st4+ct4*st)
+    y = ch*sh4*st4+sh*(ch4*ct*st4+ct4*st)
+    p4v[3] = mod(atan(y,x)/pi,2)
 
-    # adding tallies 
-    @. OldGainTally3 += GainTally3_K
-    @. OldGainTally4 += GainTally4_K
-
-end
-
-"""
-    WeightedAverageLoss!(LossMatrix,OldLossMatrix,LossTally,OldLossTally)
-
-Computes the integral estimate by weighted average of the old and new gain matrices. Mutating the old gain and tally terms.
-"""
-function WeightedAverageLoss!(LossMatrix::Array{Float64,6},OldLossMatrix::Array{Float64,6},LossTally::Array{UInt32,6},OldLossTally::Array{UInt32,6})
-
-    # weighted average 
-    @. OldLossMatrix = (LossMatrix*LossTally+OldLossMatrix*OldLossTally)/(LossTally+OldLossTally)
-
-    replace!(OldLossMatrix,NaN=>0e0)
-
-    # adding tallies
-    @. OldLossTally += LossTally
+    return nothing
 
 end
+

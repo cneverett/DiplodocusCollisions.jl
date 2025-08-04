@@ -17,13 +17,13 @@ julia> location(0e0,10e0,9,2e0,"u")
 ```
 """
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,spacing::String)
-    # function for generating position in array. Bins MUST be uniform
+    # function for generating position in array
     if spacing == "u" # uniform spacing
-        return val != low_bound ? ceil(Int64,Float64(num)*(val-low_bound)/(up_bound-low_bound)) : Int64(1) 
+        return val != up_bound ? floor(Int64,num*(val-low_bound)/(up_bound-low_bound)+1) : num 
     elseif spacing == "l" # log spacing
         logval = log10(val)
-        loc = logval != low_bound ? ceil(Int64,Float64(num)*(logval-low_bound)/(up_bound-low_bound)) : Int64(1) 
-        return 1 <= loc <= num ? loc : loc>num ? num+1 : 1 # assigns 1 for under, num+1 for over and loc for in range
+        loc = logval != up_bound ? floor(Int64,num*(logval-low_bound)/(up_bound-low_bound)+1) : num
+        return loc 
     elseif spacing == "b" # binary (2^n) fractional spacing
         logval = log(1/2,1-abs(val))
         num_half = Int64((num-1)/2)
@@ -36,14 +36,25 @@ end
 
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::UniformGrid)
     # grid location for uniform grid
-    return val != low_bound ? ceil(Int64,Float64(num)*(val-low_bound)/(up_bound-low_bound)) : Int64(1) 
+    # if val is on grid boundary then it is assigned to the next bin 
+    # if val == up_bound then it is assigned to the last bin
+    return val != up_bound ? floor(Int64,num*(val-low_bound)/(up_bound-low_bound)+1) : num
 end
 
-function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::LogTenGrid)
+#=function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::LogTenGrid)
     # grid location for log10 grid
     logval = log10(val)
-    loc = logval != low_bound ? ceil(Int64,Float64(num)*(logval-low_bound)/(up_bound-low_bound)) : Int64(1) 
+    loc = logval != low_bound ? ceil(Int64,num*(logval-low_bound)/(up_bound-low_bound)) : Int64(1) 
     return 1 <= loc <= num ? loc : loc>num ? num+1 : 1 # assigns 1 for under, num+1 for over and loc for in range
+end=#
+
+function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::LogTenGrid)
+    # grid location for log10 grid with no underflow or overflow
+    # if val is on grid boundary then it is assigned to the next bin 
+    # if val == up_bound then it is assigned to the last bin
+    logval::Float64 = log10(val)
+    loc::Int64 = logval != up_bound ? floor(Int64,num*(logval-low_bound)/(up_bound-low_bound)+1) : num
+    return loc 
 end
 
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::BinaryGrid)

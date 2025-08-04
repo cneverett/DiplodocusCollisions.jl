@@ -156,28 +156,134 @@ end
 
 
 """
-    WeightedFactors!()
+    WeightedFactors(p1v,p2v,m1,m2,scale)
 
-Returns the weighting rapidity `w` and the direction an angles `t` and `h` for rotations on a sphere. 
-Weighting rapidity can be scaled by `scale`.
+Returns the weighting rapidities `w3` and `w4` and the direction an angles `t` and `h` for rotations on a sphere. Weighting rapidity can be scaled by `scale`. `t` and `h` are the angles of the COM velocity direction, and the weights `w3` and `w4` are rapidities based on the expected angular spread of the particles 3 and 4 due to the incoming states of particles 1 and 2. 
 """
-function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m2::Float64,scale::Float64) 
+function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m2::Float64,m3::Float64,m4::Float64,sBig::Float64,sSmol::Float64,scale::Float64) 
 
+    p1::Float64 = p1v[1]
+    p2::Float64 = p2v[1]
+
+    (st1::Float64,ct1::Float64) = sincospi(p1v[4])
+    (st2::Float64,ct2::Float64) = sincospi(p2v[4])
+    (sh1::Float64,ch1::Float64) = sincospi(p1v[3])
+    (sh2::Float64,ch2::Float64) = sincospi(p2v[3])
+    ch1h2::Float64 = cospi(p1v[3]-p2v[3])
+
+    s::Float64 = sBig + sSmol
     E1::Float64 = sqrt(p1v[1]^2+m1^2)
     E2::Float64 = sqrt(p2v[1]^2+m2^2)
-    ratio::Float64 = E1/E2
 
-    if ratio >= 1e0 # p1 has higher energy
-        w = scale*log(ratio) #*rand(Float64)
-        t = p1v[4]
-        h = p1v[3]
+    # COM frame vector and angles
+    γC::Float64 = (E1+E2)/sqrt(s)
+    if γC < 1.0
+        γC = 1.0 # avoid numerical issues
+    end
+    wC::Float64 = acosh(γC)
+    if (pSmol::Float64 = p2/p1) < 1e-6
+        #z = sqrt(1e0+pSmol^2+2*pSmol*(ct1*ct2+ch1h2*st1*st2))
+        a = (ct1*ct2+ch1h2*st1*st2)
+        b = ct1
+        c = ct2 
+        # 1/sqrt(1+smol^2) approx 1-smol^2/2
+        val =  b + (-a*b+c)*pSmol + ((-1+3*a^2)*b/2-a*c)*pSmol^2 + (3*a*b/2-5*a^3*b/2-c+3*a^2*c/2)*pSmol^3 
+        x = st1*ch1 + pSmol*st2*ch2
+        y = st1*sh1 + pSmol*st2*sh2
+    elseif (pSmol = p1/p2) < 1e-6
+        #z = sqrt(1e0+pSmol^2+2*pSmol*(ct1*ct2+ch1h2*st1*st2))
+        a = (ct1*ct2+ch1h2*st1*st2)
+        b = ct1
+        c = ct2 
+        # 1/sqrt(1+smol^2) approx 1-smol^2/2
+        val =  c + (-a*c+b)*pSmol + ((-1+3*a^2)*c/2-a*b)*pSmol^2 + (-b+3*a*c/2-5*a^3*c/2+3*a^2*b/2)*pSmol^3 
+        x = pSmol*st1*ch1 + st2*ch2
+        y = pSmol*st1*sh1 + st2*sh2
     else
-        w = scale*log(1/ratio) #*rand(Float64)
-        t = p2v[4]
-        h = p2v[3]
+        z = sqrt(p1^2+p2^2+2*p1*p2*(ct1*ct2+ch1h2*st1*st2))
+        x = p1*st1*ch1 + p2*st2*ch2
+        y = p1*st1*sh1 + p2*st2*sh2
+        val  = (p1*ct1+p2*ct2)/z
+    end 
+    t::Float64 = acos(val)/pi
+    h::Float64 = mod(atan(y,x)/pi,2)   
+
+    # outgoing COM frame momentum
+    pC::Float64 = InvariantFluxSmall(sSmol,m3,m4)/sqrt(s)
+
+    # pre allocate types
+    w3Limit::Float64 = 0e0
+    w4Limit::Float64 = 0e0
+
+    # Lab Frame Angle limits
+    # Due to conservation laws there is a limit on the lab frame scattering angle with respect to the COM frame direction. This angle is then mapped to a rapidity that "boosts" the lab frame angle samples such that 50% of samples lie within this angle limit.
+    if m3 > m4
+        w4Limit = 0e0
+        tmp =  pC/(m3*sinh(wC))
+        if tmp < 1e0 
+            if tmp > 1e-7
+                w3Limit = atanh(sqrt(1-tmp^2))
+            else # small tmp
+                w3Limit = log(2e0)-log(tmp)-tmp^2/4
+            end
+            #w3Limit = min(atanh(sqrt(1-tmp^2)),18.7e0) # for tmp < 1e-8 sqrt=0 due to float precision, 18.7e0 is maximum value of w3 to this precision
+        else
+            w3Limit = 0e0
+        end
+    elseif m3 < m4
+        w3Limit = 0e0
+        tmp = pC/(m4*sinh(wC))
+        if tmp < 1e0
+            if tmp > 1e-7
+                w4Limit = atanh(sqrt(1-tmp^2))
+            else # small tmp
+                w4Limit = log(2e0)-log(tmp)-tmp^2/4
+            end
+            #w4Limit = min(atanh(sqrt(1-tmp^2)),18.7e0)
+        else
+            w4Limit = 0e0
+        end
+    else
+        w3Limit = 0e0
+        w4Limit = 0e0
     end
 
-    #w = min(15e0,w) # limit the rapidity so that unboosted angle is not 1.0 to numerical precision. 
+    sCOMrest = max((m1+m2)^2,(m3+m4)^2)
+    wScale::Float64 = asinh(sqrt(sSmol/(sCOMrest))) # rough measure of how energetic the interaction is over the COM frame energy
+
+    #w3::Float64 = min(w3Limit+wC+scale*wScale,18e0)
+    #w4::Float64 = min(w4Limit+wC+scale*wScale,18e0)
+    if w3Limit != 0e0
+        w3 = w3Limit + scale
+    else
+        w3 = scale*wC+scale*wScale
+    end
+    if w4Limit != 0e0
+        w4 = w4Limit + scale
+    else
+        w4 = scale*wC+scale*wScale
+    end
+    #w3::Float64 = w3Limit#+scale*wC #+scale*(wScale)
+    #w4::Float64 = w4Limit#+scale*wC #+scale*(wScale) 
+
+    return (w3,w4,t,h)
+    
+end
+
+
+"""
+    WeightedFactorsEmission!(p1v,m1,scale)
+
+Returns the weighting rapidity `w` and the direction an angles `t` and `h` for rotations on a sphere. Weighting rapidity can be scaled by `scale`. Weight is dependant on the energy of the emitting particle `p1v`. With angles `t` and `h` being the angles of the emitting particle. 
+"""
+function WeightedFactorsEmission(p1v::Vector{Float64},m1::Float64,scale::Float64) 
+
+    E1::Float64 = sqrt(p1v[1]^2+m1^2)
+    gamma::Float64 = E1/m1
+
+    w = scale*acosh(gamma)
+    t = p1v[4]
+    h = p1v[3]
 
     return (w,t,h)
     
@@ -193,12 +299,27 @@ function RPointSphereWeighted!(a::Vector{Float64},w::Float64)
     # phi points are normalised by pi
     # prob is then the probability of sampling the random points on the sphere given the doppler boosting.
 
+    #=
+        Angle transformations, where u is in lab frame and uB is in the boosted frame (and uniformly sampled with uB = 2v-1):
+            u = (cosh(w)*uB+sinh(w))/(cosh(w)+sinh(w)*uB)
+            phi = phiB
+        This can be re-written as: 
+            t = 2*atan(exp(-w)*tan(tB/2))
+            where t = acos(u)
+
+        Probability of sampling
+            P(u) = 1/(cosh(w)-sinh(w)u)^2 = (cosh(w)+sinh(w)*uB)^2 = Doppler^2 i.e. solid angle element transformation dOmega = Doppler^2 dOmegaB
+        Putting uB = 2v-1 for uniform sampling 
+            P(u) = (e^w*v+(1-v)/e^w)^2
+
+    =#
+
     v::Float64 = rand(Float64)
     #tB::Float64 = acos(2*v-1)/pi # "boosted" theta
 
-    costBdiv2sqr::Float64 = v
-    sintBdiv2sqr::Float64 = 1-v
-    tantBdiv2::Float64 = sqrt((1-v)/v)
+    #costBdiv2sqr::Float64 = v
+    #sintBdiv2sqr::Float64 = 1-v
+    tantBdiv2::Float64 = sqrt((1e0-v)/v)
 
 
     h::Float64 = 2*rand(Float64) # phi points are normalised by pi
@@ -206,16 +327,17 @@ function RPointSphereWeighted!(a::Vector{Float64},w::Float64)
     x::Float64 = exp(-w)*tantBdiv2
     t::Float64 = 2*atan(exp(-w)*tantBdiv2)/pi  # "unboosted" theta divided by pi
     
-    sintdiv2sqr::Float64 = x^2/(1+x^2)
-    costdiv2sqr::Float64 = 1/(1+x^2)
+    #sintdiv2sqr::Float64 = x^2/(1+x^2)
+    #costdiv2sqr::Float64 = 1/(1+x^2)
 
     ew::Float64 = exp(w)
     #prob::Float64 = (ew*sinpi(t/2)^2+cospi(t/2)^2/ew)^-2
-    prob::Float64 = (ew*sintdiv2sqr+costdiv2sqr/ew)^-2
+    #prob::Float64 = (ew*sintdiv2sqr+costdiv2sqr/ew)^-2
     #prob::Float64 = (ew*cospi(tB/2)^2+sinpi(tB/2)^2/ew)^2
     #prob::Float64 = (ew*costBdiv2sqr+sintBdiv2sqr/ew)^2
-    #prob::Float64 = (ew*v+(1-v)/ew)^2
+    prob::Float64 = (ew*v+(1-v)/ew)^2
 
+    
     a[2] = cospi(t)
     a[3] = h
     a[4] = t
@@ -230,6 +352,23 @@ function RPointSphereWeighted!(a::Vector{Float64},w::Float64)
         println("")
     end  =#
 
-    return prob
+    return prob #/ (2*pi)
+    
+end
+
+"""
+    WeightedFactorsSync!()
+
+Returns the weighting rapidity `w` and the direction an angles `t` and `h` for rotations on a sphere. Weighting rapidity can be scaled by `scale`. 
+"""
+function WeightedFactorsSync(pv::Vector{Float64},m::Float64,scale::Float64) 
+
+    E1::Float64 = sqrt(pv[1]^2+m^2) # non dimensional units energy is gamma * m
+
+    w = scale*acosh(E1/m) #*rand(Float64)
+    t = pv[4]
+    h = pv[3]
+
+    return (w,t,h)
     
 end
