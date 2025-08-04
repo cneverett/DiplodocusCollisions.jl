@@ -55,7 +55,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 
         filePath = fileLocation*"\\"*fileName
 
-        (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)  = OldMonteCarloArraysBinary(Parameters,filePath)
+        (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2) = OldMonteCarloArraysBinary(Parameters,filePath)
 
         (GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = MonteCarloArraysBinary(Parameters)
 
