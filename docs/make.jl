@@ -1,11 +1,11 @@
 # Inside make.jl
 push!(LOAD_PATH,"../src/")
 using Documenter
-using BoltzmannCollisionIntegral
+using DiplodocusCollisions
 
 makedocs(
-        sitename = "BoltzmannCollisionIntegral.jl",
-        modules  = [BoltzmannCollisionIntegral],
+        sitename = "DiplodocusCollisions.jl",
+        modules  = [DiplodocusCollisions],
         authors = "Christopher Everett",
         pages=[
                 "Overview" => "index.md",
@@ -28,7 +28,7 @@ makedocs(
 )
 
 deploydocs(
-    repo="github.com/cneverett/BoltzmannCollisionIntegral.jl.git",
+    repo="github.com/cneverett/DiplodocusCollisions.jl.git",
     target = "build",
     branch = "gh-pages",
     devbranch = "main",
