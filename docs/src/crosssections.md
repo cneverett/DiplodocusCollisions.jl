@@ -60,8 +60,8 @@ where all of `sSmol`, `sBig`, `tSmol`, `tBig`, `uSmol`, and `uBig` must be inclu
     To ensure greater computational accuracy and prevent underflow of ``Float64`` precision values, all cross sections have a normalisation defined in the function documentation.
 
 ```@meta
-CurrentModule = BoltzmannCollisionIntegral
-using BoltzmannCollisionIntegral
+CurrentModule = DiplodocusCollisions
+using DiplodocusCollisions
 end
 ```
 

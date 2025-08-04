@@ -2,12 +2,12 @@
 
 
 ```@meta
-CurrentModule = BoltzmannCollisionIntegral
-using BoltzmannCollisionIntegral
+CurrentModule = DiplodocusCollisions
+using DiplodocusCollisions
 end
 ```
 
 ```@autodocs
-Modules = [BoltzmannCollisionIntegral]
+Modules = [DiplodocusCollisions]
 ```
 
