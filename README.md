@@ -11,6 +11,11 @@
 [gha-img]: https://github.com/cneverett/BoltzmannCollisionIntegral.jl/actions/workflows/CI.yml/badge.svg?branch=main
 [gha-url]: https://github.com/cneverett/BoltzmannCollisionIntegral.jl/actions/workflows/CI.yml?query=branch%3Amain
 
+> [!CAUTION]
+> This project is undergoing an major revision to align with the Diplodocus package framework
+
+
+
 ## Overview
 
 `BoltzmannCollisionIntegral.jl` is a [Julia](http://julialang.org/) package for the evaluation of the relativistic Boltzmann collision integral for binary interactions $(12\rightleftharpoons34)$ (see [Everett+Cotter 2024](https://doi.org/10.1093/rasti/rzae036)):
