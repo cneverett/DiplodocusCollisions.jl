@@ -80,8 +80,15 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             fill!(GainTally3,UInt32(0))
             fill!(LossTally,UInt32(0))
 
-            if mu3 != mu4 # memory reduction by not assigning 4 particle arrays
-            
+            if mu3 == mu4 # memory reduction by not assigning 4 particle arrays
+                if numThreads == 1
+                    # Run in serial if only one thread, easier to use for debugging
+                    BinaryMonteCarlo_Debug!(GainTotal3,GainTotal3,LossTotal,GainTally3,GainTally3,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,1)
+                else
+                    workers = [BinaryMonteCarlo!(GainTotal3,GainTotal3,LossTotal,GainTally3,GainTally3,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
+                    wait.(workers) # Allow all workers to finish
+                end  
+            else # mu3 == mu4 so identical in terms of collision dynamics
                 fill!(GainTotal4,Float64(0))
                 fill!(GainTally4,UInt32(0))
 
@@ -92,17 +99,6 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                     workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
                     wait.(workers) # Allow all workers to finish
                 end
-
-            else # mu3 == mu4 so identical in terms of collision dynamics
-
-                if numThreads == 1
-                    # Run in serial if only one thread, easier to use for debugging
-                    BinaryMonteCarlo_Debug!(GainTotal3,GainTotal3,LossTotal,GainTally3,GainTally3,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,1)
-                else
-                    workers = [BinaryMonteCarlo!(GainTotal3,GainTotal3,LossTotal,GainTally3,GainTally3,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
-                    wait.(workers) # Allow all workers to finish
-                end
-
             end
     
     # ===================================== #
