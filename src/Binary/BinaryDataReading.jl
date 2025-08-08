@@ -393,7 +393,7 @@ function DoesConserve(Output::Tuple{Tuple{String, String, String, String, Float6
     EGainMatrix4 = zeros(Float64,size(LossMatrix1))
     ELossMatrix2 = zeros(Float64,size(LossMatrix1))
 
-    for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
+    @inbounds for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
         for p3 in axes(GainMatrix3,1), u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
         SsumN3 += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]
         SsumE3 += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]*E3_d[p3]
@@ -402,7 +402,7 @@ function DoesConserve(Output::Tuple{Tuple{String, String, String, String, Float6
         end
     end
 
-    for p1 in axes(GainMatrix4, 4), u1 in axes(GainMatrix4,5), h1 in axes(GainMatrix4,6), p2 in axes(GainMatrix4,7), u2 in axes(GainMatrix4,8), h2 in axes(GainMatrix4,9)
+    @inbounds for p1 in axes(GainMatrix4, 4), u1 in axes(GainMatrix4,5), h1 in axes(GainMatrix4,6), p2 in axes(GainMatrix4,7), u2 in axes(GainMatrix4,8), h2 in axes(GainMatrix4,9)
         for p4 in axes(GainMatrix4,1), u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
         SsumN4 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]
         SsumE4 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]*E4_d[p4]
@@ -411,7 +411,7 @@ function DoesConserve(Output::Tuple{Tuple{String, String, String, String, Float6
         end
     end
 
-    for p1 in axes(LossMatrix1,1), u1 in axes(LossMatrix1, 2), h1 in axes(LossMatrix1,3), p2 in axes(LossMatrix1,4), u2 in axes(LossMatrix1,5), h2 in axes(LossMatrix1,6)
+    @inbounds for p1 in axes(LossMatrix1,1), u1 in axes(LossMatrix1, 2), h1 in axes(LossMatrix1,3), p2 in axes(LossMatrix1,4), u2 in axes(LossMatrix1,5), h2 in axes(LossMatrix1,6)
         TsumN1 += LossMatrix1[p1,u1,h1,p2,u2,h2]
         TsumE1 += LossMatrix1[p1,u1,h1,p2,u2,h2]*E1_d[p1]
         TsumN2 += LossMatrix2[p2,u2,h2,p1,u1,h1]
@@ -523,7 +523,7 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
     u4_r = bounds(u_low,u_up,u4_num,u4_grid);
     u4_d = deltaVector(u4_r);
 
-    for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
+    @inbounds for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
         
         GainSumN3 = zero(Float64)
         GainSumN4 = zero(Float64)
