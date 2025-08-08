@@ -17,15 +17,9 @@ function MonteCarloArraysBinary(Parameters::Tuple{String,String,String,String,Fl
     LossMatrix1::Array{Float64,6} = zeros(Float64,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
     LossMatrix2::Array{Float64,6} = zeros(Float64,p2_num,u2_num,h2_num,p1_num,u1_num,h1_num);
 
-    if mu3 != mu4
-        GainTotal4::Array{Float64,9} = zeros(Float64,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num); 
-        GainTally4::Array{UInt32,9} = zeros(UInt32,(p4_num+1),u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
-        GainMatrix4::Array{Float64,9} = zeros(Float64,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
-    else 
-        GainTotal4::Array{Float64,9} = zeros(Float64,0,0,0,0,0,0,0,0,0); 
-        GainTally4::Array{UInt32,9} = zeros(UInt32,0,0,0,0,0,0,0,0,0);
-        GainMatrix4::Array{Float64,9} = zeros(Float64,0,0,0,0,0,0,0,0,0);
-    end
+    GainTotal4::Array{Float64,9} = (mu3 == mu4) ? zeros(Float64,0,0,0,0,0,0,0,0,0) : zeros(Float64,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num); 
+    GainTally4::Array{UInt32,9} = (mu3 == mu4) ? zeros(UInt32,0,0,0,0,0,0,0,0,0) : zeros(UInt32,(p4_num+1),u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
+    GainMatrix4::Array{Float64,9} = (mu3 == mu4) ? zeros(Float64,0,0,0,0,0,0,0,0,0) : zeros(Float64,p4_num,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num);
 
     return (GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2)
 
