@@ -66,7 +66,7 @@ function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,Los
 
     end
 
-    if mu3 != mu4
+    if m3 != m4
 
         tmp_total4 = zeros(Float64,size(GainTotal4)[1:2])
         tmp_tally4 = zeros(Float64,size(GainTally4)[1:2])
