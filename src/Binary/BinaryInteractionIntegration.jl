@@ -201,6 +201,13 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
     # ===================================== #
 
+    # =========== Garbage Collection ====== #
+
+        (GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = (0,0,0,0,0,0,0,0,0,0)
+        GC.gc()
+        
+    # ===================================== #
+
     # ========== Save Arrays ============== #
 
         println("Saving Arrays")
