@@ -80,7 +80,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             fill!(GainTally3,UInt32(0))
             fill!(LossTally,UInt32(0))
 
-            if mu3 == mu4 # memory reduction by not assigning 4 particle arrays
+            if m3 == m4 # memory reduction by not assigning 4 particle arrays
                 if numThreads == 1
                     # Run in serial if only one thread, easier to use for debugging
                     BinaryMonteCarlo_Debug!(GainTotal3,GainTotal3,LossTotal,GainTally3,GainTally3,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,1)
@@ -109,7 +109,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             GainTally3_N = @view(GainTally3[end,:,:,:,:,:,:,:,:])
             # K value are all but last element of the tally array
             GainTally3_K = @view(GainTally3[1:end-1,:,:,:,:,:,:,:,:])
-            if mu3 != mu4 
+            if m3 != m4 
                 GainTally4_N = @view(GainTally4[end,:,:,:,:,:,:,:,:])
                 GainTally4_K = @view(GainTally4[1:end-1,:,:,:,:,:,:,:,:])
             end
@@ -152,7 +152,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             h4val = bounds(h_low,h_up,h4_num,h4_grid).*pi
 
             # Momentum space volume elements
-            if mu3 == mu4
+            if m3 == m4
                 MomentumSpaceFactorsBinary!(GainMatrix3,u3val,h3val,Indistinguishable_12)
             else
                 MomentumSpaceFactorsBinary!(GainMatrix3,GainMatrix4,u3val,h3val,u4val,h4val,Indistinguishable_12)
@@ -161,7 +161,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             println("Weighting average of New and Old Sampling Arrays")
 
             # old arrays are modified in this process
-            if mu3 == mu4
+            if m3 == m4
                 WeightedAverageGainBinary!(GainMatrix3,OldGainMatrix3,GainTally3_K,GainTally3_N,OldGainWeights3)
                 if Indistinguishable_34 == false # particles are distinguishable 
                     @. OldGainMatrix4 = OldGainMatrix3
