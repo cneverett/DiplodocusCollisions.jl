@@ -36,6 +36,23 @@ function WeightedAverageGainBinary!(GainMatrix3::Array{Float64,9},OldGainMatrix3
 
 end
 
+function WeightedAverageGainBinary!(GainMatrix3::Array{Float64,9},OldGainMatrix3::Array{Float64,9},GainTally3_K::AbstractArray{UInt32,9},GainTally3_N::AbstractArray{UInt32,8},OldGainWeights3::Array{Float64,9})
+    # Version for if mu3 == mu4
+
+    # new weights k^2/N
+    NewGainWeights = similar(OldGainWeights3)
+    for i in axes(GainTally3_K,1)
+        @. NewGainWeights[i,:,:,:,:,:,:,:,:] = GainTally3_K[i,:,:,:,:,:,:,:,:]^2 / GainTally3_N
+    end
+    replace!(NewGainWeights3,NaN=>0e0)
+    #weighted average
+    @. OldGainMatrix3 = (GainMatrix3*NewGainWeights+OldGainMatrix3*OldGainWeights3)/(NewGainWeights+OldGainWeights3)
+    replace!(OldGainMatrix3,NaN=>0e0)
+    # adjust weights for next integration step
+    @. OldGainWeights3 += NewGainWeights
+
+end
+
 """
     WeightedAverageLossBinary!(LossMatrix,OldLossMatrix,LossTally,OldLossTally)
 
