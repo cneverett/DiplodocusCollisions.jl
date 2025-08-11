@@ -167,7 +167,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
         finish!(prog)
 
-        if Indistinguishable_12 == false
+        if Indistinguishable_12 == false # particles are distinguishable
             perm = [4,5,6,1,2,3]
             OldLossMatrix2 .= permutedims(OldLossMatrix1,perm)
         else

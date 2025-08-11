@@ -71,9 +71,9 @@ returns the differential cross section for electron positron annihilation to two
 
 # Arguments
 - `sSmol::Float64` : ``s - sBig``
-- `sBig::Float64` : ``(m_1+m_2)^2 = 4 ∴ s = sSmol + 4``
+- `sBig::Float64` : ``(m1+m2)^2 = 4 ∴ s = sSmol + 4``
 - `tSmol::Float64` : ``t - tBig``
-- `tBig::Float64` : ``(m_3-m_1)^2 = 1 ∴ t = tSmol + 1``
+- `tBig::Float64` : ``(m3-m1)^2 = 1 ∴ t = tSmol + 1``
 - `uSmol::Float64` : ``u - uBig``
 - `uBig::Float64` : ``(m2-m3)^2 = 1 ∴ u = uSmol + 1``
 """
@@ -81,7 +81,7 @@ function dsigmadt_ElePosPhoPho(sSmol::Float64,sBig::Float64,tSmol::Float64,tBig:
 
     # -(1/(s(s-4)))*((1/(t-1)+1/(1-s-t))^2+(1/(t-1)+1/(1-s-t))-(1/4)*((t-1)/(1-s-t)+(1-s-t)/(t-1)))
     
-    s = sSmol+sBig
+    s::Float64 = sSmol+sBig
     -(3/((s)*(sSmol)))*((1/(tSmol)+1/(uSmol))^2+(1/(tSmol)+1/(uSmol))-(1/4)*((tSmol)/(uSmol)+(uSmol)/(tSmol)))
 
 end
@@ -119,7 +119,7 @@ const sigmaNorm_ElePosPhoPho = σT;
 """
     dsigmadt_PhoPhoElePos(sSmol,sBig,tSmol,tBig,uSmol,uBig)
 
-returns the differential cross section for photon-photon annihilation to electron-positron pair. (Inverse proceess of electron positron annihilation to two photons). Masses and momenta are normalised by the rest mass of the electron ``m_{\\text{Ele}}`` and the cross section is normalised by ``σ_T``.
+returns the differential cross section for photon-photon annihilation to electron-positron pair. (Inverse process of electron positron annihilation to two photons). Masses and momenta are normalised by the rest mass of the electron ``m_{\\text{Ele}}`` and the cross section is normalised by ``σ_T``.
 
 ```math
 \\frac{dσ_{\\gamma\\gamma\\rightarrow e^+e^-}}{dt} = -\\frac{3}{s^2}\\left(\\left(\\frac{1}{t-1}+\\frac{1}{u-1}\\right)^2+\\left(\\frac{1}{t-1}+\\frac{1}{u-1}\\right)-\\frac{1}{4}\\left(\\frac{t-1}{u-1}+\\frac{u-1}{t-1}\\right)\\right)
@@ -135,9 +135,13 @@ returns the differential cross section for photon-photon annihilation to electro
 """
 function dsigmadt_PhoPhoElePos(sSmol::Float64,sBig::Float64,tSmol::Float64,tBig::Float64,uSmol::Float64,uBig::Float64)
 
-    # -(1/(s^2))*((1/(t-1)+1/(1-s-t))^2+(1/(t-1)+1/(1-s-t))-(1/4)*((t-1)/(1-s-t)+(1-s-t)/(t-1)))
+    # -(3/(s^2))*((1/(t-1)+1/(1-s-t))^2+(1/(t-1)+1/(1-s-t))-(1/4)*((t-1)/(1-s-t)+(1-s-t)/(t-1)))
     
-    -(3/(sSmol^2))*((1/(tSmol)+1/(uSmol))^2+(1/(tSmol)+1/(uSmol))-(1/4)*((tSmol)/(uSmol)+(uSmol)/(tSmol)))
+    val = -(3/(sSmol^2))*((1/(tSmol)+1/(uSmol))^2+(1/(tSmol)+1/(uSmol))-(1/4)*((tSmol)/(uSmol)+(uSmol)/(tSmol)))
+
+    valmax = 3(sSmol-2)/(4sSmol^2)
+
+    return min(val,valmax)
 
 end
 
@@ -156,14 +160,26 @@ returns the total cross section for photon-photon annihilation to electron-posit
 """
 function sigma_PhoPhoElePos(sSmol::Float64,sBig::Float64)
 
-    #(1/(2*s^3))*((s^2+4*s-8)*log((sqrt(s)+sqrt(s-4))/(sqrt(s)-sqrt(s-4)))-(s+4)*sqrt(s*(s-4)))
-    s = sSmol+sBig
-    (3/(2*s^3))*((s^2+4*s-8)*log((2*s-4+2*sqrt(s*(s-4)))/(4))-(s+4)*sqrt(s*(s-4)))
+    #(3/(2*s^3))*((s^2+4*s-8)*log((sqrt(s)+sqrt(s-4))/(sqrt(s)-sqrt(s-4)))-(s+4)*sqrt(s*(s-4)))
+    #s::Float64 = sSmol+sBig
+    #(3/(2*s^3))*((s^2+4*s-8)*log((2*s-4+2*sqrt(s*(s-4)))/(4))-(s+4)*sqrt(s*(s-4)))
+
+    # better precision to use sBig = (m3+m4)^2 = 4
+    sBig::Float64 = 4.0
+    sSmol::Float64 = sSmol-sBig
+    s::Float64 = sSmol+sBig
+    
+    if sSmol < 1e-6 # small approximation
+        3sqrt(sSmol)/16+3s^(3/2)/128-423s^(5/2)/10240
+    else
+        (3/(2*s^3))*((sSmol^2+12*sSmol+24)*log((s+sSmol+2*sqrt(sSmol*s))/(sBig))-(sSmol+8)*sqrt((s)*(sSmol)))
+    end
+    
 
 end
 
-const dsigmadtNorm_PhoPhoElePos = 3*σT;
-const sigmaNorm_PhoPhoElePos = 3*σT;
+const dsigmadtNorm_PhoPhoElePos = σT;
+const sigmaNorm_PhoPhoElePos = σT;
 
 # ==================================================================== # 
 
@@ -235,26 +251,6 @@ end
 
 const dsigmadtNorm_ElePhoElePho = σT;
 const sigmaNorm_ElePhoElePho = σT;
-
-function dsigmadt_PhoElePhoEle(sSmol::Float64,sBig::Float64,tSmol::Float64,tBig::Float64,uSmol::Float64,uBig::Float64)
-
-    # -(1/(s-1)^2)*((1/(s-1)+1/(u-1))^2+(1/(s-1)+1/(u-1))-(1/4)*((s-1)/(u-1)+(u-1)/(s-1)))
-    
-    (3/(sSmol)^2)*((1/(sSmol)+1/(uSmol))^2+(1/(sSmol)+1/(uSmol))-(1/4)*((sSmol)/(uSmol)+(uSmol)/(sSmol)))
-
-end
-
-function sigma_PhoElePhoEle(sSmol::Float64,sBig::Float64)
-
-    #(1/(4*(s-1)))*((1-4/(s-1)-8/(s-1)^2)*log(s)+1/2+8/(s-1)-1/(2*s^2))
-    s = sBig+sSmol
-    if sSmol < 1e-3 # small approximation
-        1-sSmol+13*sSmol^2/10
-    else
-        (3/(4*(sSmol)))*((1-4/(sSmol)-8/(sSmol)^2)*log(s)+1/2+8/(sSmol)-1/(2*s^2))
-    end
-
-end
 
 # ==================================================================== # 
 
