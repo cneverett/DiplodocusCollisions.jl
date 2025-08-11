@@ -229,7 +229,7 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
     EGainMatrix4 = zeros(Float64,size(LossMatrix1))
     ELossMatrix2 = zeros(Float64,size(LossMatrix1))
 
-    for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
+    @inbounds for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
         for p3 in axes(GainMatrix3,1), u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
         SsumN3 += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]
         SsumE3 += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]*E3_d[p3]
@@ -238,7 +238,7 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
         end
     end
 
-    for p1 in axes(GainMatrix4, 4), u1 in axes(GainMatrix4,5), h1 in axes(GainMatrix4,6), p2 in axes(GainMatrix4,7), u2 in axes(GainMatrix4,8), h2 in axes(GainMatrix4,9)
+    @inbounds for p1 in axes(GainMatrix4, 4), u1 in axes(GainMatrix4,5), h1 in axes(GainMatrix4,6), p2 in axes(GainMatrix4,7), u2 in axes(GainMatrix4,8), h2 in axes(GainMatrix4,9)
         for p4 in axes(GainMatrix4,1), u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
         SsumN4 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]
         SsumE4 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]*E4_d[p4]
@@ -247,7 +247,7 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
         end
     end
 
-    for p1 in axes(LossMatrix1,1), u1 in axes(LossMatrix1, 2), h1 in axes(LossMatrix1,3), p2 in axes(LossMatrix1,4), u2 in axes(LossMatrix1,5), h2 in axes(LossMatrix1,6)
+    @inbounds for p1 in axes(LossMatrix1,1), u1 in axes(LossMatrix1, 2), h1 in axes(LossMatrix1,3), p2 in axes(LossMatrix1,4), u2 in axes(LossMatrix1,5), h2 in axes(LossMatrix1,6)
         TsumN1 += LossMatrix1[p1,u1,h1,p2,u2,h2]
         TsumE1 += LossMatrix1[p1,u1,h1,p2,u2,h2]*E1_d[p1]
         TsumN2 += LossMatrix2[p2,u2,h2,p1,u1,h1]
@@ -496,12 +496,14 @@ MC sampling introduces noise that can lead to poor number conservation. `GainCor
 """
 function GainCorrection(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::Array{Float64, 9}, GainMatrix4::Array{Float64, 9}, LossMatrix1::Array{Float64, 6}, LossMatrix2::Array{Float64, 6})
 
-    # Function that applies the correct phase space factors to SMatrix and TMatrix derived from Stotal and Ttotal arrays
+    # Function that applies the correct phase space factors to GainMatrix and LossMatrix derived from Stotal and Ttotal arrays
 
     (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
 
     CorrectedGainMatrix3 = similar(GainMatrix3)
     CorrectedGainMatrix4 = similar(GainMatrix4)
+    fill!(CorrectedGainMatrix3,Float64(0))
+    fill!(CorrectedGainMatrix4,Float64(0))
 
     p1_r = bounds(p1_low,p1_up,p1_num,p1_grid);
     p1_d = deltaVector(p1_r);
@@ -523,7 +525,7 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
     u4_r = bounds(u_low,u_up,u4_num,u4_grid);
     u4_d = deltaVector(u4_r);
 
-    @inbounds for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
+    for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
         
         GainSumN3 = zero(Float64)
         GainSumN4 = zero(Float64)
@@ -537,7 +539,7 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
             GainSumN4 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]
         end
 
-        if name1 == name3
+        if name1 == name3 # particle 1 and particle 3 are identical
             if GainSumN3 != 0e0
                 Correction = LossSumN1/GainSumN3
                 @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])
@@ -545,7 +547,7 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                 CorrectedGainMatrix3[p1,u1,h1,p1,u1,h1,p2,u2,h2] += LossSumN1
             end
         end
-        if  name2 == name4
+        if  name2 == name4 # particle 2 and 4 are identical
             if GainSumN4 != 0e0
                 Correction = LossSumN2/GainSumN4
                 @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
@@ -554,8 +556,13 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
             end
         end    
         if m1 == m2 && m3 == m4 # incoming and outgoing states are symmetric
-            if GainSumN3 + GainSumN4 != 0e0
+            if (GainSumN3 + GainSumN4) != 0e0
                 Correction = (LossSumN1+LossSumN2)/(GainSumN3+GainSumN4)
+                println(GainSumN3)
+                println(GainSumN4)
+                println(LossSumN1)
+                println(LossSumN2)
+                println(Correction)
                 @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])
                 @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
             end

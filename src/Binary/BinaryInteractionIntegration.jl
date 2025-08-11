@@ -88,7 +88,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                     workers = [BinaryMonteCarlo!(GainTotal3,GainTotal3,LossTotal,GainTally3,GainTally3,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
                     wait.(workers) # Allow all workers to finish
                 end  
-            else # mu3 == mu4 so identical in terms of collision dynamics
+            else # mu3 != mu4 
                 fill!(GainTotal4,Float64(0))
                 fill!(GainTally4,UInt32(0))
 
