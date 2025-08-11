@@ -558,11 +558,11 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
         if m1 == m2 && m3 == m4 # incoming and outgoing states are symmetric
             if (GainSumN3 + GainSumN4) != 0e0
                 Correction = (LossSumN1+LossSumN2)/(GainSumN3+GainSumN4)
-                println(GainSumN3)
-                println(GainSumN4)
-                println(LossSumN1)
-                println(LossSumN2)
-                println(Correction)
+                #println(GainSumN3)
+                #println(GainSumN4)
+                #println(LossSumN1)
+                #println(LossSumN2)
+                #println(Correction)
                 @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])
                 @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
             end
