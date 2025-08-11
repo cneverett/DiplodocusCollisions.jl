@@ -66,8 +66,10 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
 
     LocalGainTotal3::Array{Float64,3} = zeros(Float64,size(GainTotal3)[1:3])
     LocalGainTally3::Array{UInt32,3} = zeros(UInt32,size(GainTally3)[1:3])
-    LocalGainTotal4::Array{Float64,3} = zeros(Float64,size(GainTotal4)[1:3])
-    LocalGainTally4::Array{UInt32,3} = zeros(UInt32,size(GainTally4)[1:3])
+    if m3 != m4
+        LocalGainTotal4::Array{Float64,3} = zeros(Float64,size(GainTotal4)[1:3])
+        LocalGainTally4::Array{UInt32,3} = zeros(UInt32,size(GainTally4)[1:3])
+    end
 
     @inbounds for _ in 1:numLoss
         
@@ -89,18 +91,22 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
         loc12 = CartesianIndex(p1loc,u1loc,h1loc,p2loc,u2loc,h2loc)
 
         fill!(LocalGainTally3,UInt32(0))
-        fill!(LocalGainTally4,UInt32(0))
+        if m3 != m4
+            fill!(LocalGainTally4,UInt32(0))
+        end
 
         if LossVal != 0e0 # i.e. it is a valid interaction state
 
             (w3,w4,t,h) = WeightedFactors(p1v,p2v,m1,m2,m3,m4,sBig,sSmol,scale)
 
             fill!(LocalGainTotal3,Float64(0))
-            fill!(LocalGainTotal4,Float64(0))
+            if m3 != m4
+                fill!(LocalGainTotal4,Float64(0))
+            end
                    
             @inbounds for _ in 1:numGain
 
-                prob3 = RPointSphereWeighted!(p3v,w3)    
+                prob3 = RPointSphereWeighted!(p3v,w3)  
                 prob4 = RPointSphereWeighted!(p4v,w4)
                 RotateToLab!(p3v,p4v,t,h)
                 @. p3pv = p3v
@@ -146,45 +152,49 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                     end
                 end
 
-                # === p4 === #
+                if m3 != m4
 
-                # Calculate p4 value
-                (p_physical,pp_physical,NumStates) = MomentumValue!(p4v,p4pv,p2v,p1v,m2,m1,m4,m3,p4_low,p4_up)
+                    # === p4 === #
 
-                # S Array Tallies
-                # For each u3,h4 sampled, p4 will be + or -ve, corresponding to a change in sign of u3 and a shift in h4 by pi i.e. Mod(h4+1,2). Therefore by sampling one u3 we are actually sampling u3/h4 and -u3/mod(h4+1,2) with one or both having valid p4 states. NOTE: This has been removed due to difference in sampling probability not being accounted for 
-                u4loc = location(u_low,u_up,u4_num,p4v[2],u4_grid)
-                h4loc = location(h_low,h_up,h4_num,p4v[3],h4_grid)
-                #u4locMirror = location(u_low,u_up,u4_num,-p4v[2],u4_grid)
-                #h4locMirror = location(h_low,h_up,h4_num,mod(p4v[3]+1e0,2e0),h4_grid)
-                LocalGainTally4[end,u4loc,h4loc] += UInt32(1)
-                #LocalGainTally4[end,u4locMirror,h4locMirror] += UInt32(1)
+                    # Calculate p4 value
+                    (p_physical,pp_physical,NumStates) = MomentumValue!(p4v,p4pv,p2v,p1v,m2,m1,m4,m3,p4_low,p4_up)
 
-                # Calculate S Array totals
-                if NumStates == 1
-                    if p_physical
-                        p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
-                        GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
-                        LocalGainTotal4[p4loc,u4loc,h4loc] += GainVal/prob4
-                        LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
+                    # S Array Tallies
+                    # For each u3,h4 sampled, p4 will be + or -ve, corresponding to a change in sign of u3 and a shift in h4 by pi i.e. Mod(h4+1,2). Therefore by sampling one u3 we are actually sampling u3/h4 and -u3/mod(h4+1,2) with one or both having valid p4 states. NOTE: This has been removed due to difference in sampling probability not being accounted for 
+                    u4loc = location(u_low,u_up,u4_num,p4v[2],u4_grid)
+                    h4loc = location(h_low,h_up,h4_num,p4v[3],h4_grid)
+                    #u4locMirror = location(u_low,u_up,u4_num,-p4v[2],u4_grid)
+                    #h4locMirror = location(h_low,h_up,h4_num,mod(p4v[3]+1e0,2e0),h4_grid)
+                    LocalGainTally4[end,u4loc,h4loc] += UInt32(1)
+                    #LocalGainTally4[end,u4locMirror,h4locMirror] += UInt32(1)
+
+                    # Calculate S Array totals
+                    if NumStates == 1
+                        if p_physical
+                            p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
+                            GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+                            LocalGainTotal4[p4loc,u4loc,h4loc] += GainVal/prob4
+                            LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
+                        end
                     end
-                end
 
-                if NumStates == 2
-                    if p_physical
-                        p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
-                        GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
-                        LocalGainTotal4[p4loc,u4loc,h4loc] += GainVal/prob4
-                        LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
+                    if NumStates == 2
+                        if p_physical
+                            p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
+                            GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+                            LocalGainTotal4[p4loc,u4loc,h4loc] += GainVal/prob4
+                            LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
+                        end
+                        if pp_physical
+                            u4ploc = location(u_low,u_up,u4_num,p4pv[2],u4_grid)
+                            h4ploc = location(h_low,h_up,h4_num,p4pv[3],h4_grid)
+                            p4ploc = location(p4_low,p4_up,p4_num,p4pv[1],p4_grid)
+                            GainValp = GainValue4(p4pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+                            LocalGainTotal4[p4ploc,u4ploc,h4ploc] += GainValp/prob4
+                            LocalGainTally4[p4ploc,u4ploc,h4ploc] += UInt32(1)
+                        end
                     end
-                    if pp_physical
-                        u4ploc = location(u_low,u_up,u4_num,p4pv[2],u4_grid)
-                        h4ploc = location(h_low,h_up,h4_num,p4pv[3],h4_grid)
-                        p4ploc = location(p4_low,p4_up,p4_num,p4pv[1],p4_grid)
-                        GainValp = GainValue4(p4pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
-                        LocalGainTotal4[p4ploc,u4ploc,h4ploc] += GainValp/prob4
-                        LocalGainTally4[p4ploc,u4ploc,h4ploc] += UInt32(1)
-                    end
+            
                 end
 
             end # S loop
@@ -192,7 +202,9 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
         else # no valid interaction state
             # add one to tally of all relevant S tallies i.e. all momenta and all angles as no emission states are possible
             @view(LocalGainTally3[end,:,:]) .+= UInt32(1)
-            @view(LocalGainTally4[end,:,:]) .+= UInt32(1)
+            if m3 != m4
+                @view(LocalGainTally4[end,:,:]) .+= UInt32(1)
+            end
         end
 
         # assign values to arrays
@@ -200,10 +212,14 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
             LossTotal[loc12] += LossVal
             LossTally[loc12] += UInt32(1)
             @view(GainTally3[:,:,:,loc12]) .+= LocalGainTally3
-            @view(GainTally4[:,:,:,loc12]) .+= LocalGainTally4
+            if m3 != m4 
+                @view(GainTally4[:,:,:,loc12]) .+= LocalGainTally4
+            end
             if LossVal != 0e0
                 @view(GainTotal3[:,:,:,loc12]) .+= LocalGainTotal3
-                @view(GainTotal4[:,:,:,loc12]) .+= LocalGainTotal4
+                if m3 != m4
+                    @view(GainTotal4[:,:,:,loc12]) .+= LocalGainTotal4
+                end
             end
         end
 
