@@ -170,7 +170,7 @@ function sigma_PhoPhoElePos(sSmol::Float64,sBig::Float64)
     s::Float64 = sSmol+sBig
     
     if sSmol < 1e-6 # small approximation
-        3sqrt(sSmol)/16+3s^(3/2)/128-423s^(5/2)/10240
+        3sqrt(sSmol)/16+3sSmol^(3/2)/128-423sSmol^(5/2)/10240
     else
         (3/(2*s^3))*((sSmol^2+12*sSmol+24)*log((s+sSmol+2*sqrt(sSmol*s))/(sBig))-(sSmol+8)*sqrt((s)*(sSmol)))
     end
