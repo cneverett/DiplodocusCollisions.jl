@@ -29,15 +29,17 @@ function BinaryFileLoad_All(fileLocation::String,fileName::String;corrected::Boo
         if corrected
             GainMatrix3 = f["CorrectedGainMatrix3"];
             GainMatrix4 = f["CorrectedGainMatrix4"];
+            LossMatrix1 = f["CorrectedLossMatrix1"];
+            LossMatrix2 = f["CorrectedLossMatrix2"];
         else
             GainMatrix3 = f["GainMatrix3"];
             GainMatrix4 = f["GainMatrix4"];
+            LossMatrix1 = f["LossMatrix1"];
+            LossMatrix2 = f["LossMatrix2"]; 
         end
         GainWeights3 = f["GainWeights3"];
         GainWeights4 = f["GainWeights4"];
-        LossMatrix1 = f["LossMatrix1"];
         LossTally = f["LossTally"];
-        LossMatrix2 = f["LossMatrix2"]; 
 
         close(f)  
     else
@@ -75,12 +77,14 @@ function BinaryFileLoad_Matrix(fileLocation::String,fileName::String;corrected::
         if corrected
             GainMatrix3 = f["CorrectedGainMatrix3"];
             GainMatrix4 = f["CorrectedGainMatrix4"];
+            LossMatrix1 = f["CorrectedLossMatrix1"];
+            LossMatrix2 = f["CorrectedLossMatrix2"];
         else
             GainMatrix3 = f["GainMatrix3"];
             GainMatrix4 = f["GainMatrix4"];
+            LossMatrix1 = f["LossMatrix1"];
+            LossMatrix2 = f["LossMatrix2"]; 
         end
-        LossMatrix1 = f["LossMatrix1"];
-        LossMatrix2 = f["LossMatrix2"];
         close(f)  
     else
         error("no file with name $fileName found at location $fileLocation")
@@ -492,7 +496,7 @@ end
 """
     GainCorrection(Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2)
 
-MC sampling introduces noise that can lead to poor number conservation. `GainCorrection` weights each element of the `GainMatrix3` and `GainMatrix4` by the ratio of their sum over the output states to `LossMatrix1` and `LossMatrix2` values of the input state, thereby correcting the gain and loss matrices to ensure number conservation. If there is no GainMatrix element then the value of the LossMatrix is applied to the same bin as the input state (if they are identical particles).
+MC sampling introduces noise that can lead to poor number conservation. `GainCorrection` weights each element of the `GainMatrix3` and `GainMatrix4` by the ratio of their sum over the output states to `LossMatrix1` and `LossMatrix2` values of the input state, thereby correcting the gain and loss matrices to ensure number conservation. If there is no GainMatrix element then the value of the LossMatrix is applied to the same bin as the input state (if they are identical particles); if not identical particles if there is no GainMatrix element then the value of the LossMatrix is set to zero to ensure particle conservation (with good MC sampling this should rarely occur).
 """
 function GainCorrection(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::Array{Float64, 9}, GainMatrix4::Array{Float64, 9}, LossMatrix1::Array{Float64, 6}, LossMatrix2::Array{Float64, 6})
 
@@ -502,8 +506,12 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
 
     CorrectedGainMatrix3 = similar(GainMatrix3)
     CorrectedGainMatrix4 = similar(GainMatrix4)
+    CorrectedLossMatrix1 = similar(LossMatrix1)
+    CorrectedLossMatrix2 = similar(LossMatrix2)
     fill!(CorrectedGainMatrix3,Float64(0))
     fill!(CorrectedGainMatrix4,Float64(0))
+    CorrectedLossMatrix1 .= LossMatrix1
+    CorrectedLossMatrix2 .= LossMatrix2
 
     p1_r = bounds(p1_low,p1_up,p1_num,p1_grid);
     p1_d = deltaVector(p1_r);
@@ -565,12 +573,16 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                 #println(Correction)
                 @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])
                 @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
+            elseif (LossSumN1+LossSumN2) != 0e0
+                # no gain term but there is a loss term, as outgoing states are not identical to incoming there is no way to correct for this so have to set loss terms to 0.0
+                CorrectedLossMatrix1[p1,u1,h1,p2,u2,h2] = 0e0
+                CorrectedLossMatrix2[p2,u2,h2,p1,u1,h1] = 0e0
             end
         end
 
     end
 
-    return CorrectedGainMatrix3, CorrectedGainMatrix4
+    return CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2
 
 end
 
