@@ -219,6 +219,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
         write(f,"CorrectedGainMatrix3",CorrectedGainMatrix3)
         write(f,"CorrectedGainMatrix4",CorrectedGainMatrix4)
+        write(f,"CorrectedLossMatrix3",CorrectedLossMatrix3)
+        write(f,"CorrectedLossMatrix4",CorrectedLossMatrix4)
         close(f)
 
     # ===================================== #
