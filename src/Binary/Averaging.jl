@@ -9,28 +9,47 @@ where `I1` and `I1` are the old and new gain matrix element estimates and `w1` a
 """
 function WeightedAverageGainBinary!(GainMatrix3::Array{Float64,9},OldGainMatrix3::Array{Float64,9},GainTally3_K::AbstractArray{UInt32,9},GainTally3_N::AbstractArray{UInt32,8},OldGainWeights3::Array{Float64,9},GainMatrix4::Array{Float64,9},OldGainMatrix4::Array{Float64,9},GainTally4_K::AbstractArray{UInt32,9},GainTally4_N::AbstractArray{UInt32,8},OldGainWeights4::Array{Float64,9})
 
-    # new weights k/N
-    NewGainWeights3 = similar(OldGainWeights3)
-    NewGainWeights4 = similar(OldGainWeights4)
+    # new weights k^2/N
+    NewGainWeights = similar(OldGainWeights3)
     for i in axes(GainTally3_K,1)
-        @. NewGainWeights3[i,:,:,:,:,:,:,:,:] = GainTally3_K[i,:,:,:,:,:,:,:,:]^2 / GainTally3_N
+        @. NewGainWeights[i,:,:,:,:,:,:,:,:] = GainTally3_K[i,:,:,:,:,:,:,:,:]^2 / GainTally3_N
     end
-    for i in axes(GainTally4_K,1)
-        @. NewGainWeights4[i,:,:,:,:,:,:,:,:] = GainTally4_K[i,:,:,:,:,:,:,:,:]^2 / GainTally4_N
-    end
-    replace!(NewGainWeights3,NaN=>0e0)
-    replace!(NewGainWeights4,NaN=>0e0)
-
-    # weighted average
-    @. OldGainMatrix3 = (GainMatrix3*NewGainWeights3+OldGainMatrix3*OldGainWeights3)/(NewGainWeights3+OldGainWeights3)
-    @. OldGainMatrix4 = (GainMatrix4*NewGainWeights4+OldGainMatrix4*OldGainWeights4)/(NewGainWeights4+OldGainWeights4)
-
+    replace!(NewGainWeights,NaN=>0e0)
+    #weighted average
+    @. OldGainMatrix3 = (GainMatrix3*NewGainWeights+OldGainMatrix3*OldGainWeights3)/(NewGainWeights+OldGainWeights3)
     replace!(OldGainMatrix3,NaN=>0e0)
-    replace!(OldGainMatrix4,NaN=>0e0)
+    # adjust weights for next integration step
+    @. OldGainWeights3 += NewGainWeights
 
-    # adjusting new weights for next integration step
-    @. OldGainWeights3 += NewGainWeights3
-    @. OldGainWeights4 += NewGainWeights4
+    NewGainWeights = 0.0
+    GC.gc()
+    
+    # repeat above for 4 to save memory 
+    NewGainWeights = similar(OldGainWeights4)
+    for i in axes(GainTally4_K,1)
+        @. NewGainWeights[i,:,:,:,:,:,:,:,:] = GainTally4_K[i,:,:,:,:,:,:,:,:]^2 / GainTally4_N
+    end
+    replace!(NewGainWeights,NaN=>0e0)
+    @. OldGainMatrix4 = (GainMatrix4*NewGainWeights+OldGainMatrix4*OldGainWeights4)/(NewGainWeights+OldGainWeights4)
+    replace!(OldGainMatrix4,NaN=>0e0)
+    @. OldGainWeights4 += NewGainWeights
+
+end
+
+function WeightedAverageGainBinary!(GainMatrix3::Array{Float64,9},OldGainMatrix3::Array{Float64,9},GainTally3_K::AbstractArray{UInt32,9},GainTally3_N::AbstractArray{UInt32,8},OldGainWeights3::Array{Float64,9})
+    # Version for if mu3 == mu4
+
+    # new weights k^2/N
+    NewGainWeights = similar(OldGainWeights3)
+    for i in axes(GainTally3_K,1)
+        @. NewGainWeights[i,:,:,:,:,:,:,:,:] = GainTally3_K[i,:,:,:,:,:,:,:,:]^2 / GainTally3_N
+    end
+    replace!(NewGainWeights,NaN=>0e0)
+    #weighted average
+    @. OldGainMatrix3 = (GainMatrix3*NewGainWeights+OldGainMatrix3*OldGainWeights3)/(NewGainWeights+OldGainWeights3)
+    replace!(OldGainMatrix3,NaN=>0e0)
+    # adjust weights for next integration step
+    @. OldGainWeights3 += NewGainWeights
 
 end
 

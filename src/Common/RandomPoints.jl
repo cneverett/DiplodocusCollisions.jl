@@ -254,14 +254,14 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
     #w3::Float64 = min(w3Limit+wC+scale*wScale,18e0)
     #w4::Float64 = min(w4Limit+wC+scale*wScale,18e0)
     if w3Limit != 0e0
-        w3 = w3Limit + scale
+        w3 = (1.0+scale)*w3Limit #+ scale
     else
-        w3 = scale*wC+scale*wScale
+        w3 = scale*wC #+scale*wScale
     end
     if w4Limit != 0e0
-        w4 = w4Limit + scale
+        w4 = (1.0+scale)*w4Limit #+ scale
     else
-        w4 = scale*wC+scale*wScale
+        w4 = scale*wC #+scale*wScale
     end
     #w3::Float64 = w3Limit#+scale*wC #+scale*(wScale)
     #w4::Float64 = w4Limit#+scale*wC #+scale*(wScale) 
@@ -342,7 +342,7 @@ function RPointSphereWeighted!(a::Vector{Float64},w::Float64)
     a[3] = h
     a[4] = t
 
-#=     if w >= 7e0
+    #=if w >= 7e0
         println("")
         println("w = $w")
         println("t = $t")

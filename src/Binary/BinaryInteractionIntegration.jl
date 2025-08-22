@@ -76,11 +76,12 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
             # reset arrays
             fill!(GainTotal3,Float64(0))
-            fill!(GainTotal4,Float64(0))
             fill!(LossTotal,Float64(0))
             fill!(GainTally3,UInt32(0))
-            fill!(GainTally4,UInt32(0))
             fill!(LossTally,UInt32(0))
+
+            fill!(GainTotal4,Float64(0))
+            fill!(GainTally4,UInt32(0))
 
             if numThreads == 1
                 # Run in serial if only one thread, easier to use for debugging
@@ -89,6 +90,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
                 wait.(workers) # Allow all workers to finish
             end
+
     
     # ===================================== #
 
@@ -96,10 +98,12 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
             # N values are last element of the tally array
             GainTally3_N = @view(GainTally3[end,:,:,:,:,:,:,:,:])
-            GainTally4_N = @view(GainTally4[end,:,:,:,:,:,:,:,:])
             # K value are all but last element of the tally array
             GainTally3_K = @view(GainTally3[1:end-1,:,:,:,:,:,:,:,:])
-            GainTally4_K = @view(GainTally4[1:end-1,:,:,:,:,:,:,:,:])
+            if m3 != m4 
+                GainTally4_N = @view(GainTally4[end,:,:,:,:,:,:,:,:])
+                GainTally4_K = @view(GainTally4[1:end-1,:,:,:,:,:,:,:,:])
+            end
 
             println("")
             println("Applying Symmetries")
@@ -110,25 +114,22 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             println("Generating New Sampling Arrays")
 
             # calculate the gain and loss matrices
-            if Indistinguishable_34 == true
+            if m3 == m4
                 # Only need to calculate GainMatrix3
                 for i in axes(GainTotal3,1)
                     @. @view(GainMatrix3[i,:,:,:,:,:,:,:,:]) = @view(GainTotal3[i,:,:,:,:,:,:,:,:]) / GainTally3_N
                 end
                 replace!(GainMatrix3,NaN=>0e0); # remove NaN caused by / 0
+                # GainMatrix4 remains zero
             else
                 for i in axes(GainTotal3,1)
                     @. @view(GainMatrix3[i,:,:,:,:,:,:,:,:]) = @view(GainTotal3[i,:,:,:,:,:,:,:,:]) / GainTally3_N
                 end
                 replace!(GainMatrix3,NaN=>0e0); # remove NaN caused by /0e0
-                if m3 == m4
-                    @. GainMatrix4 = GainMatrix3
-                else
-                    for i in axes(GainTotal4,1)
-                    @. @view(GainMatrix4[i,:,:,:,:,:,:,:,:]) = @view(GainTotal4[i,:,:,:,:,:,:,:,:]) / GainTally4_N
-                    end
-                    replace!(GainMatrix4,NaN=>0e0); # remove NaN caused by /0e0
+                for i in axes(GainTotal4,1)
+                @. @view(GainMatrix4[i,:,:,:,:,:,:,:,:]) = @view(GainTotal4[i,:,:,:,:,:,:,:,:]) / GainTally4_N
                 end
+                replace!(GainMatrix4,NaN=>0e0); # remove NaN caused by /0e0
             end
             @. LossMatrix1 = LossTotal / LossTally;
             replace!(LossMatrix1,NaN=>0e0);
@@ -142,19 +143,31 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             h4val = bounds(h_low,h_up,h4_num,h4_grid).*pi
 
             # Momentum space volume elements
-            MomentumSpaceFactorsBinary!(GainMatrix3,GainMatrix4,u3val,h3val,u4val,h4val,Indistinguishable_12)
+            if m3 == m4
+                MomentumSpaceFactorsBinary!(GainMatrix3,u3val,h3val,Indistinguishable_12)
+            else
+                MomentumSpaceFactorsBinary!(GainMatrix3,GainMatrix4,u3val,h3val,u4val,h4val,Indistinguishable_12)
+            end
                                         
             println("Weighting average of New and Old Sampling Arrays")
 
             # old arrays are modified in this process
-            WeightedAverageGainBinary!(GainMatrix3,OldGainMatrix3,GainTally3_K,GainTally3_N,OldGainWeights3,GainMatrix4,OldGainMatrix4,GainTally4_K,GainTally4_N,OldGainWeights4)
+            if m3 == m4
+                WeightedAverageGainBinary!(GainMatrix3,OldGainMatrix3,GainTally3_K,GainTally3_N,OldGainWeights3)
+                if Indistinguishable_34 == false # particles are distinguishable 
+                    @. OldGainMatrix4 = OldGainMatrix3
+                    @. OldGainWeights4 = OldGainWeights3
+                end
+            else
+                WeightedAverageGainBinary!(GainMatrix3,OldGainMatrix3,GainTally3_K,GainTally3_N,OldGainWeights3,GainMatrix4,OldGainMatrix4,GainTally4_K,GainTally4_N,OldGainWeights4)
+            end
             WeightedAverageLossBinary!(LossMatrix1,OldLossMatrix1,LossTally,OldLossTally)
 
         end # scale loop 
 
         finish!(prog)
 
-        if Indistinguishable_12 == false
+        if Indistinguishable_12 == false # particles are distinguishable
             perm = [4,5,6,1,2,3]
             OldLossMatrix2 .= permutedims(OldLossMatrix1,perm)
         else
@@ -175,8 +188,15 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
         println("Calculating Noise Corrected Arrays")
 
-        CorrectedGainMatrix3, CorrectedGainMatrix4 =  GainCorrection(Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)
+        CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2 =  GainCorrection(Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)
 
+    # ===================================== #
+
+    # =========== Garbage Collection ====== #
+
+        (GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = (0,0,0,0,0,0,0,0,0,0)
+        GC.gc()
+        
     # ===================================== #
 
     # ========== Save Arrays ============== #
@@ -199,6 +219,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
         write(f,"CorrectedGainMatrix3",CorrectedGainMatrix3)
         write(f,"CorrectedGainMatrix4",CorrectedGainMatrix4)
+        write(f,"CorrectedLossMatrix1",CorrectedLossMatrix1)
+        write(f,"CorrectedLossMatrix2",CorrectedLossMatrix2)
         close(f)
 
     # ===================================== #
