@@ -46,6 +46,7 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
         else
             e = 1-y^2
         end
+        # Approximation taken from Sokolov et al. 1969
         K13 = besselk(1/3,n*e^(3/2)/3)
         K23 = besselk(2/3,n*e^(3/2)/3)
         J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 +(e/10)*(K13-2*n*e^(3/2)*K23))
