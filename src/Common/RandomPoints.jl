@@ -342,7 +342,7 @@ function RPointSphereWeighted!(a::Vector{Float64},w::Float64)
     a[3] = h
     a[4] = t
 
-#=     if w >= 7e0
+    #=if w >= 7e0
         println("")
         println("w = $w")
         println("t = $t")
