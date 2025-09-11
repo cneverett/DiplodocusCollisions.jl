@@ -100,11 +100,16 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
             h2loc = location(h_low,h_up,h2_num,p2v[3],h2_grid)
             loc12 = CartesianIndex(p1loc,u1loc,h1loc,p2loc,u2loc,h2loc)
 
-            LocalGainTotal3 = @view(GainTotal3[:,:,:,loc12])
+            #=LocalGainTotal3 = @view(GainTotal3[:,:,:,loc12])
             LocalGainTally3 = @view(GainTally3[:,:,:,loc12])
             if m3 != m4
                 LocalGainTotal4 = @view(GainTotal4[:,:,:,loc12])
                 LocalGainTally4 = @view(GainTally4[:,:,:,loc12])
+            end=#
+
+            fill!(LocalGainTally3,UInt32(0))
+            if m3 != m4
+                fill!(LocalGainTally4,UInt32(0))
             end
 
             # LossVal
