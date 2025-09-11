@@ -123,6 +123,11 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                 p4pv = zeros(Float64,4)
 
                 (w3,w4,t,h) = WeightedFactors(p1v,p2v,m1,m2,m3,m4,sBig,sSmol,scale)
+
+                fill!(LocalGainTotal3,Float64(0))
+                if m3 != m4
+                    fill!(LocalGainTotal4,Float64(0))
+                end
                     
                 for _ in 1:(numGain*p3_num*u3_num*h3_num)
 
