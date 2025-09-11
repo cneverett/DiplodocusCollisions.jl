@@ -99,17 +99,17 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             #    wait.(workers) # Allow all workers to finish
             #end
 
-            #if numThreads == 1
-            #    # Run in serial if only one thread, easier to use for debugging
-            #    BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices,scale_val,prog,1)
-            #else
-            #    workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
-            #    wait.(workers) # Allow all workers to finish
-            #end
+            if numThreads == 1
+                # Run in serial if only one thread, easier to use for debugging
+                BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices,scale_val,prog,1)
+            else
+                workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
+                wait.(workers) # Allow all workers to finish
+            end
 
-            thread =1
+            #thread =1
 
-            BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,bins,scale_val,thread)
+            #BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,bins,scale_val,thread)
 
     
     # ===================================== #
