@@ -117,10 +117,10 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
 
             if LossVal != 0e0 # i.e. it is a valid interaction state
 
-                p3v = zeros(Float64,4)
-                p3pv = zeros(Float64,4)
-                p4v = zeros(Float64,4)
-                p4pv = zeros(Float64,4)
+                #p3v = zeros(Float64,4)
+                #p3pv = zeros(Float64,4)
+                #p4v = zeros(Float64,4)
+                #p4pv = zeros(Float64,4)
 
                 (w3,w4,t,h) = WeightedFactors(p1v,p2v,m1,m2,m3,m4,sBig,sSmol,scale)
 
