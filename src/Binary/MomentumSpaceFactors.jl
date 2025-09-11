@@ -21,7 +21,7 @@ function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,Los
     tmp_tally3 = zeros(Float64,size(GainTally3)[1:2])
 
     # Particle 3 Gain terms
-    @inbounds for h2 in axes(GainTotal3,9), u2 in axes(GainTotal3,8), p2 in axes(GainTotal3,7), h1 in axes(GainTotal3,6), u1 in axes(GainTotal3,5), p1 in axes(GainTotal3,4), h3 in axes(GainTotal3,3)
+    for h2 in axes(GainTotal3,9), u2 in axes(GainTotal3,8), p2 in axes(GainTotal3,7), h1 in axes(GainTotal3,6), u1 in axes(GainTotal3,5), p1 in axes(GainTotal3,4), h3 in axes(GainTotal3,3)
 
         nu1 = size(GainTotal3)[5]
         nu2 = size(GainTotal3)[8]
@@ -72,7 +72,7 @@ function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,Los
         tmp_tally4 = zeros(Float64,size(GainTally4)[1:2])
 
         # Particle 4 Gain terms
-        @inbounds for h2 in axes(GainTotal4,9), u2 in axes(GainTotal4,8), p2 in axes(GainTotal4,7), h1 in axes(GainTotal4,6), u1 in axes(GainTotal4,5), p1 in axes(GainTotal4,4), h4 in axes(GainTotal4,3)
+        for h2 in axes(GainTotal4,9), u2 in axes(GainTotal4,8), p2 in axes(GainTotal4,7), h1 in axes(GainTotal4,6), u1 in axes(GainTotal4,5), p1 in axes(GainTotal4,4), h4 in axes(GainTotal4,3)
 
             nu1 = size(GainTotal4)[5]
             nu2 = size(GainTotal4)[8]
@@ -104,8 +104,8 @@ function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,Los
 
             else # only first symmetry true
 
-                tmp_total4 = ViewGainTotal4 + ViewGainTotal4Mirror123
-                tmp_tally4 = ViewGainTally4 + ViewGainTally4Mirror123
+                @. tmp_total4 = ViewGainTotal4 + ViewGainTotal4Mirror123
+                @. tmp_tally4 = ViewGainTally4 + ViewGainTally4Mirror123
 
                 @. ViewGainTotal4 = tmp_total4
                 @. ViewGainTotal4Mirror123 = tmp_total4
@@ -120,7 +120,7 @@ function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,Los
     end
 
     # Particle Loss Terms
-    @inbounds for h2 in axes(LossTotal,6), u2 in axes(LossTotal,5), p2 in axes(LossTotal,4), h1 in axes(LossTotal,3), u1 in axes(LossTotal,2), p1 in axes(LossTotal,1)
+    for h2 in axes(LossTotal,6), u2 in axes(LossTotal,5), p2 in axes(LossTotal,4), h1 in axes(LossTotal,3), u1 in axes(LossTotal,2), p1 in axes(LossTotal,1)
 
         nu1 = size(LossTotal)[2]
         nu2 = size(LossTotal)[5]        
@@ -164,7 +164,7 @@ Applies momentum space volume element to the Gain and Loss matrices such that th
 function MomentumSpaceFactorsBinary!(GainMatrix3::Array{Float64,9},GainMatrix4::Array{Float64,9},u3_bounds::Vector{Float64},h3_bounds::Vector{Float64},u4_bounds::Vector{Float64},h4_bounds::Vector{Float64},Indistinguishable_12::Bool)
 
     # Momentum space volume elements
-    @inbounds for h2 in axes(GainMatrix3,9), u2 in axes(GainMatrix3,8), p2 in axes(GainMatrix3,7), h1 in axes(GainMatrix3,6), u1 in axes(GainMatrix3,5), p1 in axes(GainMatrix3,4) # common axes
+    for h2 in axes(GainMatrix3,9), u2 in axes(GainMatrix3,8), p2 in axes(GainMatrix3,7), h1 in axes(GainMatrix3,6), u1 in axes(GainMatrix3,5), p1 in axes(GainMatrix3,4) # common axes
         for h3 in axes(GainMatrix3,3), u3 in axes(GainMatrix3,2), p3 in 1:size(GainMatrix3,1)
             GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] *= (u3_bounds[u3+1]-u3_bounds[u3])*(h3_bounds[h3+1]-h3_bounds[h3]) # du3dh3
             GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] /= (1e0+Float64(Indistinguishable_12))
@@ -182,7 +182,7 @@ end
 function MomentumSpaceFactorsBinary!(GainMatrix3::Array{Float64,9},u3_bounds::Vector{Float64},h3_bounds::Vector{Float64},Indistinguishable_12::Bool)
 
     # Momentum space volume elements
-    @inbounds for h2 in axes(GainMatrix3,9), u2 in axes(GainMatrix3,8), p2 in axes(GainMatrix3,7), h1 in axes(GainMatrix3,6), u1 in axes(GainMatrix3,5), p1 in axes(GainMatrix3,4) # common axes
+    for h2 in axes(GainMatrix3,9), u2 in axes(GainMatrix3,8), p2 in axes(GainMatrix3,7), h1 in axes(GainMatrix3,6), u1 in axes(GainMatrix3,5), p1 in axes(GainMatrix3,4) # common axes
         for h3 in axes(GainMatrix3,3), u3 in axes(GainMatrix3,2), p3 in 1:size(GainMatrix3,1)
             GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] *= (u3_bounds[u3+1]-u3_bounds[u3])*(h3_bounds[h3+1]-h3_bounds[h3]) # du3dh3
             GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] /= (1e0+Float64(Indistinguishable_12))

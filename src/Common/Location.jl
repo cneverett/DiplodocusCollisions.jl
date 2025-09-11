@@ -19,7 +19,8 @@ julia> location(0e0,10e0,9,2e0,"u")
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,spacing::String)
     # function for generating position in array
     if spacing == "u" # uniform spacing
-        return val != up_bound ? floor(Int64,num*(val-low_bound)/(up_bound-low_bound)+1) : num 
+        loc = floor(Int64,num*(val-low_bound)/(up_bound-low_bound)) 
+        return loc >= num ? num : loc+1
     elseif spacing == "l" # log spacing
         logval = log10(val)
         loc = logval != up_bound ? floor(Int64,num*(logval-low_bound)/(up_bound-low_bound)+1) : num
@@ -37,8 +38,9 @@ end
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::UniformGrid)
     # grid location for uniform grid
     # if val is on grid boundary then it is assigned to the next bin 
-    # if val == up_bound then it is assigned to the last bin
-    return val != up_bound ? floor(Int64,num*(val-low_bound)/(up_bound-low_bound)+1) : num
+    # if val ≈ up_bound (the evaluation of floor can sometimes put val in bin num+1) then it is assigned to the last bin
+    loc = floor(Int64,num*(val-low_bound)/(up_bound-low_bound)) 
+    return loc >= num ? num : loc+1
 end
 
 #=function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::LogTenGrid)
