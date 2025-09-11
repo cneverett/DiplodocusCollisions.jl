@@ -65,12 +65,11 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
     h3_grid::GridType = Grid_String_to_Type(h3_grid_st)
     h4_grid::GridType = Grid_String_to_Type(h4_grid_st)
 
-    LocalGainTotal3 = zeros(Float64,p3_num,u3_num,h3_num)
-    LocalGainTotal3 = @view(GainTotal3[:,:,:,loc12])
-    LocalGainTally3 = @view(GainTally3[:,:,:,loc12])
+    LocalGainTotal3::Array{Float64,3} = zeros(Float64,size(GainTotal3)[1:3])
+    LocalGainTally3::Array{UInt32,3} = zeros(UInt32,size(GainTally3)[1:3])
     if m3 != m4
-        LocalGainTotal4 = @view(GainTotal4[:,:,:,loc12])
-        LocalGainTally4 = @view(GainTally4[:,:,:,loc12])
+        LocalGainTotal4::Array{Float64,3} = zeros(Float64,size(GainTotal4)[1:3])
+        LocalGainTally4::Array{UInt32,3} = zeros(UInt32,size(GainTally4)[1:3])
     end
 
     #indices = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))
