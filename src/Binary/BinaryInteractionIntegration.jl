@@ -67,11 +67,20 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
         println("Running Monte Carlo Integration")
 
         for (ii,scale_val) in enumerate(scale)
-        numT = round(Int,numLoss/length(scale))
 
             println("")
             println("scale = $scale_val, itteration = $ii out of $(length(scale))")
             println("")
+
+            indices = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))
+            length_indices=length(indices)
+
+            if length_indices/numThreads > 1.0
+                length_div_threads = ceil(Int64,length_indices/numThreads)
+                index_range = range(0:numThreads*length_div_threads,length=numThreads+1)
+            else 
+                index_range = 0:length_indices
+            end
 
             # reset arrays
             fill!(GainTotal3,Float64(0))
@@ -87,6 +96,14 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             #    BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,1)
             #else
             #    workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
+            #    wait.(workers) # Allow all workers to finish
+            #end
+
+            #if numThreads == 1
+            #    # Run in serial if only one thread, easier to use for debugging
+            #    BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices,scale_val,prog,1)
+            #else
+            #    workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
             #    wait.(workers) # Allow all workers to finish
             #end
 
