@@ -140,7 +140,7 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                     #if NumStates != 0
                         u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
                         h3loc = location(h_low,h_up,h3_num,p3v[3],h3_grid)
-                        LocalGainTally3[end,u3loc,h3loc] += 2*UInt32(1)
+                        LocalGainTally3[end,u3loc,h3loc] += UInt32(1)
                     #end
 
                     # Calculate Gain Array totals
@@ -189,7 +189,7 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                         h4loc = location(h_low,h_up,h4_num,p4v[3],h4_grid)
                         #u4locMirror = location(u_low,u_up,u4_num,-p4v[2],u4_grid)
                         #h4locMirror = location(h_low,h_up,h4_num,mod(p4v[3]+1e0,2e0),h4_grid)
-                        LocalGainTally4[end,u4loc,h4loc] += 2*UInt32(1)
+                        LocalGainTally4[end,u4loc,h4loc] += UInt32(1)
                         #LocalGainTally4[end,u4locMirror,h4locMirror] += UInt32(1)
 
                         # Calculate S Array totals
