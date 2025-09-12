@@ -73,11 +73,12 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             println("")
 
             indices = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))
-            length_indices=length(indices)
+            length_indices::Int64 = length(indices)
 
             if length_indices/numThreads > 1.0
-                length_div_threads = ceil(Int64,length_indices/numThreads)
-                index_range = range(0:numThreads*length_div_threads,length=numThreads+1)
+                length_div_threads::Int64 = ceil(Int64,length_indices/numThreads)
+                index_range = Vector(0:length_div_threads:numThreads*length_div_threads)
+                index_range[end] = length_indices
             else 
                 index_range = 0:length_indices
             end
@@ -105,7 +106,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 # Run in serial if only one thread, easier to use for debugging
                 BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices,scale_val,prog,1)
             else
-                numProgress = numLoss*index_range[1+1]*u1_num*h1_num*u2_num*h2_num
+                numProgress::Int64 = numLoss*index_range[1+1]*u1_num*h1_num*u2_num*h2_num
                 prog = Progress(numProgress)
                 workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
                 wait.(workers) # Allow all workers to finish
