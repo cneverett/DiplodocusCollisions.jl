@@ -3,7 +3,7 @@
 
 Function performs the Monte-Carlo sampling of incoming and outgoing particle states for binary interactions.
 """
-function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float64,9},LossTotal::Array{Float64,6},GainTally3::Array{UInt32,9},GainTally4::Array{UInt32,9},LossTally::Array{UInt32,6},ArrayOfLocks,sigma::Function,dsigmadt::Function,Parameters::Tuple{String,String,String,String,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64},numLoss::Int64,numGain::Int64,#= ,bins::Tuple{Int64,Int64,Int64,Int64} =#indices::CartesianIndices,scale::Float64,prog::Progress,thread_id::Int64)
+function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float64,9},LossTotal::Array{Float64,6},GainTally3::Array{UInt32,9},GainTally4::Array{UInt32,9},LossTally::Array{UInt32,6},ArrayOfLocks,sigma::Function,dsigmadt::Function,Parameters::Tuple{String,String,String,String,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64},numLoss::Int64,numGain::Int64,#= ,bins::Tuple{Int64,Int64,Int64,Int64} =#indices::Vector{CartesianIndex{2}},scale::Float64,prog::Progress,thread_id::Int64)
 
     # Set Parameters
     (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid_st,p1_num,u1_grid_st,u1_num,h1_grid_st,h1_num,p2_low,p2_up,p2_grid_st,p2_num,u2_grid_st,u2_num,h2_grid_st,h2_num,p3_low,p3_up,p3_grid_st,p3_num,u3_grid_st,u3_num,h3_grid_st,h3_num,p4_low,p4_up,p4_grid_st,p4_num,u4_grid_st,u4_num,h4_grid_st,h4_num) = Parameters
@@ -74,8 +74,6 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
 
     #indices = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))
 
-    println("here")
-
     #= @showprogress desc="MC Sampling for scale=$(scale):" =# for index in eachindex(indices)
         
         p1loc = indices[index][1]
@@ -142,7 +140,7 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                     #if NumStates != 0
                         u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
                         h3loc = location(h_low,h_up,h3_num,p3v[3],h3_grid)
-                        LocalGainTally3[end,u3loc,h3loc] += UInt32(1)
+                        LocalGainTally3[end,u3loc,h3loc] += 2*UInt32(1)
                     #end
 
                     # Calculate Gain Array totals
@@ -179,7 +177,7 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                     for _ in 1:(numGain*p4_num*u4_num*h4_num)
 
                         prob4 = RPointSphereWeighted!(p4v,w4)
-                        RotateToLab!(p3v,t,h)
+                        RotateToLab!(p4v,t,h)
                         @. p4pv = p4v
 
                         # Calculate p4 value
@@ -191,7 +189,7 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                         h4loc = location(h_low,h_up,h4_num,p4v[3],h4_grid)
                         #u4locMirror = location(u_low,u_up,u4_num,-p4v[2],u4_grid)
                         #h4locMirror = location(h_low,h_up,h4_num,mod(p4v[3]+1e0,2e0),h4_grid)
-                        LocalGainTally4[end,u4loc,h4loc] += UInt32(1)
+                        LocalGainTally4[end,u4loc,h4loc] += 2*UInt32(1)
                         #LocalGainTally4[end,u4locMirror,h4locMirror] += UInt32(1)
 
                         # Calculate S Array totals
@@ -257,8 +255,6 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
         end
 
         end # T loop
-
-        println("there")
 
     end # indices loop
 
