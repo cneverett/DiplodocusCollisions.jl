@@ -53,11 +53,21 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
         prog = Progress(numLoss)
 
         for (ii,scale_val) in enumerate(scale)
-            numT = round(Int,numLoss/length(scale))
 
             println("")
             println("scale = $scale_val, itteration = $ii out of $(length(scale))")
             println("")
+
+            indices = CartesianIndices((p1loc_low:p1loc_up))
+            length_indices::Int64 = length(indices)
+
+            if length_indices/numThreads > 1.0
+                length_div_threads::Int64 = ceil(Int64,length_indices/numThreads)
+                index_range = Vector(0:length_div_threads:numThreads*length_div_threads)
+                index_range[end] = length_indices
+            else 
+                index_range = Vector(0:length_indices)
+            end
 
             # reset new arrays
             fill!(LossTotal1,Float64(0))
@@ -72,9 +82,9 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
 
             #workers  = [EmissionMonteCarloAxi_MultiThread!(SAtotal,SAtally,ArrayOfLocks,Parameters,numT,numSiterPerThread,nThreads,prog,thread) for thread in 1:nThreads]
             if numThreads == 1
-                EmissionMonteCarlo_Debug!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numT,numGain,scale_val,prog,1)
+                EmissionMonteCarlo_Debug!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numT,numGain,indices,scale_val,prog,1)
             else 
-                workers  = [EmissionMonteCarlo!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
+                workers  = [EmissionMonteCarlo!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
                 wait.(workers) # Allow all workers to finish
             end
 

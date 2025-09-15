@@ -12,7 +12,6 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
 
     # Set Parameters
     (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid_st,p1_num,u1_grid_st,u1_num,h1_grid_st,h1_num,p2_low,p2_up,p2_grid_st,p2_num,u2_grid_st,u2_num,h2_grid_st,h2_num,p3_low,p3_up,p3_grid_st,p3_num,u3_grid_st,u3_num,h3_grid_st,h3_num,p4_low,p4_up,p4_grid_st,p4_num,u4_grid_st,u4_num,h4_grid_st,h4_num) = Parameters
-    #(p1loc_low,p1loc_up,p2loc_low,p2loc_up) = bins
 
     # allocate arrays for each thread
     p1v::Vector{Float64} = zeros(Float64,4)
