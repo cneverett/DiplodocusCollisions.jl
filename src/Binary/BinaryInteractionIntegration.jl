@@ -80,7 +80,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 index_range = Vector(0:length_div_threads:numThreads*length_div_threads)
                 index_range[end] = length_indices
             else 
-                index_range = 0:length_indices
+                index_range = Vector(0:length_indices)
             end
 
             # reset arrays
