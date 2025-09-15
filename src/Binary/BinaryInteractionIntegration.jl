@@ -101,12 +101,12 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             #end
 
             if numThreads == 1
-                numProgress = numLoss*index_range[1+1]*u1_num*h1_num*u2_num*h2_num
+                numProgress = numLoss*index_range[end]*u1_num*h1_num*u2_num*h2_num
                 prog = Progress(numProgress)
                 # Run in serial if only one thread, easier to use for debugging
                 BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices,scale_val,prog,1)
             else
-                numProgress::Int64 = numLoss*index_range[1+1]*u1_num*h1_num*u2_num*h2_num
+                numProgress = numLoss*index_range[1+1]*u1_num*h1_num*u2_num*h2_num
                 prog = Progress(numProgress)
                 workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
                 wait.(workers) # Allow all workers to finish
