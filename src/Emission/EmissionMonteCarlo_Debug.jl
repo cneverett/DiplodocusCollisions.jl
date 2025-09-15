@@ -76,8 +76,7 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
 
             # generate p1v (emitting particle)
             RPointSphereCosThetaPhi!(p1v)
-            RPointLogMomentum!(p1v,p1_low,p1_up,p1_num)
-            p1loc = location(p1_low,p1_up,p1_num,p1v[1],p1_grid)
+            RPointLogMomentum!(p1v,p1_low,p1_up,p1_num,p1loc)
             u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
             h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
 
