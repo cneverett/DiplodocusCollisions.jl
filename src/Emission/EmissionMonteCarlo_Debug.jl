@@ -71,6 +71,7 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
     for index in eachindex(indices)
 
         p1loc = indices[index][1]
+        p3loc = indices[index][2]
 
         for _ in 1:(numLoss*u1_num*h1_num)
 
@@ -87,17 +88,16 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
             fill!(localGainTallyN3,UInt32(0))
             fill!(localGainTallyK3,UInt32(0))
 
-            for _ in 1:(numGain*p3_num*u3_num*h3_num)
+            for _ in 1:(numGain*u3_num*h3_num)
 
                 prob = RPointSphereWeighted!(p3v,w) # sample angles aligned to p1v
                 RotateToLab!(p3v,t,h)   # rotate to z aligned
-                RPointLogMomentum!(p3v,p3_low,p3_up,p3_num)
+                RPointLogMomentum!(p3v,p3_low,p3_up,p3_num,p3loc)
 
                 # calculate S value
                 Sval = EmissionKernel(p3v,p1v,m1,z1,Ext)
 
                 # find S array location 
-                p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)
                 u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
                 h3loc = location(h_low,h_up,h3_num,p3v[3],h3_grid)
 

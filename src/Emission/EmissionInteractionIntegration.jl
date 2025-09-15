@@ -3,13 +3,14 @@
 
 Function to run the Monte Carlo integration of the S array in a serial environment. 
 """
-function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,String,Float64,Float64,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Vector{Float64}},StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64},Int64},Int64,Int64,Int64,String,String})
+function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,String,Float64,Float64,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Vector{Float64}},Tuple{Int64,Int64,Int64,Int64},StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64},Int64},Int64,Int64,Int64,String,String})
 
     # ======= Load User Parameters ======= #
 
-    (Parameters,scale,numLoss,numGain,numThreads,fileLocation,fileName) = Setup;
+    (Parameters,bins,scale,numLoss,numGain,numThreads,fileLocation,fileName) = Setup;
     #(name1,name2,mu1,mu2,z1,z2,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,BMag) = Parameters;
     (name1,name2,name3,type,m1,m2,m3,z1,z2,z3,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,Ext) = Parameters
+    (p1loc_low,p1loc_up,p3loc_low,p3loc_up) = bins 
 
     # ==================================== #
 
@@ -58,7 +59,7 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             println("scale = $scale_val, itteration = $ii out of $(length(scale))")
             println("")
 
-            indices = CartesianIndices((p1loc_low:p1loc_up))
+            indices = CartesianIndices((p1loc_low:p1loc_up,p3loc_low:p3loc:up))
             length_indices::Int64 = length(indices)
 
             if length_indices/numThreads > 1.0
