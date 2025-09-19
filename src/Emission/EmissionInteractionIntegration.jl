@@ -59,7 +59,7 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             println("scale = $scale_val, itteration = $ii out of $(length(scale))")
             println("")
 
-            indices = CartesianIndices((p1loc_low:p1loc_up,p3loc_low:p3loc:up))
+            indices = CartesianIndices((p1loc_low:p1loc_up,p3loc_low:p3loc_up))
             length_indices::Int64 = length(indices)
 
             if length_indices/numThreads > 1.0
