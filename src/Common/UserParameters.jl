@@ -236,7 +236,7 @@ function UserEmissionParameters()
 
     Parameters = (name1,name2,name3,type,m1,m2,m3,z1,z2,z3,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,Ext)
 
-    bins = (p1loc_low,p1loc_up,p2loc_low,p2loc_up)
+    bins = (p1loc_low,p1loc_up,p3loc_low,p3loc_up)
 
     numLoss::Int64 = getfield(Main,Symbol("numLoss"))   
     numGain::Int64 = getfield(Main,Symbol("numGain"))  
