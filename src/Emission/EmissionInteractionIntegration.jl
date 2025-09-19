@@ -84,11 +84,13 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
                 numProgress = numLoss*index_range[end]*u1_num*h1_num
                 prog = Progress(numProgress)
                 EmissionMonteCarlo_Debug!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numT,numGain,indices,scale_val,prog,1)
+                finish!(prog)
             else 
                 numProgress = numLoss*index_range[1+1]*u1_num*h1_num
                 prog = Progress(numProgress)
                 workers  = [EmissionMonteCarlo!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
-                wait.(workers) # Allow all workers to finish
+                wait.(workers) # Allow all workers to finish#
+                finish!(prog)
             end
 
     # ===================================== #
@@ -122,8 +124,6 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             WeightedAverageLossEmission!(LossMatrix1,OldLossMatrix1,LossTallyN1,OldLossTallyN1)
 
         end # scale loop 
-
-        finish!(prog)
 
     # ===================================== #
 
