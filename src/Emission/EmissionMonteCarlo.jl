@@ -108,6 +108,7 @@ function EmissionMonteCarlo!(GainTotal2::Array{Float64,6},GainTallyN2::Array{UIn
                 end
 
                 if thread_id == 1
+                    println(p3loc)
                     println(p3v[1])
                     println(Sval)
                 end
