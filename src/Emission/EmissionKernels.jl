@@ -49,8 +49,8 @@ function SyncKernel(p3v::Vector{Float64},p1v::Vector{Float64},m1::Float64,z1::Fl
         # Approximation taken from Sokolov et al. 1969
         K13 = besselk(1/3,n*e^(3/2)/3)
         K23 = besselk(2/3,n*e^(3/2)/3)
-        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 #=+(e/10)*(K13-2*n*e^(3/2)*K23)=#)
-        J2 = (e/(pi*sqrt(3)))*(K23#= + (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13)=#)    
+        J1 = ((sqrt(e))/(pi*sqrt(3)))*(K13 +(e/10)*(K13-2*n*e^(3/2)*K23))
+        J2 = (e/(pi*sqrt(3)))*(K23 + (e/5)*(2*K23-(1/(e^(3/2)*n)+n*e^(3/2))*K13))    
     elseif n_int >= 1 && abs(n-n_int)/n_int < tol # for tol = 5e-4 this always true for n > 1e3 
         #J1 = (n*y/2)^n/Bessels.Gamma(n+1)
         #J2 = (1/2)*(n*y/2)^(n-1)/Bessels.Gamma(n)
