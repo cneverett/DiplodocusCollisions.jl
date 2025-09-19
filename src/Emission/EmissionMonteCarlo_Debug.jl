@@ -88,11 +88,6 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
             fill!(localGainTallyN3,UInt32(0))
             fill!(localGainTallyK3,UInt32(0))
 
-            println(p3_low)
-            println(p3_up)
-            println(p3_num)
-            println(p3loc)
-
             for _ in 1:(numGain*u3_num*h3_num)
 
                 prob = RPointSphereWeighted!(p3v,w) # sample angles aligned to p1v
