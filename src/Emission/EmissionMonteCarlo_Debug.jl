@@ -88,6 +88,11 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
             fill!(localGainTallyN3,UInt32(0))
             fill!(localGainTallyK3,UInt32(0))
 
+            println(p3_low)
+            println(p3_up)
+            println(p3_num)
+            println(p3loc)
+
             for _ in 1:(numGain*u3_num*h3_num)
 
                 prob = RPointSphereWeighted!(p3v,w) # sample angles aligned to p1v
@@ -105,12 +110,6 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
                 localGainTotal3[p3loc,u3loc,h3loc] += Sval/prob
                 if Sval != 0e0
                     localGainTallyK3[p3loc,u3loc,h3loc] += UInt32(1)
-                end
-
-                if thread_id == 1
-                    println(p3loc)
-                    println(p3v[1])
-                    println(Sval)
                 end
             
             end
