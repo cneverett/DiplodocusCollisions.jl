@@ -106,6 +106,12 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
                 if Sval != 0e0
                     localGainTallyK3[p3loc,u3loc,h3loc] += UInt32(1)
                 end
+
+                if thread_id == 1
+                    println(p3loc)
+                    println(p3v[1])
+                    println(Sval)
+                end
             
             end
 
