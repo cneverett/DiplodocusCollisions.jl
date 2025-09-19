@@ -93,7 +93,6 @@ function EmissionMonteCarlo!(GainTotal2::Array{Float64,6},GainTallyN2::Array{UIn
                 prob = RPointSphereWeighted!(p3v,w) # sample angles aligned to p1v
                 RotateToLab!(p3v,t,h)   # rotate to z aligned
                 RPointLogMomentum!(p3v,p3_low,p3_up,p3_num,p3loc)
-                println(p3v[1])
 
                 # calculate S value
                 Sval = EmissionKernel(p3v,p1v,m1,z1,Ext)
@@ -106,6 +105,11 @@ function EmissionMonteCarlo!(GainTotal2::Array{Float64,6},GainTallyN2::Array{UIn
                 localGainTotal3[p3loc,u3loc,h3loc] += Sval/prob
                 if Sval != 0e0
                     localGainTallyK3[p3loc,u3loc,h3loc] += UInt32(1)
+                end
+
+                if thread_id == 1
+                    println(p3v[1])
+                    println(Sval)
                 end
             
             end
