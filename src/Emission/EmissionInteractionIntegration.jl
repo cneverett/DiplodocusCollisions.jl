@@ -51,8 +51,6 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
 
         println("Running Monte Carlo Integration")
 
-        prog = Progress(numLoss)
-
         for (ii,scale_val) in enumerate(scale)
 
             println("")
@@ -83,8 +81,12 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
 
             #workers  = [EmissionMonteCarloAxi_MultiThread!(SAtotal,SAtally,ArrayOfLocks,Parameters,numT,numSiterPerThread,nThreads,prog,thread) for thread in 1:nThreads]
             if numThreads == 1
+                numProgress = numLoss*index_range[end]*u1_num*h1_num
+                prog = Progress(numProgress)
                 EmissionMonteCarlo_Debug!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numT,numGain,indices,scale_val,prog,1)
             else 
+                numProgress = numLoss*index_range[1+1]*u1_num*h1_num
+                prog = Progress(numProgress)
                 workers  = [EmissionMonteCarlo!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
                 wait.(workers) # Allow all workers to finish
             end
