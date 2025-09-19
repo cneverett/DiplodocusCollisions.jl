@@ -83,7 +83,7 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             if numThreads == 1
                 numProgress = numLoss*index_range[end]*u1_num*h1_num
                 prog = Progress(numProgress)
-                EmissionMonteCarlo_Debug!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numLoss,numGain,indices,scale_val,prog,1)
+                EmissionMonteCarlo_Debug!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numLoss,numGain,indices[1:end],scale_val,prog,1)
                 finish!(prog)
             else 
                 numProgress = numLoss*index_range[1+1]*u1_num*h1_num
