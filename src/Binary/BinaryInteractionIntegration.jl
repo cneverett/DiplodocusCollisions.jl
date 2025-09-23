@@ -72,7 +72,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             println("scale = $scale_val, itteration = $ii out of $(length(scale))")
             println("")
 
-            indices::Vector{CartesianIndex{2}} = Vector(CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up)))
+            indices::Vector{CartesianIndex{2}} = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))[1:end]
             shuffle!(indices) # better balances workload between threads
             length_indices::Int64 = length(indices)
 
@@ -105,7 +105,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 numProgress = numLoss*index_range[end]*u1_num*h1_num*u2_num*h2_num
                 prog = Progress(numProgress)
                 # Run in serial if only one thread, easier to use for debugging
-                BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices,scale_val,prog,1)
+                BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[1:end],scale_val,prog,1)
                 finish!(prog)
             else
                 numProgress = numLoss*index_range[1+1]*u1_num*h1_num*u2_num*h2_num
