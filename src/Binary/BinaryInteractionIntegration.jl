@@ -72,7 +72,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             println("scale = $scale_val, itteration = $ii out of $(length(scale))")
             println("")
 
-            indices = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))
+            indices::Vector{CartesianIndex{2}} = Vector(CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up)))
+            shuffle!(indices) # better balances workload between threads
             length_indices::Int64 = length(indices)
 
             if length_indices/numThreads > 1.0
