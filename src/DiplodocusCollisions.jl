@@ -9,6 +9,7 @@ export UserBinaryParameters, UserEmissionParameters
     using BenchmarkTools
     using Bessels
     using ProgressMeter
+    using Random: shuffle!
 
     # include Common files
         include("Common/Constants.jl")

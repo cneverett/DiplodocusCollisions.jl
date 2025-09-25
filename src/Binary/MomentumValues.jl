@@ -28,8 +28,8 @@ function MomentumValue!(pv::Vector{Float64},ppv::Vector{Float64},p1v::Vector{Flo
     st2::Float64,ct2::Float64 = sincospi(t2)
     st3::Float64,ct3::Float64 = sincospi(t3)
 
-    ch3h1::Float64 = cospi(h3-h1)
-    ch3h2::Float64 = cospi(h3-h2)
+    ch3h1::Float64 = 0e0
+    ch3h2::Float64 = 0e0
     ch1h2::Float64 = cospi(h1-h2)
 
     m32::Float64 = m3^2
@@ -43,27 +43,56 @@ function MomentumValue!(pv::Vector{Float64},ppv::Vector{Float64},p1v::Vector{Flo
     E1::Float64 = sqrt(m12+p12)
     E2::Float64 = sqrt(m22+p22)
 
-    ctheta12::Float64 = ct1*ct2 + ch1h2*st1*st2
-    ctheta13::Float64 = ct3*ct1 + ch3h1*st3*st1
-    ctheta23::Float64 = ct3*ct2 + ch3h2*st3*st2
+    C3sqr::Float64 = 0e0
+    C3::Float64 = 0e0
+    C2::Float64 = 0e0
+    C4::Float64 = 0e0
 
-    if (ctheta13 >= 1e0) || (ctheta23 >= 1e0)
-        # bit inaccurate but hacky fix
-        ctheta13 = min(ctheta13,1e0)
-        ctheta23 = min(ctheta23,1e0)
-        # exceed float precision 
-        #return false, false, 0
+    ctheta12::Float64 = ct1*ct2 + ch1h2*st1*st2
+
+    x::Float64 = 0e0
+    y::Float64 = 0e0
+    z::Float64 = 0e0
+
+    if (x=(t1-t3)^2) < 1e-10 && (y=(h1-h3)^2) < 1e-10 # p3 close to p1, leading to ctheta13 >=1.0
+        ch3h2 = cospi(h3-h2)
+        ctheta23 = ct3*ct2 + ch3h2*st3*st2
+        # ctheta13 = 1-z
+        z = (1/2) * pi^2 * (x+y*sinpi(t1)*sinpi(t3))
+
+        C3sqr = (m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)^2-4*m32*(m12+m22+2*E1*E2-(p1^2*z^2-2(p1^2+p1*p2*ctheta23)*z+2p1*p2*ctheta23-p2^2*(1-ctheta23^2)))
+        C2 = -4*(-p1*z+(p1+p2*ctheta23))*(m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)
+        C4 = -8*(m12+m22+2*E1*E2-(p1^2*z^2-2(p1^2+p1*p2*ctheta23)*z+2p1*p2*ctheta23-p2^2*(1-ctheta23^2)))
+
+    elseif (x=(t2-t3)^2) < 1e-10 && (y=(h2-h3)^2) < 1e-10 # p3 close to p22, leading to ctheta23 >=1.0
+        ch3h1 = cospi(h3-h1)
+        ctheta13 = ct3*ct1 + ch3h1*st3*st1
+        # ctheta23 = 1-z
+        z = (1/2) * pi^2 * (x+y*sinpi(t2)*sinpi(t3))
+
+        C3sqr = (m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)^2-4*m32*(m22+m12+2*E1*E2-(p2^2*z^2-2(p2^2+p1*p2*ctheta13)*z+2p1*p2*ctheta13-p1^2*(1-ctheta13^2)))
+        C2 = -4*(-p2*z+(p2+p1*ctheta13))*(m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)
+        C4 = -8*(m22+m12+2*E1*E2-(p2^2*z^2-2(p2^2+p1*p2*ctheta13)*z+2p1*p2*ctheta13-p1^2*(1-ctheta13^2)))
+
+    else
+        ch3h1 = cospi(h3-h1)
+        ch3h2 = cospi(h3-h2)
+        ctheta13 = ct3*ct1 + ch3h1*st3*st1
+        ctheta23 = ct3*ct2 + ch3h2*st3*st2
+
+        C3sqr = (m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)^2-4*m32*((E1+E2)^2-(p1*ctheta13+p2*ctheta23)^2)
+        C2 = -4*(p1*ctheta13+p2*ctheta23)*(m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)
+        C4 = -8*((E1+E2)^2-(p1*ctheta13+p2*ctheta23)^2)
     end
+
 
     # reset pv values
     pv[1] = 0e0 
     ppv[1] = 0e0
 
-    C3sqr::Float64 = (m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)^2-4*m32*((E1+E2)^2-(p1*ctheta13+p2*ctheta23)^2)
-
-    C2::Float64 = -4*(p1*ctheta13+p2*ctheta23)*(m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)
-
-    C4::Float64 = -8*((E1+E2)^2-(p1*ctheta13+p2*ctheta23)^2)
+    #C3sqr = (m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)^2-4*m32*((E1+E2)^2-(p1*ctheta13+p2*ctheta23)^2)
+    #C2 = -4*(p1*ctheta13+p2*ctheta23)*(m32-m42+m12+m22+2*E1*E2-2*p1*p2*ctheta12)
+    #C4 = -8*((E1+E2)^2-(p1*ctheta13+p2*ctheta23)^2)
 
     # C3sqr == 0 was causing issues with SValue calculation often leading to deltacorrect = 0 so we are going to ignore this point and tread it as if p were complex.
     #=if C3sqr == 0 # only one state and p cannot equal zero

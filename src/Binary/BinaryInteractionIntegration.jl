@@ -1,7 +1,7 @@
 #= Script for running the ST integration and returning data arrays =#
 
 #=
-    Optimisation of the multi-threaded version would not have been possible without the kind guidence of those on the Julia Forums: https://discourse.julialang.org/t/fast-multi-threaded-array-editing-without-data-races/114863/41
+    Optimisation of the multi-threaded version would not have been possible without the kind guidance of those on the Julia Forums: https://discourse.julialang.org/t/fast-multi-threaded-array-editing-without-data-races/114863/41
     In particular the assistance of users: mbauman, adienes, Oscar_Smith, Satvik, Salmon, sgaure and foobar_lv2
 =#
 
@@ -10,12 +10,13 @@
 
 Function to build/load the collision matrices, then run the Monte Carlo integration of the Gain and Loss arrays in a multi-threaded environment. The function will run the Monte Carlo integration in parallel across the number of threads specified in the global variable `numThreads``. The function will then evaluate the Gain and Loss matrices using a weighted averaging method and save the results to a file specified by `fileLocation` and `fileName` in the input `Setup`.
 """
-function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,String,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64},StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64},Int64},Int64,Int64,Int64,String,String})
+function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,String,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64},Tuple{Int64,Int64,Int64,Int64},StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64},Int64},Int64,Int64,Int64,String,String})
 
     # ========= Load user Parameters ======= #
 
-    (Parameters,scale,numLoss,numGain,numThreads,fileLocation,fileName) = Setup
+    (Parameters,bins,scale,numLoss,numGain,numThreads,fileLocation,fileName) = Setup
     (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
+    (p1loc_low,p1loc_up,p2loc_low,p2loc_up) = bins 
 
     # ====================================== #
 
@@ -65,14 +66,23 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
         println("Running Monte Carlo Integration")
 
-        prog = Progress(numLoss)
-
         for (ii,scale_val) in enumerate(scale)
-        numT = round(Int,numLoss/length(scale))
 
             println("")
             println("scale = $scale_val, itteration = $ii out of $(length(scale))")
             println("")
+
+            indices::Vector{CartesianIndex{2}} = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))[1:end]
+            shuffle!(indices) # better balances workload between threads
+            length_indices::Int64 = length(indices)
+
+            if length_indices/numThreads > 1.0
+                length_div_threads::Int64 = ceil(Int64,length_indices/numThreads)
+                index_range = Vector(0:length_div_threads:numThreads*length_div_threads)
+                index_range[end] = length_indices
+            else 
+                index_range = Vector(0:length_indices)
+            end
 
             # reset arrays
             fill!(GainTotal3,Float64(0))
@@ -83,13 +93,31 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             fill!(GainTotal4,Float64(0))
             fill!(GainTally4,UInt32(0))
 
+            #if numThreads == 1
+            #    # Run in serial if only one thread, easier to use for debugging
+            #    BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,1)
+            #else
+            #    workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
+            #    wait.(workers) # Allow all workers to finish
+            #end
+
             if numThreads == 1
+                numProgress = numLoss*index_range[end]*u1_num*h1_num*u2_num*h2_num
+                prog = Progress(numProgress)
                 # Run in serial if only one thread, easier to use for debugging
-                BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,1)
+                BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[1:end],scale_val,prog,1)
+                finish!(prog)
             else
-                workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numT,numGain,scale_val,prog,thread) for thread in 1:numThreads]
+                numProgress = numLoss*index_range[1+1]*u1_num*h1_num*u2_num*h2_num
+                prog = Progress(numProgress)
+                workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
                 wait.(workers) # Allow all workers to finish
+                finish!(prog)
             end
+
+            #thread =1
+
+            #BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,bins,scale_val,thread)
 
     
     # ===================================== #
@@ -117,17 +145,17 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             if m3 == m4
                 # Only need to calculate GainMatrix3
                 for i in axes(GainTotal3,1)
-                    @. @view(GainMatrix3[i,:,:,:,:,:,:,:,:]) = @view(GainTotal3[i,:,:,:,:,:,:,:,:]) / GainTally3_N
+                    @view(GainMatrix3[i,:,:,:,:,:,:,:,:]) .= @view(GainTotal3[i,:,:,:,:,:,:,:,:]) ./ GainTally3_N
                 end
                 replace!(GainMatrix3,NaN=>0e0); # remove NaN caused by / 0
                 # GainMatrix4 remains zero
             else
                 for i in axes(GainTotal3,1)
-                    @. @view(GainMatrix3[i,:,:,:,:,:,:,:,:]) = @view(GainTotal3[i,:,:,:,:,:,:,:,:]) / GainTally3_N
+                    @view(GainMatrix3[i,:,:,:,:,:,:,:,:]) .= @view(GainTotal3[i,:,:,:,:,:,:,:,:]) ./ GainTally3_N
                 end
                 replace!(GainMatrix3,NaN=>0e0); # remove NaN caused by /0e0
                 for i in axes(GainTotal4,1)
-                @. @view(GainMatrix4[i,:,:,:,:,:,:,:,:]) = @view(GainTotal4[i,:,:,:,:,:,:,:,:]) / GainTally4_N
+                    @view(GainMatrix4[i,:,:,:,:,:,:,:,:]) .= @view(GainTotal4[i,:,:,:,:,:,:,:,:]) ./ GainTally4_N
                 end
                 replace!(GainMatrix4,NaN=>0e0); # remove NaN caused by /0e0
             end
@@ -164,8 +192,6 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             WeightedAverageLossBinary!(LossMatrix1,OldLossMatrix1,LossTally,OldLossTally)
 
         end # scale loop 
-
-        finish!(prog)
 
         if Indistinguishable_12 == false # particles are distinguishable
             perm = [4,5,6,1,2,3]
@@ -224,6 +250,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
         close(f)
 
     # ===================================== #
+
+    GC.gc()
 
     return nothing
 

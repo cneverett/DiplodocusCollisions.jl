@@ -19,7 +19,7 @@
 - Take random points (p1,p2,t1,t2) and calculate Synchrotron emissivity
 - Find position in S arrays and allocated tallies and totals accordingly.
 """
-function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Array{UInt32,6},GainTallyK2::Array{UInt32,6},GainTotal3::Array{Float64,6},GainTallyN3::Array{UInt32,6},GainTallyK3::Array{UInt32,6},LossTotal1::Array{Float64,3},LossTallyN1::Array{UInt32,3},LossTallyK1::Array{UInt32,3},ArrayOfLocks,EmissionKernel::Function,Parameters::Tuple{String,String,String,String,Float64,Float64,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Vector{Float64}},numLoss::Int64,numGain::Int64,scale::Float64,prog::Progress,thread_id::Int64)
+function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Array{UInt32,6},GainTallyK2::Array{UInt32,6},GainTotal3::Array{Float64,6},GainTallyN3::Array{UInt32,6},GainTallyK3::Array{UInt32,6},LossTotal1::Array{Float64,3},LossTallyN1::Array{UInt32,3},LossTallyK1::Array{UInt32,3},ArrayOfLocks,EmissionKernel::Function,Parameters::Tuple{String,String,String,String,Float64,Float64,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Vector{Float64}},numLoss::Int64,numGain::Int64,indices::Vector{CartesianIndex{2}},scale::Float64,prog::Progress,thread_id::Int64)
 
     # Set Parameters
     (name1,name2,name3,type,m1,m2,m3,z1,z2,z3,p1_low,p1_up,p1_grid_st,p1_num,u1_grid_st,u1_num,h1_grid_st,h1_num,p2_low,p2_up,p2_grid_st,p2_num,u2_grid_st,u2_num,h2_grid_st,h2_num,p3_low,p3_up,p3_grid_st,p3_num,u3_grid_st,u3_num,h3_grid_st,h3_num,Ext) = Parameters
@@ -65,73 +65,64 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
     localGainTallyK2::Array{UInt32,3} = zeros(UInt32,size(GainTallyK2)[1:3])
 
     localGainTotal3::Array{Float64,3} = zeros(Float64,size(GainTotal3)[1:3])
-    localGainTallyN3::Array{UInt32,3} = zeros(UInt32,size(GainTotalN3)[1:3])
-    localGainTallyK3::Array{UInt32,3} = zeros(UInt32,size(GainTallyK3)[1:3])
+    localGainTallyN3::Array{UInt32,3} = zeros(UInt32,size(GainTotal3)[1:3])
+    localGainTallyK3::Array{UInt32,3} = zeros(UInt32,size(GainTotal3)[1:3])
 
-    for _ in 1:numLoss
+    for index in eachindex(indices)
 
-        # generate p1v (emitting particle)
-        RPointSphereCosThetaPhi!(p1v)
-        RPointLogMomentum!(p1v,p1_low,p1_up,p1_num)
-        p1loc = location(p1_low,p1_up,p1_num,p1v[1],p1_grid)
-        u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
-        h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
+        p1loc = indices[index][1]
+        p3loc = indices[index][2]
 
-        #WeightFactors = WeightedFactorsEmission(p1v,m1,scale)
-        (w,t,h) = WeightedFactorsEmission(p1v,m1,scale)
+        for _ in 1:(numLoss*u1_num*h1_num)
 
-        fill!(localGainTotal3,Float64(0))
-        fill!(localGainTally3,UInt32(0))
+            # generate p1v (emitting particle)
+            RPointSphereCosThetaPhi!(p1v)
+            RPointLogMomentum!(p1v,p1_up,p1_low,p1_num,p1loc)
+            u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
+            h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
 
-        for _ in 1:numGain
+            #WeightFactors = WeightedFactorsEmission(p1v,m1,scale)
+            (w,t,h) = WeightedFactorsEmission(p1v,m1,scale)
 
-            #ImportanceSamplingSync!(p1v,p3v,localGainTally3,localGainTotal3,SmallParameters,WeightFactors)
+            fill!(localGainTotal3,Float64(0))
+            fill!(localGainTallyN3,UInt32(0))
+            fill!(localGainTallyK3,UInt32(0))
 
-            prob = RPointSphereWeighted!(p3v,w) # sample angles aligned to p1v
-            RotateToLab!(p3v,t,h)   # rotate to z aligned
-            RPointLogMomentum!(p3v,p3_low,p3_up,p3_num)
+            for _ in 1:(numGain*u3_num*h3_num)
 
-            # calculate S value
-            Sval = EmissionKernel(p3v,p1v,m1,z1,Ext)
+                prob = RPointSphereWeighted!(p3v,w) # sample angles aligned to p1v
+                RotateToLab!(p3v,t,h)   # rotate to z aligned
+                RPointLogMomentum!(p3v,p3_up,p3_low,p3_num,p3loc)
 
-            # find S array location 
-            p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)
-            u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
-            h3loc = location(h_low,h_up,h3_num,p3v[3],h3_grid)
+                # calculate S value
+                Sval = EmissionKernel(p3v,p1v,m1,z1,Ext)
 
-            localGainTallyN3[p3loc,u3loc,h3loc] += UInt32(1)
-            localGainTotal3[p3loc,u3loc,h3loc] += Sval/prob
-            if Sval != 0e0
-                localGainTallyK3[p3loc,u3loc,h3loc] += UInt32(1)
+                # find S array location 
+                u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
+                h3loc = location(h_low,h_up,h3_num,p3v[3],h3_grid)
+
+                localGainTallyN3[p3loc,u3loc,h3loc] += UInt32(1)
+                localGainTotal3[p3loc,u3loc,h3loc] += Sval/prob
+                if Sval != 0e0
+                    localGainTallyK3[p3loc,u3loc,h3loc] += UInt32(1)
+                end
+            
             end
 
-#=             # generate p1v (photon)
-            RPointSphereCosTheta!(p1v)
-            RPointLogMomentum!(p1v,p1_low,p1_up,p1_num)
+            # assign values to arrays
+            @lock ArrayOfLocks[p1loc] begin
+                @view(GainTallyN3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTallyN3
+                @view(GainTallyK3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTallyK3
+                @view(GainTotal3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTotal3
+            end
 
-            # calculate S value
-            Sval = SyncKernel(p1v,p2v,m2,z2,BMag)
-            # find S array location 
-            p1loc = location(p1_low,p1_up,p1_num,p1v[1],p1_grid)
-            u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
+            if thread_id == 1
+                next!(prog)
+            end
 
-            localGainTally[p1loc,u1loc] += UInt32(1)
-            localGainTotal[p1loc,u1loc] += Sval =#
-        
-        end
+        end # T loop
 
-        # assign values to arrays
-        @lock ArrayOfLocks[p1loc] begin
-            @view(GainTallyN3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTallyN3
-            @view(GainTallyK3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTallyK3
-            @view(GainTotal3[:,:,:,p1loc,u1loc,h1loc]) .+= localGainTotal3
-        end
-
-        if thread_id == 1
-            next!(prog)
-        end
-
-    end
+    end # indices loop
 
     #end # workers 
 

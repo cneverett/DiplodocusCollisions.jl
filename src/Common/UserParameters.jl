@@ -56,7 +56,30 @@ function UserBinaryParameters()
 
     scale::StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64} = getfield(Main,Symbol("scale"))
 
+    p1loc_low::Int64 = try 
+        getfield(Main,Symbol("ploc_low_"*name1))
+        catch
+        1
+        end
+    p1loc_up::Int64 = try 
+        getfield(Main,Symbol("ploc_up_"*name1))
+        catch
+        p1_num
+        end
+    p2loc_low::Int64 = try 
+        getfield(Main,Symbol("ploc_low_"*name2))
+        catch
+        1
+        end
+    p2loc_up::Int64 = try 
+        getfield(Main,Symbol("ploc_up_"*name2))
+        catch
+        p2_num
+        end
+
     Parameters = (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num)
+
+    bins = (p1loc_low,p1loc_up,p2loc_low,p2loc_up)
 
     numLoss::Int64 = getfield(Main,Symbol("numLoss"))   
     numGain::Int64 = getfield(Main,Symbol("numGain"))  
@@ -65,7 +88,7 @@ function UserBinaryParameters()
     fileLocation::String = getfield(Main,Symbol("fileLocation"))
     fileName::String = BinaryFileName(Parameters)
 
-    Setup::Tuple = (Parameters,scale, numLoss, numGain, numThreads, fileLocation, fileName)
+    Setup::Tuple = (Parameters,bins,scale, numLoss, numGain, numThreads, fileLocation, fileName)
 
     return (Setup, fileName)
 end
@@ -190,7 +213,30 @@ function UserEmissionParameters()
 
     Ext::Vector{Float64} = getfield(Main,Symbol("Ext"))
 
+    p1loc_low::Int64 = try 
+        getfield(Main,Symbol("ploc_low_"*name1))
+        catch
+        1
+        end
+    p1loc_up::Int64 = try 
+        getfield(Main,Symbol("ploc_up_"*name1))
+        catch
+        p1_num
+        end
+    p3loc_low::Int64 = try 
+        getfield(Main,Symbol("ploc_low_"*name3))
+        catch
+        1
+        end
+    p3loc_up::Int64 = try 
+        getfield(Main,Symbol("ploc_up_"*name3))
+        catch
+        p3_num
+        end
+
     Parameters = (name1,name2,name3,type,m1,m2,m3,z1,z2,z3,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,Ext)
+
+    bins = (p1loc_low,p1loc_up,p3loc_low,p3loc_up)
 
     numLoss::Int64 = getfield(Main,Symbol("numLoss"))   
     numGain::Int64 = getfield(Main,Symbol("numGain"))  
@@ -199,7 +245,7 @@ function UserEmissionParameters()
     fileLocation::String = getfield(Main,Symbol("fileLocation"))
     fileName::String = EmissionFileName(Parameters)
 
-    Setup::Tuple = (Parameters,scale, numLoss, numGain, numThreads, fileLocation, fileName)
+    Setup::Tuple = (Parameters,bins,scale, numLoss, numGain, numThreads, fileLocation, fileName)
 
     return (Setup, fileName)
 end

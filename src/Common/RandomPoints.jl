@@ -25,6 +25,19 @@ function RPointLogMomentum!(pv::Vector{Float64},pu::Float64,pl::Float64,num::Int
     
 end
 
+function RPointLogMomentum!(pv::Vector{Float64},pu::Float64,pl::Float64,num::Int64,bin::Int64) 
+    # Inputs a momentum vector and momentum bounds and mutates first of said vector
+    l = (pl + (pu-pl)*(bin-1)/num)
+    u = (pl + (pu-pl)*(bin)/num)
+
+    U = rand(Float64)
+    #pv[1] = (10^u)*cbrt(U+(1-U)*1f3^(l-u)) 
+    pv[1] = U*10^(u)+(1-U)*10^(l)  # if instead want to sample space uniformly.
+
+    return nothing
+    
+end
+
 """
     RPointSphereThetaPhi!()
 
@@ -256,13 +269,15 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
     if w3Limit != 0e0
         w3 = (1.0+scale)*w3Limit #+ scale
     else
-        w3 = scale*wC #+scale*wScale
+        w3 = scale*wC +scale*wScale/5
     end
     if w4Limit != 0e0
         w4 = (1.0+scale)*w4Limit #+ scale
     else
-        w4 = scale*wC #+scale*wScale
+        w4 = scale*wC +scale*wScale/5
     end
+    w3 = min(w3,18.0)
+    w4 = min(w4,18.0)
     #w3::Float64 = w3Limit#+scale*wC #+scale*(wScale)
     #w4::Float64 = w4Limit#+scale*wC #+scale*(wScale) 
 
