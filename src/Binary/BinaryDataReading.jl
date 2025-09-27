@@ -555,7 +555,7 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                 CorrectedGainMatrix3[p1,u1,h1,p1,u1,h1,p2,u2,h2] += LossSumN1
             end
         end
-        if  name2 == name4 # particle 2 and 4 are identical
+        if name2 == name4 # particle 2 and 4 are identical
             if GainSumN4 != 0e0
                 Correction = LossSumN2/GainSumN4
                 @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
@@ -563,7 +563,7 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                 CorrectedGainMatrix4[p2,u2,h2,p1,u1,h1,p2,u2,h2] += LossSumN2
             end
         end    
-        if m1 == m2 && m3 == m4 # incoming and outgoing states are symmetric
+        if (name1 != name3) && (name2 != name4) && m1 == m2 && m3 == m4 # incoming and outgoing states are symmetric but not the same particles
             if (GainSumN3 + GainSumN4) != 0e0
                 Correction = (LossSumN1+LossSumN2)/(GainSumN3+GainSumN4)
                 #println(GainSumN3)
