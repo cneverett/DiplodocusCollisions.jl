@@ -69,7 +69,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
         for (ii,scale_val) in enumerate(scale)
 
             println("")
-            println("scale = $scale_val, itteration = $ii out of $(length(scale))")
+            println("scale = $scale_val, iteration = $ii out of $(length(scale))")
             println("")
 
             indices::Vector{CartesianIndex{2}} = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))[1:end]
