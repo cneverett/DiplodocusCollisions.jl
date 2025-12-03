@@ -38,6 +38,10 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
     # ======== Load Old Arrays ========= #
 
         println("Loading Old and Allocating New Sampling Arrays")
+
+        if isdir(fileLocation) == false
+            mkpath(fileLocation)
+        end
         
         filePath = fileLocation*"\\"*fileName
 
