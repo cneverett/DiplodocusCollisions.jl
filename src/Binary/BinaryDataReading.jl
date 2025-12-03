@@ -19,7 +19,7 @@ Returns a tuple of the data stored in the file. The fields are as follows:
 """
 function BinaryFileLoad_All(fileLocation::String,fileName::String;corrected::Bool=false)
         
-    filePath = fileLocation*"\\"*fileName
+    filePath = joinpath(fileLocation,fileName)
     fileExist = isfile(filePath)
 
     if fileExist
@@ -68,7 +68,7 @@ Returns a tuple of the data stored in the file. The fields are as follows:
 """
 function BinaryFileLoad_Matrix(fileLocation::String,fileName::String;corrected::Bool=false)
         
-    filePath = fileLocation*"\\"*fileName
+    filePath = joinpath(fileLocation,fileName)
     fileExist = isfile(filePath)
 
     if fileExist
@@ -115,7 +115,7 @@ If initial or final particles are identical then only one of the SMatrices or TM
 """
 function fload_Matrix_ISO(fileLocation::String,fileName::String)
         
-    filePath = fileLocation*"\\"*fileName
+    filePath = joinpath(fileLocation,fileName)
     fileExist = isfile(filePath)
 
     if fileExist

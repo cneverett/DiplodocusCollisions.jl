@@ -15,7 +15,7 @@ Returns a tuple of the data stored in the file. The fields are as follows:
 """
 function EmissionFileLoad_All(fileLocation::String,fileName::String)
         
-    filePath = fileLocation*"\\"*fileName
+    filePath = joinpath(fileLocation,fileName)
     fileExist = isfile(filePath)
 
     if fileExist
@@ -50,7 +50,7 @@ Returns a tuple of the data stored in the file. The fields are as follows:
 """
 function EmissionFileLoad_Matrix(fileLocation::String,fileName::String)
         
-    filePath = fileLocation*"\\"*fileName
+    filePath = joinpath(fileLocation,fileName)
     fileExist = isfile(filePath)
 
     if fileExist
@@ -81,7 +81,7 @@ Returns a tuple of the data stored in the file. The fields are as follows:
 """
 function fload_Matrix_SyncISO(fileLocation::String,fileName::String)
         
-    filePath = fileLocation*"\\"*fileName
+    filePath = joinpath(fileLocation,fileName)
     fileExist = isfile(filePath)
 
     if fileExist
