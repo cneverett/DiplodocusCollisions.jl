@@ -43,7 +43,7 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             mkpath(fileLocation)
         end
         
-        filePath = fileLocation*"\\"*fileName
+        filePath = joinpath(fileLocation,fileName)
 
         (OldGainTallyK2,OldGainTallyK3,OldLossTallyK1,OldGainTallyN2,OldGainTallyN3,OldLossTallyN1,OldGainMatrix2,OldGainMatrix3,OldLossMatrix1) = OldMonteCarloArraysEmission(Parameters,filePath)
 

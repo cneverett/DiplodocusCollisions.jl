@@ -58,7 +58,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             mkpath(fileLocation)
         end
                 
-        filePath = fileLocation*"\\"*fileName
+        filePath = joinpath(fileLocation,fileName)
 
         (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2) = OldMonteCarloArraysBinary(Parameters,filePath)
 
