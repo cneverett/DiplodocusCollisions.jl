@@ -82,7 +82,9 @@ function dsigmadt_ElePosPhoPho(sSmol::Float64,sBig::Float64,tSmol::Float64,tBig:
     # -(1/(s(s-4)))*((1/(t-1)+1/(1-s-t))^2+(1/(t-1)+1/(1-s-t))-(1/4)*((t-1)/(1-s-t)+(1-s-t)/(t-1)))
     
     s::Float64 = sSmol+sBig
-    -(3/((s)*(sSmol)))*((1/(tSmol)+1/(uSmol))^2+(1/(tSmol)+1/(uSmol))-(1/4)*((tSmol)/(uSmol)+(uSmol)/(tSmol)))
+    val::Float64 = -(3/(s*sSmol))*((1/(tSmol)+1/(uSmol))^2+(1/(tSmol)+1/(uSmol))-(1/4)*((tSmol)/(uSmol)+(uSmol)/(tSmol)))
+
+    return val
 
 end
 
@@ -103,8 +105,10 @@ function sigma_ElePosPhoPho(sSmol::Float64,sBig::Float64)
 
     #(1/(4*s^2*(s-4)))*((s^2+4*s-8)*log((sqrt(s)+sqrt(s-4))/(sqrt(s)-sqrt(s-4)))-(s+4)*sqrt(s*(s-4)))
 
-    s = sSmol+sBig
-    (3/(4*(sSmol)*s^2))*((sSmol^2+12*sSmol+24)*log((s+sSmol+2*sqrt(sSmol*s))/(sBig))-(sSmol+8)*sqrt((s)*(sSmol)))
+    s::Float64 = sSmol+sBig
+    val::Float64 = (3/(4*(sSmol)*s^2))*((sSmol^2+12*sSmol+24)*log((s+sSmol+2*sqrt(sSmol*s))/(sBig))-(sSmol+8)*sqrt((s)*(sSmol)))
+
+    return val
 
 end
 
@@ -127,7 +131,7 @@ returns the differential cross section for photon-photon annihilation to electro
 
 # Arguments
 - `sSmol::Float64` : ``s - sBig``
-- `sBig::Float64` : ``(m_1+m_2)^2 = 0 ∴ s = sSmol``
+- `sBig::Float64` : ``max((m_1+m_2)^2,(m_3+m_4)^2) = 4 ∴ s = sSmol + 4``
 - `tSmol::Float64` : ``t - tBig``
 - `tBig::Float64` : ``(m_3-m_1)^2 = 1 ∴ t = tSmol + 1``
 - `uSmol::Float64` : ``u - uBig``
@@ -135,11 +139,22 @@ returns the differential cross section for photon-photon annihilation to electro
 """
 function dsigmadt_PhoPhoElePos(sSmol::Float64,sBig::Float64,tSmol::Float64,tBig::Float64,uSmol::Float64,uBig::Float64)
 
-    # -(3/(s^2))*((1/(t-1)+1/(1-s-t))^2+(1/(t-1)+1/(1-s-t))-(1/4)*((t-1)/(1-s-t)+(1-s-t)/(t-1)))
-    
-    val = -(3/(sSmol^2))*((1/(tSmol)+1/(uSmol))^2+(1/(tSmol)+1/(uSmol))-(1/4)*((tSmol)/(uSmol)+(uSmol)/(tSmol)))
+    s::Float64 = sSmol+sBig
+    # s+t+u=2 
+    # u = 2 - s - t
+    # uSmol = 2 - s - t - uBig = 1 - s - t
+    # t - 1 = tSmol
+    # sSmol + sBig + tSmol + tBig + uSmol + uBig = 2
+    # tSmol + uSmol = 2 - s - tBig - uBig = 2 - 1 - 1 - s = -s
 
-    valmax = 3(sSmol-2)/(4sSmol^2)
+
+    # -(3/(s^2))*((1/(t-1)+1/(1-s-t))^2+(1/(t-1)+1/(1-s-t))-(1/4)*((t-1)/(1-s-t)+(1-s-t)/(t-1)))
+    # -(3/(s^2))*((-s/((t-1)(1-s-t)))^2-s/((t-1)(1-s-t))-(1/4)*((t-1)/(1-s-t)+(1-s-t)/(t-1)))
+    
+    val::Float64 = -(3/(s^2))*((-s/(tSmol*uSmol))^2-(s/(tSmol*uSmol))-(1/4)*((tSmol^2+uSmol^2)/(tSmol*uSmol)))
+
+    #valmax::Float64 = 3(sSmol-2)/(4sSmol^2) old version with sBig = 0 so s = sSmol
+    valmax::Float64 = 3(sSmol+2)/(4s^2)
 
     return min(val,valmax)
 
@@ -156,7 +171,7 @@ returns the total cross section for photon-photon annihilation to electron-posit
 
 # Arguments
 - `sSmol::Float64` : ``s - sBig``
-- `sBig::Float64` : ``(m_1+m_2)^2 = 0 ∴ s = sSmol``
+- `sBig::Float64` : ``max((m_1+m_2)^2,(m_3+m_4)^2) = 4 ∴ s = sSmol + 4``
 """
 function sigma_PhoPhoElePos(sSmol::Float64,sBig::Float64)
 
@@ -164,17 +179,17 @@ function sigma_PhoPhoElePos(sSmol::Float64,sBig::Float64)
     #s::Float64 = sSmol+sBig
     #(3/(2*s^3))*((s^2+4*s-8)*log((2*s-4+2*sqrt(s*(s-4)))/(4))-(s+4)*sqrt(s*(s-4)))
 
-    # better precision to use sBig = (m3+m4)^2 = 4
-    sBig::Float64 = 4.0
-    sSmol::Float64 = sSmol-sBig
     s::Float64 = sSmol+sBig
+
+    val::Float64 = 0e0
     
     if sSmol < 1e-6 # small approximation
-        3sqrt(sSmol)/16+3sSmol^(3/2)/128-423sSmol^(5/2)/10240
+        val = 3sqrt(sSmol)/16+3sSmol^(3/2)/128-423sSmol^(5/2)/10240
     else
-        (3/(2*s^3))*((sSmol^2+12*sSmol+24)*log((s+sSmol+2*sqrt(sSmol*s))/(sBig))-(sSmol+8)*sqrt((s)*(sSmol)))
+        val = (3/(2*s^3))*((sSmol^2+12*sSmol+24)*log((s+sSmol+2*sqrt(sSmol*s))/(sBig))-(sSmol+8)*sqrt((s)*(sSmol)))
     end
-    
+
+    return val
 
 end
 

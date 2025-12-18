@@ -130,7 +130,7 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
                     # Calculate Gain Array totals
                     if NumStates == 1
                         if p_physical
-                            p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)
+                            p3loc = locationUnderOver(p3_low,p3_up,p3_num,p3v[1],p3_grid)
                             GainVal = GainValue3(p3v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                             LocalGainTotal3[p3loc,u3loc,h3loc] += GainVal/prob3
                             LocalGainTally3[p3loc,u3loc,h3loc] += UInt32(1)
@@ -139,7 +139,7 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
 
                     if NumStates == 2
                         if p_physical
-                            p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)
+                            p3loc = locationUnderOver(p3_low,p3_up,p3_num,p3v[1],p3_grid)
                             GainVal = GainValue3(p3v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                             LocalGainTotal3[p3loc,u3loc,h3loc] += GainVal/prob3
                             LocalGainTally3[p3loc,u3loc,h3loc] += UInt32(1)
@@ -147,7 +147,7 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
                         if pp_physical
                             u3ploc = location(u_low,u_up,u3_num,p3pv[2],u3_grid)
                             h3ploc = location(h_low,h_up,h3_num,p3pv[3],h3_grid)
-                            p3ploc = location(p3_low,p3_up,p3_num,p3pv[1],p3_grid)
+                            p3ploc = locationUnderOver(p3_low,p3_up,p3_num,p3pv[1],p3_grid)
                             GainValp = GainValue3(p3pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                             LocalGainTotal3[p3ploc,u3ploc,h3ploc] += GainValp/prob3
                             LocalGainTally3[p3ploc,u3ploc,h3ploc] += UInt32(1)
@@ -179,8 +179,8 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
                         # Calculate S Array totals
                         if NumStates == 1
                             if p_physical
-                                p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
-                                GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+                                p4loc = locationUnderOver(p4_low,p4_up,p4_num,p4v[1],p4_grid)
+                                GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                                 LocalGainTotal4[p4loc,u4loc,h4loc] += GainVal/prob4
                                 LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
                             end
@@ -188,16 +188,20 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
 
                         if NumStates == 2
                             if p_physical
-                                p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
-                                GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+                                p4loc = locationUnderOver(p4_low,p4_up,p4_num,p4v[1],p4_grid)
+                                GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                                 LocalGainTotal4[p4loc,u4loc,h4loc] += GainVal/prob4
                                 LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
                             end
                             if pp_physical
                                 u4ploc = location(u_low,u_up,u4_num,p4pv[2],u4_grid)
                                 h4ploc = location(h_low,h_up,h4_num,p4pv[3],h4_grid)
-                                p4ploc = location(p4_low,p4_up,p4_num,p4pv[1],p4_grid)
-                                GainValp = GainValue4(p4pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+                                if u4ploc != u4loc || h4ploc != h4loc
+                                println("u and h loc don't match up")
+                                end
+                                println("here")
+                                p4ploc = locationUnderOver(p4_low,p4_up,p4_num,p4pv[1],p4_grid)
+                                GainValp = GainValue4(p4pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                                 LocalGainTotal4[p4ploc,u4ploc,h4ploc] += GainValp/prob4
                                 LocalGainTally4[p4ploc,u4ploc,h4ploc] += UInt32(1)
                             end

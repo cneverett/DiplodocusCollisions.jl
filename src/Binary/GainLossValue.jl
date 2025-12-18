@@ -66,15 +66,15 @@ function LossValue(p1v::Vector{Float64},p2v::Vector{Float64},sigma::Function,m1:
     Es2::Float64 = (p2^2)/(sqrt(m22+p2^2)+m2)
     Es2s::Float64 = Es2/p2
 
-    sBig::Float64 = (m1+m2)^2
-    sSmol::Float64 = 2*p1*p2*(-ctheta12 +Es1s*Es2s +m1*Es2s/p1 +m2*Es1s/p2)
+    sBig::Float64 = max((m1+m2)^2,(m3+m4)^2)
+    sSmol::Float64 = ((m1+m2)^2-sBig) + 2*p1*p2*(-ctheta12 + Es1s*Es2s + m1*Es2s/p1 + m2*Es1s/p2)
 
     if sCheck(sSmol,sBig,m1,m2,m3,m4) # check if s value is valid for interaction
 
         E1::Float64 = Es1 + m1
         E2::Float64 = Es2 + m2
         
-        LossVal = (1/E1)*(1/E2)*(InvariantFluxSmall(sSmol,m1,m2))*sigma(sSmol,sBig)
+        LossVal = (1/E1)*(1/E2)*(InvariantFluxSmall(sSmol,sBig,m1,m2))*sigma(sSmol,sBig)
         if LossVal==Inf || LossVal < 0e0
             println("")
             println("p1v = $p1v")
@@ -154,7 +154,7 @@ function GainValue3(p3v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
     #uSmol::Float64 = -2*(m3*Es2 + m2*Es3 + Es2*Es3 - p2*p3*(ct2*ct3+ch3h2*st2*st3))
     uSmol::Float64 = 2*p2*p3*(ctheta23 - Es2s*Es3s - m3*Es2s/p3 - m2*Es3s/p2)
 
-    val::Float64 = (1/E1)*(1/E2)*(InvariantFlux2Small(sSmol,m1,m2))/pi
+    val::Float64 = (1/E1)*(1/E2)*(InvariantFlux2Small(sSmol,sBig,m1,m2))/pi
 
     #=if (stuCheck(sSmol,sBig,tSmol,tBig,uSmol,uBig,m1,m2,m3,m4) == false || tCheck(tSmol,tBig,m1,m2,m3,m4) == false || uCheck(uSmol,uBig,m1,m2,m3,m4) == false)
         println("p1v = $p1v")
@@ -190,7 +190,7 @@ end
 Returns `GainVal` based on initial momentum states `p1v` and `p2v` and final state `p4v` and differential cross section `dsigmadt` based on particle selection 12->34.  
 Assumes f(x,p,μ)=constant over bin
 """
-function GainValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float64},sBig::Float64,sSmol::Float64,dsigmadt::Function,m1::Float64,m2::Float64,m3::Float64,m4::Float64,prob::Float64)
+function GainValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float64},sBig::Float64,sSmol::Float64,dsigmadt::Function,m1::Float64,m2::Float64,m3::Float64,m4::Float64)
 
     # pre-defining terms for efficiency 
     p1::Float64 = p1v[1]
@@ -241,7 +241,7 @@ function GainValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
     #tSmol::Float64 = -2*(m4*Es2 + m2*Es4 + Es2*Es4 - p2*p4*(ct2*ct4+ch4h2*st2*st4))
     tSmol::Float64 = 2*p2*p4*(ctheta24 - Es2s*Es4s - m4*Es2s/p4 - m2*Es4s/p2)
     
-    val::Float64 = (1/E1)*(1/E2)*(InvariantFlux2Small(sSmol,m1,m2))/pi
+    val::Float64 = (1/E1)*(1/E2)*(InvariantFlux2Small(sSmol,sBig,m1,m2))/pi
 
     #=if (stuCheck(sSmol,sBig,tSmol,tBig,uSmol,uBig,m1,m2,m3,m4) == false || tCheck(tSmol,tBig,m1,m2,m3,m4) == false || uCheck(uSmol,uBig,m1,m2,m3,m4) == false)
         error("stu check")
@@ -280,15 +280,21 @@ function InvariantFlux(s::Float64,mu12::Float64,mu22::Float64)
 end
 
 """
-    InvariantFluxSmall(sSmol,mu12,mu22)
+    InvariantFluxSmall(sSmol,sBig,m1,m2)
 
-returns the value of the invariant flux with smalled 's' Mandelstram variable (sSmol = s - (m1+m2)^2)
+returns the value of the invariant flux with smalled 's' Mandelstram variable (sSmol = s - max((m1+m2)^2,(m3+m4)^2))
 """
-function InvariantFluxSmall(sSmol::Float64,m1::Float64,m2::Float64)
+function InvariantFluxSmall(sSmol::Float64,sBig::Float64,m1::Float64,m2::Float64)
     # Better accuracy for small s
 
     # sqrt(lambda(s,m1^2,m2^2))/2 = sqrt(s)|p*|
-    return sqrt(sSmol*(sSmol+4*m1*m2))/2
+
+    if sBig == (m1+m2)^2
+        # lambda(s,m1^2,m2^2) = sSmol*(sSmol+4*m1*m2)
+        return sqrt(sSmol*(sSmol+4*m1*m2))/2
+    else
+        return sqrt(sSmol*(sSmol+2(sBig-(m1^2+m2^2)))+(sBig^2-2sBig*(m1^2+m2^2)+(m1^2-m2^2)^2))/2
+    end
 
 end
 
@@ -305,15 +311,20 @@ function InvariantFlux2(s::Float64,mu12::Float64,mu22::Float64)
 end
 
 """
-    InvariantFluxSmall(sSmol,mass12,mass22)
+    InvariantFluxSmall(sSmol,mass1,mass2)
 
 returns the value of the squared invariant flux with smalled 's' Mandelstram variable (sSmol = s - (m1+m2)^2)
 """
-function InvariantFlux2Small(sSmol::Float64,m1::Float64,m2::Float64)
+function InvariantFlux2Small(sSmol::Float64,sBig::Float64,m1::Float64,m2::Float64)
     # Better accuracy for small s
 
     # lambda(s,m1^2,m2^2)/4 = s|p*|^2
-    return (sSmol*(sSmol+4*m1*m2))/4
+    if sBig == (m1+m2)^2
+        # lambda(s,m1^2,m2^2) = sSmol*(sSmol+4*m1*m2)
+        return sSmol*(sSmol+4*m1*m2)/4
+    else
+        return (sSmol*(sSmol+2(sBig-(m1^2+m2^2)))+(sBig^2-2sBig*(m1^2+m2^2)+(m1^2-m2^2)^2))/4
+    end
 
 end
 

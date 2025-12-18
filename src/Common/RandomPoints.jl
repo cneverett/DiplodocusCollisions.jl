@@ -222,7 +222,7 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
     h::Float64 = mod(atan(y,x)/pi,2)   
 
     # outgoing COM frame momentum
-    pC::Float64 = InvariantFluxSmall(sSmol,m3,m4)/sqrt(s)
+    pC::Float64 = InvariantFluxSmall(sSmol,sBig,m3,m4)/sqrt(s)
 
     # pre allocate types
     w3Limit::Float64 = 0e0

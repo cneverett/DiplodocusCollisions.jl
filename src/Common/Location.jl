@@ -43,12 +43,21 @@ function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,:
     return loc >= num ? num : loc+1
 end
 
-#=function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::LogTenGrid)
+function locationUnderOver(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::LogTenGrid)
+    # grid location for log10 grid with underflow and overflow
+    # there are num bins within the domain bounds, therefore num+2 bins overall including underflow and overflow
+    # first bin (loc==1) is underflow bin last bin (loc==num+2) is overflow bin
+    # if val is on grid boundary then it is assigned to the next bin 
+    # if val == up_bound then it is assigned to the last domain bin (n==num+1) (to account for floating point precision issues, when selecting random momentum values for incoming states where under/overflow is not allowed)
     # grid location for log10 grid
-    logval = log10(val)
-    loc = logval != low_bound ? ceil(Int64,num*(logval-low_bound)/(up_bound-low_bound)) : Int64(1) 
-    return 1 <= loc <= num ? loc : loc>num ? num+1 : 1 # assigns 1 for under, num+1 for over and loc for in range
-end=#
+    logval::Float64 = log10(val)
+    loc::Int64 = logval != up_bound ? floor(Int64,Float64(num)*(logval-low_bound)/(up_bound-low_bound)+1) : num # range 1:num, +1 is added in next line to convert to 1:num+2
+    #loc = 
+    #if loc==0
+    #    println("val: ",val," logval: ",logval," loc: ",loc)
+    #end
+    return 1 <= loc <= num ? loc+1 : loc>num ? num+2 : 1 # assigns 1 for under, num+1 for over and loc for in range
+end
 
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::LogTenGrid)
     # grid location for log10 grid with no underflow or overflow
@@ -61,10 +70,30 @@ end
 
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::BinaryGrid)
     # grid location for binary grid
+    #= e.g. 
+      | 1/8 | 1/8 |  1/4  |    1/2    |    1/2    |  1/4  | 1/8 | 1/8 |
+    u=-1                              0                               1
+    =#
     logval = log(1/2,1-abs(val))
     num_half = Int64((num-1)/2)
     loc = logval < num_half ? floor(Int64,logval/up_bound) : num_half
     return sign(val) == -1 ? Int64(num_half+1-loc) : Int64(num_half+1+loc)
+end
+
+function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::BoostGrid)
+    # grid location for boosted grid
+    #= e.g. 
+      |             1             |    1/2    |  1/4  | 1/8 | 1/8 |
+    u=-1                          0                               1
+    =#
+    if val < 0.0
+        return 1
+    else
+        logval = log(1/2,1-val)
+        num_plus = Int64(num-1)
+        loc = logval < num_plus ? floor(Int64,logval/up_bound+1) : num-1
+        return Int64(1+loc)
+    end
 end
 
 function Grid_String_to_Type(grid_string)
@@ -74,10 +103,14 @@ function Grid_String_to_Type(grid_string)
         return LogTenGrid()
     elseif grid_string == "b"
         return BinaryGrid()
+    elseif grid_string == "B"
+        return BoostGrid()
     else
         error("Spacing type not recognized")
     end
 end
+
+#= no longer used ==
 
 """
     location_t(numt,val)
@@ -140,4 +173,4 @@ function vectorLocation(pu::Float64,pl::Float64,nump::Int64,numt::Int64,vector::
     
 end
 
-
+=#

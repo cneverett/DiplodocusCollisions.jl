@@ -6,8 +6,8 @@ Returns 'true' if 's' mandelstram generated from inital system state can generat
 function sCheck(sSmol::Float64,sBig::Float64,mu1::Float64,mu2::Float64,mu3::Float64,mu4::Float64)
     #returns true/false depending on if s is above minimum value
     # s >= (m1+m2)^2 && s >= (m3+m4)^2
-    # sBig = (m1+m2)^2 in code
-    return ((sSmol>(mu1+mu2)^2-sBig) && (sSmol>(mu3+mu4)^2-sBig))  # = gives T value of zero
+    # sBig = max((m1+m2)^2,(m3+m4)^2) in code
+    return sSmol>0.0#((sSmol>(mu1+mu2)^2-sBig) && (sSmol>(mu3+mu4)^2-sBig))  # = gives Loss value of zero
 
 end
 
