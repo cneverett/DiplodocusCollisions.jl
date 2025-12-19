@@ -30,6 +30,15 @@ function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,s
         num_half = Int64((num-1)/2)
         loc = logval < num_half ? floor(Int64,logval/up_bound) : num_half
         return sign(val) == -1 ? num_half+1-loc : num_half+1+loc
+    elseif spacing == "B" # boosted (2^n) fractional spacing
+        if val < 0.0
+            loc = val < -0.5 ? 1 : 2
+        else
+            logval = log(1/2,1-val)
+            num_plus = Int64(num-2)
+            loc = logval < num_plus ? floor(Int64,logval/up_bound+1)+2 : num
+        end
+        return loc
     else
         error("Spacing type not recognized")
     end
@@ -83,17 +92,17 @@ end
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::BoostGrid)
     # grid location for boosted grid
     #= e.g. 
-      |             1             |    1/2    |  1/4  | 1/8 | 1/8 |
+      |     1/2     |     1/2     |    1/2    |  1/4  | 1/8 | 1/8 |
     u=-1                          0                               1
     =#
     if val < 0.0
-        return 1
+        loc = val < -0.5 ? 1 : 2
     else
         logval = log(1/2,1-val)
-        num_plus = Int64(num-1)
-        loc = logval < num_plus ? floor(Int64,logval/up_bound+1) : num-1
-        return Int64(1+loc)
+        num_plus = Int64(num-2)
+        loc = logval < num_plus ? floor(Int64,logval/up_bound+1)+2 : num
     end
+    return loc
 end
 
 function Grid_String_to_Type(grid_string)
