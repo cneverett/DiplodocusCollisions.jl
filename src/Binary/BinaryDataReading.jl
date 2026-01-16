@@ -253,13 +253,20 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
 
     @inbounds for p1 in axes(LossMatrix1,1), u1 in axes(LossMatrix1, 2), h1 in axes(LossMatrix1,3), p2 in axes(LossMatrix1,4), u2 in axes(LossMatrix1,5), h2 in axes(LossMatrix1,6)
         TsumN1 += LossMatrix1[p1,u1,h1,p2,u2,h2]
-        TsumE1 += LossMatrix1[p1,u1,h1,p2,u2,h2]*E1_d[p1]
         TsumN2 += LossMatrix2[p2,u2,h2,p1,u1,h1]
-        TsumE2 += LossMatrix2[p2,u2,h2,p1,u1,h1]*E2_d[p2]
         NLossMatrix1[p1,u1,h1,p2,u2,h2] += LossMatrix1[p1,u1,h1,p2,u2,h2]
         NLossMatrix2[p1,u1,h1,p2,u2,h2] += LossMatrix2[p2,u2,h2,p1,u1,h1]
-        ELossMatrix1[p1,u1,h1,p2,u2,h2] += LossMatrix1[p1,u1,h1,p2,u2,h2]*E1_d[p1]
-        ELossMatrix2[p1,u1,h1,p2,u2,h2] += LossMatrix2[p2,u2,h2,p1,u1,h1]*E2_d[p2]
+        if name1 != name2 # Indistinguishable_12 == false so LossMatrix2 is non-zero
+            TsumE1 += LossMatrix1[p1,u1,h1,p2,u2,h2]*E1_d[p1]
+            TsumE2 += LossMatrix2[p2,u2,h2,p1,u1,h1]*E2_d[p2]
+            ELossMatrix1[p1,u1,h1,p2,u2,h2] += LossMatrix1[p1,u1,h1,p2,u2,h2]*E1_d[p1]
+            ELossMatrix2[p1,u1,h1,p2,u2,h2] += LossMatrix2[p2,u2,h2,p1,u1,h1]*E2_d[p2]
+        else
+            TsumE1 += LossMatrix1[p1,u1,h1,p2,u2,h2]*(E1_d[p1]+E2_d[p2])/2
+            TsumE2 += 0.0
+            ELossMatrix1[p1,u1,h1,p2,u2,h2] += LossMatrix1[p1,u1,h1,p2,u2,h2]*(E1_d[p1]+E2_d[p2])/2
+            ELossMatrix2[p1,u1,h1,p2,u2,h2] += 0.0#LossMatrix1[p1,u1,h1,p2,u2,h2]*(E1_d[p1]+E2_d[p2])/2
+        end
     end
 
     NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
@@ -586,4 +593,234 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
 
 end
 
+function GainCorrection2(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::Array{Float64, 9}, GainMatrix4::Array{Float64, 9}, LossMatrix1::Array{Float64, 6}, LossMatrix2::Array{Float64, 6})
+
+    # Function that applies the correct phase space factors to GainMatrix and LossMatrix derived from Stotal and Ttotal arrays
+
+    (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
+
+    CorrectedGainMatrix3 = similar(GainMatrix3)
+    CorrectedGainMatrix4 = similar(GainMatrix4)
+    CorrectedLossMatrix1 = similar(LossMatrix1)
+    CorrectedLossMatrix2 = similar(LossMatrix2)
+    fill!(CorrectedGainMatrix3,Float64(0))
+    fill!(CorrectedGainMatrix4,Float64(0))
+    CorrectedLossMatrix1 .= LossMatrix1
+    CorrectedLossMatrix2 .= LossMatrix2
+
+    # underflow and overflow bins are taken to have size 0 -> p1_r[1] and p1_r[end] -> 2*p1_r[end] respectively
+
+    p1_r = bounds(p1_low,p1_up,p1_num,p1_grid);
+    p1_d = deltaVector(p1_r);
+    u1_r = bounds(u_low,u_up,u1_num,u1_grid);
+    u1_d = deltaVector(u1_r);
+
+    p2_r = bounds(p2_low,p2_up,p2_num,p2_grid);
+    p2_d = deltaVector(p2_r);
+    u2_r = bounds(u_low,u_up,u2_num,u2_grid);
+    u2_d = deltaVector(u2_r);
+
+    p3_r = bounds(p3_low,p3_up,p3_num,p3_grid);
+    p3_r = [0.0 ; p3_r ; 2*p3_r[end]];
+    p3_d = deltaVector(p3_r);
+    u3_r = bounds(u_low,u_up,u3_num,u3_grid);
+    u3_d = deltaVector(u3_r);
+
+    p4_r = bounds(p4_low,p4_up,p4_num,p4_grid);
+    p4_r = [0.0 ; p4_r ; 2*p4_r[end]];
+    p4_d = deltaVector(p4_r);
+    u4_r = bounds(u_low,u_up,u4_num,u4_grid);
+    u4_d = deltaVector(u4_r);
+
+    
+    E1_Δ = deltaEVector(p1_r,m1);
+    E1_d = E1_Δ ./ p1_d
+
+    E2_Δ = deltaEVector(p2_r,m2);
+    E2_d = E2_Δ ./ p2_d
+
+    E3_Δ = deltaEVector(p3_r,m3);
+    E3_d = E3_Δ ./ p3_d
+
+    E4_Δ = deltaEVector(p4_r,m4);
+    E4_d = E4_Δ ./ p4_d
+
+    num_wrong = 0
+    num_right = 0
+
+    for p1 in axes(GainMatrix3, 4), u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), p2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
+        
+        LossSumN1 = LossMatrix1[p1,u1,h1,p2,u2,h2]
+        LossSumN2 = LossMatrix2[p2,u2,h2,p1,u1,h1]
+        if name1 != name2 # Indistinguishable_12==false so LossMatrix2 is non-zero
+            LossSumE1 = LossMatrix1[p1,u1,h1,p2,u2,h2]*E1_d[p1]
+            LossSumE2 = LossMatrix2[p2,u2,h2,p1,u1,h1]*E2_d[p2]
+        else
+            LossSumE1 = LossMatrix1[p1,u1,h1,p2,u2,h2]*(E1_d[p1]+E2_d[p2])/2
+            LossSumE2 = 0.0#LossMatrix1[p1,u1,h1,p2,u2,h2]*(E1_d[p1]+E2_d[p2])/2
+        end
+
+        
+        wrong = true
+        nonzero_gain = true
+        max_high_bins = 1
+
+        while wrong && nonzero_gain
+
+            GainSumN31 = zero(Float64)
+            GainSumN32 = zero(Float64)
+            GainSumN41 = zero(Float64)
+            GainSumN42 = zero(Float64)
+            GainSumE31 = zero(Float64)
+            GainSumE32 = zero(Float64)
+            GainSumE41 = zero(Float64)
+            GainSumE42 = zero(Float64)
+
+            numbeta = 0
+            
+            for u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
+                high_bins = 0
+                for p3 in reverse(axes(GainMatrix3,1))
+                    if GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] != 0e0 && high_bins < max_high_bins # number of non-zero element starting from high p3 values
+                        GainSumN32 += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]
+                        GainSumE32 += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]*E3_d[p3]
+                        high_bins += 1
+                        numbeta +=1
+                    else
+                        GainSumN31 += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]
+                        GainSumE31 += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]*E3_d[p3]
+                    end
+                end
+            end
+            for u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
+                high_bins = 0
+                for p4 in reverse(axes(GainMatrix4,1))
+                    if GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] != 0e0 && high_bins < max_high_bins # number of non-zero element starting from high p3 values
+                        GainSumN42 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]
+                        GainSumE42 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]*E4_d[p4]
+                        high_bins += 1
+                        numbeta +=1
+                    else
+                        GainSumN41 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]
+                        GainSumE41 += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]*E4_d[p4]
+                    end
+                end
+            end
+
+            if (name1==name2==name3==name4) || (name1!=name2!=name3!=name4) # all particles identical or all particles different
+                GainN1 = GainSumN31 + GainSumN41
+                GainE1 = GainSumE31 + GainSumE41
+                GainN2 = GainSumN32 + GainSumN42
+                GainE2 = GainSumE32 + GainSumE42
+                LossN = LossSumN1 + LossSumN2
+                LossE = LossSumE1 + LossSumE2
+
+                a = GainN1
+                if a == 0e0 # loop has not produced any gain terms
+                    nonzero_gain = false
+                    println("No gain terms for p1=$p1,p2=$p2")
+                    num_wrong += 1
+                    continue
+                end
+                ac = GainE1
+                c = GainE1/GainN1
+
+                b = GainN2
+                bd = GainE2
+                d = GainE2/GainN2
+
+                e = a+b-LossN
+                f = ac+bd-LossE
+
+                alpha = (e*d-f)/(ac-a*d)+1
+                beta = (e*c-f)/(bd-b*c)+1
+
+                if alpha < 0e0 || beta < 0e0
+                    #println("LossN = $LossN, LossE = $LossE, LossN1 = $LossSumN1, LossN2 = $LossSumN2, LossE1 = $LossSumE1, LossE2 = $LossSumE2")
+                    #println("alpha = $alpha, beta = $beta, a+b-L = f = $(a+b-LossN), ac+bd-LE = e = $(ac+bd-LossE), ac = $ac, bd = $bd, c = $c, d = $d, a = $a, b = $b")
+                    #println("Old method N Correct = $(LossN/(GainN1+GainN2))")
+                    #println("Old method E Correct = $((LossE)/(GainE1+GainE2))")
+                    println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins")
+
+                    max_high_bins += 1
+
+                    continue # redo calculation
+                else
+                    println("p1=$p1,p2=$p2")
+                    println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins")
+                    wrong = false
+                    num_right += 1
+                end
+
+                for u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
+                    high_bins = 0
+                    for p3 in reverse(axes(GainMatrix3,1))
+                        if GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] != 0e0 && high_bins < max_high_bins # number of non-zero element starting from high p3 values
+                            CorrectedGainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] =  GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] * beta
+                            high_bins += 1
+                        else
+                            CorrectedGainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] = GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] * alpha
+                        end
+                    end
+                end
+
+                for u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
+                    high_bins = 0
+                    for p4 in reverse(axes(GainMatrix4,1))
+                        if GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] != 0e0 && high_bins < max_high_bins # number of non-zero element starting from high p3 values
+                            CorrectedGainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] = GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] * beta
+                            high_bins += 1
+                        else
+                            CorrectedGainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] = GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] * alpha
+                        end
+                    end
+                end
+
+                #println("N: $(sum(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) + sum(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])) vs $(LossMatrix1[p1,u1,h1,p2,u2,h2] + LossMatrix2[p2,u2,h2,p1,u1,h1])")
+
+                #println("E: $((GainSumE31+GainSumE41)*alpha + (GainSumE32+GainSumE42+beta*((GainSumE32+GainSumE42)/(GainSumN32+GainSumN42)))) vs $LossE")
+                #println("N: $((GainSumN31+GainSumN41)*alpha + (GainSumN32+GainSumN42+beta)) vs $LossN")
+
+            end
+
+        end # while
+
+        #=if name1 == name3 # particle 1 and particle 3 are identical
+            if GainSumN3 != 0e0
+                Correction = LossSumN1/GainSumN3
+                @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])
+            else
+                CorrectedGainMatrix3[p1,u1,h1,p1,u1,h1,p2,u2,h2] += LossSumN1
+            end
+        end
+        if name2 == name4 # particle 2 and 4 are identical
+            if GainSumN4 != 0e0
+                Correction = LossSumN2/GainSumN4
+                @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
+            else
+                CorrectedGainMatrix4[p2,u2,h2,p1,u1,h1,p2,u2,h2] += LossSumN2
+            end
+        end    
+        if (name1 != name3) && (name2 != name4) && m1 == m2 && m3 == m4 # incoming and outgoing states are symmetric but not the same particles
+            if (GainSumN3 + GainSumN4) != 0e0
+                Correction = (LossSumN1+LossSumN2)/(GainSumN3+GainSumN4)``
+                @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])
+                @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
+            elseif (LossSumN1+LossSumN2) != 0e0
+                # no gain term but there is a loss term, as outgoing states are not identical to incoming there is no way to correct for this so have to set loss terms to 0.0
+                CorrectedLossMatrix1[p1,u1,h1,p2,u2,h2] = 0e0
+                CorrectedLossMatrix2[p2,u2,h2,p1,u1,h1] = 0e0
+            end
+        end=#
+
+    end
+    println("wrong = $num_wrong")
+    println("right = $num_right")
+
+    #println(sum(E3_d[1:2:end]))
+    #println(sum(E3_d[2:2:end]))
+
+    return CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2
+
+end
 
