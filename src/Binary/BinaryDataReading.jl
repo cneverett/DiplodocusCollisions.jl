@@ -505,7 +505,7 @@ end
 
 MC sampling introduces noise that can lead to poor number and energy conservation. `GainCorrection` provides a corrective step to ensure number and energy conservation to numerical precision. If there is no GainMatrix element then the value of the LossMatrix is applied to the same bin as the input state (if they are identical particles); if not identical particles if there is no GainMatrix element then the value of the LossMatrix is set to zero to ensure particle conservation (with good MC sampling this should rarely occur).
 """
-function GainCorrection(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::Array{Float64, 9}, GainMatrix4::Array{Float64, 9}, LossMatrix1::Array{Float64, 6}, LossMatrix2::Array{Float64, 6})
+#function GainCorrection(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::Array{Float64, 9}, GainMatrix4::Array{Float64, 9}, LossMatrix1::Array{Float64, 6}, LossMatrix2::Array{Float64, 6})
 
     (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
 
@@ -589,9 +589,9 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
 
     return CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2
 
-end
+#end
 
-function GainCorrection2(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::Array{Float64, 9}, GainMatrix4::Array{Float64, 9}, LossMatrix1::Array{Float64, 6}, LossMatrix2::Array{Float64, 6})
+function GainCorrection(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::Array{Float64, 9}, GainMatrix4::Array{Float64, 9}, LossMatrix1::Array{Float64, 6}, LossMatrix2::Array{Float64, 6})
 
     
     #= Different possible combinations of identical and different particles that affect how to apply conservation corrections:
@@ -795,7 +795,7 @@ function GainCorrection2(Parameters::Tuple{String, String, String, String, Float
                 if a1 == 0e0 || a2 == 0e0 # loop has not produced any corrected gain terms
 
                     nonzero_gain = false
-                    println("No gain terms for p1=$p1,p2=$p2")
+                    println("No valid correction for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2")
                     alpha1 = 0.0
                     alpha2 = 0.0
                     beta = 0.0
@@ -818,15 +818,15 @@ function GainCorrection2(Parameters::Tuple{String, String, String, String, Float
 
                 if alpha1 < 0e0 || alpha2 < 0e0 || beta < 0e0
 
-                    println("alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
+                    #println("alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
 
                     max_high_bins += 1
 
                     continue # redo calculation
                 else
-                    println("p1=$p1,p2=$p2")
-                    println("alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
-                    println("new gain1 = $(a1*alpha1+b1*beta), new gain2 = $(a2*alpha2+b2*beta), new gain = $((a1*alpha1+b1*beta)+(a2*alpha2+b2*beta)), Loss = $(LossSumN1+LossSumN2), err = $((a1*alpha1+b1*beta)+(a2*alpha2+b2*beta)- (LossSumN1+LossSumN2)), L1 = $LossSumN1, L2 = $LossSumN2")
+                    #println("p1=$p1,p2=$p2")
+                    #println("alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
+                    #println("new gain1 = $(a1*alpha1+b1*beta), new gain2 = $(a2*alpha2+b2*beta), new gain = $((a1*alpha1+b1*beta)+(a2*alpha2+b2*beta)), Loss = $(LossSumN1+LossSumN2), err = $((a1*alpha1+b1*beta)+(a2*alpha2+b2*beta)- (LossSumN1+LossSumN2)), L1 = $LossSumN1, L2 = $LossSumN2")
                     wrong = false
                     num_right += 1
                 end
@@ -843,7 +843,7 @@ function GainCorrection2(Parameters::Tuple{String, String, String, String, Float
                 a = GainN1
                 if a == 0e0 # loop has not produced any gain terms
                     nonzero_gain = false
-                    println("No gain terms for p1=$p1,p2=$p2")
+                    println("No valid correction for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2")
 
                     alpha1 = 0.0
                     alpha2 = 0.0
@@ -871,14 +871,14 @@ function GainCorrection2(Parameters::Tuple{String, String, String, String, Float
 
                 if alpha < 0e0 || beta < 0e0
 
-                    println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
+                    #println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
 
                     max_high_bins += 1
 
                     continue # redo calculation
                 else
-                    println("p1=$p1,p2=$p2")
-                    println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
+                    #println("p1=$p1,p2=$p2")
+                    #println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
                     wrong = false
                     num_right += 1
                     alpha1 = alpha
@@ -918,41 +918,12 @@ function GainCorrection2(Parameters::Tuple{String, String, String, String, Float
                 end
             end
         end
-        
 
-        #=if name1 == name3 # particle 1 and particle 3 are identical
-            if GainSumN3 != 0e0
-                Correction = LossSumN1/GainSumN3
-                @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])
-            else
-                CorrectedGainMatrix3[p1,u1,h1,p1,u1,h1,p2,u2,h2] += LossSumN1
-            end
-        end
-        if name2 == name4 # particle 2 and 4 are identical
-            if GainSumN4 != 0e0
-                Correction = LossSumN2/GainSumN4
-                @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
-            else
-                CorrectedGainMatrix4[p2,u2,h2,p1,u1,h1,p2,u2,h2] += LossSumN2
-            end
-        end    
-        if (name1 != name3) && (name2 != name4) && m1 == m2 && m3 == m4 # incoming and outgoing states are symmetric but not the same particles
-            if (GainSumN3 + GainSumN4) != 0e0
-                Correction = (LossSumN1+LossSumN2)/(GainSumN3+GainSumN4)``
-                @view(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])
-                @view(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2]) .= Correction * @view(GainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])
-            elseif (LossSumN1+LossSumN2) != 0e0
-                # no gain term but there is a loss term, as outgoing states are not identical to incoming there is no way to correct for this so have to set loss terms to 0.0
-                CorrectedLossMatrix1[p1,u1,h1,p2,u2,h2] = 0e0
-                CorrectedLossMatrix2[p2,u2,h2,p1,u1,h1] = 0e0
-            end
-        end=#
-
-        println("$(sum(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])) , $(sum(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])) , $(CorrectedLossMatrix1[p1,u1,h1,p2,u2,h2]) , $(CorrectedLossMatrix2[p2,u2,h2,p1,u1,h1])")
+        #println("$(sum(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])) , $(sum(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])) , $(CorrectedLossMatrix1[p1,u1,h1,p2,u2,h2]) , $(CorrectedLossMatrix2[p2,u2,h2,p1,u1,h1])")
 
     end
-    println("wrong = $num_wrong")
-    println("right = $num_right")
+    println("Number of bins that couldn't be corrected = $num_wrong")
+    println("Number of bins corrected = $num_right")
 
     return CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2
 
