@@ -841,7 +841,7 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                 if a1 == 0e0 || a2 == 0e0 # loop has not produced any corrected gain terms
 
                     nonzero_gain = false
-                    println("No valid correction for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2")
+                    #println("No valid correction for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2")
                     alpha1 = 0.0
                     alpha2 = 0.0
                     beta = 0.0
@@ -972,8 +972,8 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
         end
 
         if Gain4False 
-            CorrectedGainMatrix4[p2,u2,h2,p1,u1,h1] = b2 * beta
-            CorrectedGainMatrix4[p2-1,u2,h2,p1,u1,h1] = a2 * alpha2
+            CorrectedGainMatrix4[p2,u2,h2,p1,u1,h1,p2,u2,h2] = b2 * beta
+            CorrectedGainMatrix4[p2-1,u2,h2,p1,u1,h1,p2,u2,h2] = a2 * alpha2
         else
             for p4 in axes(GainMatrix4,1)
                 for u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
