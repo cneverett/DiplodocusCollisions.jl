@@ -267,12 +267,12 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
     #w3::Float64 = min(w3Limit+wC+scale*wScale,18e0)
     #w4::Float64 = min(w4Limit+wC+scale*wScale,18e0)
     if w3Limit != 0e0
-        w3 = (1.0+scale)*w3Limit #+ scale
+        w3 = (scale)*w3Limit #+ scale
     else
         w3 = scale*wC +scale*wScale/5
     end
     if w4Limit != 0e0
-        w4 = (1.0+scale)*w4Limit #+ scale
+        w4 = (scale)*w4Limit #+ scale
     else
         w4 = scale*wC +scale*wScale/5
     end
