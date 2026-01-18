@@ -630,27 +630,26 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
 
     p1_r = bounds(p1_low,p1_up,p1_num,p1_grid);
     p1_d = deltaVector(p1_r);
-    u1_r = bounds(u_low,u_up,u1_num,u1_grid);
+    u1_r = bounds(-1.0,1.0,u1_num,u1_grid);
     u1_d = deltaVector(u1_r);
 
     p2_r = bounds(p2_low,p2_up,p2_num,p2_grid);
     p2_d = deltaVector(p2_r);
-    u2_r = bounds(u_low,u_up,u2_num,u2_grid);
+    u2_r = bounds(-1.0,1.0,u2_num,u2_grid);
     u2_d = deltaVector(u2_r);
 
     p3_r = bounds(p3_low,p3_up,p3_num,p3_grid);
     #p3_r = [0.0 ; p3_r ; 2*p3_r[end]];
     p3_d = deltaVector(p3_r);
-    u3_r = bounds(u_low,u_up,u3_num,u3_grid);
+    u3_r = bounds(-1.0,1.0,u3_num,u3_grid);
     u3_d = deltaVector(u3_r);
 
     p4_r = bounds(p4_low,p4_up,p4_num,p4_grid);
     #p4_r = [0.0 ; p4_r ; 2*p4_r[end]];
     p4_d = deltaVector(p4_r);
-    u4_r = bounds(u_low,u_up,u4_num,u4_grid);
+    u4_r = bounds(-1.0,1.0,u4_num,u4_grid);
     u4_d = deltaVector(u4_r);
 
-    
     E1_Δ = deltaEVector(p1_r,m1);
     E1_d = E1_Δ ./ p1_d
 
@@ -687,9 +686,23 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
         alpha1 = 0.0
         alpha2 = 0.0
         beta = 0.0
-        
+
+        a1 = 0.0
+        b1 = 0.0
+        a2 = 0.0
+        b2 = 0.0
+
+        p1Big = false
+        p2Big = false
+
         p3_offset = length(axes(GainMatrix3,1))
         p4_offset = length(axes(GainMatrix4,1))
+
+        if E3_d[p1] > E4_d[p2] && m1 > m2
+            p1Big = true
+        elseif E4_d[p2] > E3_d[p1] && m2 > m1
+            p2Big = true
+        end
 
         while wrong && nonzero_gain
 
@@ -756,15 +769,29 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
 
                 a1 = GainSumN31
                 b1 = GainSumN32
+
+                a2 = GainSumN41
+                b2 = GainSumN42
                 
-                if a1+b1 == 0e0 # There is not gain term produced by MC
-                    b1 = LossSumN1*0.9
-                    bd1 = b1*E3_d[p3]
-                    d1 = b1/bd1
-                    a1 = LossSumN1*0.1
-                    ac1 = a1*E3_d[p3-1]
-                    c1 = a1/ac1
+                if (a1+b1 == 0e0 || (max_high_bins==0 && a1==0.0 && b1!=0.0)) && p1!=1# There is not gain term produced by MC or only a single bin
+                    #TODO: Remove p!=1 condition when in v0.2.0 as will not be needed with underflow bins
+                    #TODO: replace p1 and p1-1 with p1+1 and p1 when underflow bins are added
+                    c1 = E3_d[p1-1]
+                    d1 = E3_d[p1]
+                    L = LossSumN1
+                    LE = LossSumE1
+                    e2 = a2 + b2 - LossSumN2
+                    c2 = GainSumE41/GainSumN41
+
+                    a1 = (d1*L-c2*e2-LE)/(d1-c1)
+                    b1 = L-a1
+                    ac1 = a1*c1
+                    bd1 = b1*d1
+
                     Gain3False = true
+                    if p1==40 && (p2==38 || p2==39)
+                        println("here")
+                    end
                 else
                     ac1 = GainSumE31
                     c1 = GainSumE31/GainSumN31
@@ -772,22 +799,41 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                     d1 = GainSumE32/GainSumN32
                 end
 
-                a2 = GainSumN41
-                b2 = GainSumN42
+                if (a2+b2 == 0e0 || (max_high_bins==0 && a2==0.0 && b2!=0.0)) && p2!=1 # There is not gain term produced by MC or only a single bin
+                    #TODO: Remove p!=1 condition when in v0.2.0 as will not be needed with underflow bins
+                    #TODO: replace p2 and p2-1 with p2+1 and p2 when underflow bins are added
+                    c2 = E4_d[p2-1]
+                    d2 = E4_d[p2]
+                    L = LossSumN2
+                    LE = LossSumE2
+                    e1 = a1 + b1 - LossSumN1
+                    c1 = GainSumE31/GainSumN31
 
-                if a2+b2 == 0e0 # There is not gain term produced by MC
-                    b2 = LossSumN2*0.9
-                    bd2 = b2*E4_d[p4]
-                    d2 = b2/bd2
-                    a2 = LossSumN2*0.1
-                    ac2 = a2*E4_d[p4-1]
-                    c2 = a2/ac2
+                    a2 = (d2*L-c1*e1-LE)/(d2-c2)
+                    b2 = L-a2
+                    ac2 = a2*c2
+                    bd2 = b2*d2
                     Gain4False = true
                 else
                     ac2 = GainSumE41
                     c2 = GainSumE41/GainSumN41
                     bd2 = GainSumE42
                     d2 = GainSumE42/GainSumN42
+                end
+
+                if p1Big
+                    # spectrum dominated by particle 1 so b correction will only apply to that particle 
+                    a2+=b2
+                    b2=0e0
+                    ac2+=bd2
+                    bd2=0e0
+                end
+                if p2Big
+                    # spectrum dominated by particle 2 so b correction will only apply to that particle 
+                    a1+=b1
+                    b1=0e0
+                    ac1+=bd1
+                    bd1=0e0
                 end
 
                 #println("a1: $a1, b1: $b1, a2: $a2, b2: $b2")
@@ -816,7 +862,13 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                 alpha2 = (b1*(d1-c1)*e2+b2*(d2*e2+c1*e1-f))/(a2*(b1*(c1-d1)+b2*(c2-d2))) + 1
                 beta = (f-c1*e1-c2*e2)/(b1*(c1-d1)+b2*(c2-d2)) + 1
 
-                if alpha1 < 0e0 || alpha2 < 0e0 || beta < 0e0
+                #=if p1 == 40 && (p2 == 38 || p2 == 39)
+                    println("p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2, alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
+                    println("a1: $a1, b1: $b1, a2: $a2, b2: $b2. Loss1: $LossSumN1, Loss2: $LossSumN2")
+                    println("ac1: $ac1, bd1: $bd1, ac2: $ac2, bd2: $bd2. LossE1: $LossSumE1, LossE2: $LossSumE2")
+                end=#
+
+                if  alpha1 < 0e0 || alpha2 < 0e0 || beta < 0e0
 
                     #println("alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
 
@@ -866,8 +918,23 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                 e = a+b-LossN
                 f = ac+bd-LossE
 
-                alpha = (e*d-f)/(ac-a*d)+1
-                beta = (e*c-f)/(bd-b*c)+1
+                if isapprox(c,d)
+                    # In this case deltaE is the approx the same for all bins involved, so energy is approx conserved if number is conserved so only one equation and one parameter needed which we take scales b
+                    #alpha = -e/(a+b) + 1
+                    #beta = alpha
+                    beta = -e/b +1
+                    alpha = 1.0
+                else
+                    alpha = (e*d-f)/(ac-a*d)+1
+                    beta = (e*c-f)/(bd-b*c)+1
+                end
+
+                if isnan(alpha) || isnan(beta)
+                    println("NaN encountered for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2")
+                    println("a: $a, b: $b, ac: $ac, bd: $bd, e: $e, f: $f, c: $c, d: $d")
+                    println("$(a+b-LossN), $(ac+bd-LossE)")
+                    println("LossE/LossN: $(LossE/LossN), bd/b: $(bd/b), ac/a: $(ac/a)")
+                end
 
                 if alpha < 0e0 || beta < 0e0
 
@@ -890,12 +957,12 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
         end # while
 
         if Gain3False 
-            CorrectedGainMatrix3[p1,u1,h1,p1,u1,h1,p2,u2,h2] = LossSumN1*0.9 * beta
-            CorrectedGainMatrix3[p1-1,u1,h1,p1,u1,h1,p2,u2,h2] = LossSumN1*0.1 * alpha1
+            CorrectedGainMatrix3[p1,u1,h1,p1,u1,h1,p2,u2,h2] = b1 * beta
+            CorrectedGainMatrix3[p1-1,u1,h1,p1,u1,h1,p2,u2,h2] = a1 * alpha1   
         else
             for p3 in axes(GainMatrix3,1)
                 for u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
-                    if p3 >= p3_offset-(max_high_bins)
+                    if p3 >= p3_offset-(max_high_bins) && !p2Big
                         CorrectedGainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] =  GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] * beta
                     else
                         CorrectedGainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] = GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] * alpha1
@@ -905,12 +972,12 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
         end
 
         if Gain4False 
-            CorrectedGainMatrix4[p2,u2,h2,p1,u1,h1] = LossSumN2*0.9 * beta
-            CorrectedGainMatrix4[p2-1,u2,h2,p1,u1,h1] = LossSumN2*0.1 * alpha2
+            CorrectedGainMatrix4[p2,u2,h2,p1,u1,h1] = b2 * beta
+            CorrectedGainMatrix4[p2-1,u2,h2,p1,u1,h1] = a2 * alpha2
         else
             for p4 in axes(GainMatrix4,1)
                 for u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
-                    if p4 >= p4_offset-(max_high_bins)
+                    if p4 >= p4_offset-(max_high_bins) && !p1Big
                         CorrectedGainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] =  GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] * beta
                     else
                         CorrectedGainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] = GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] * alpha2
