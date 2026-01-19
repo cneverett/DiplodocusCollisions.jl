@@ -269,15 +269,18 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
     if w3Limit != 0e0
         w3 = (scale)*w3Limit #+ scale
     else
-        w3 = scale*wC +scale*wScale
+        w3 = scale*wC #+scale*wScale
     end
     if w4Limit != 0e0
         w4 = (scale)*w4Limit #+ scale
     else
-        w4 = scale*wC +scale*wScale
+        w4 = scale*wC #+scale*wScale
     end
     w3 = min(w3,18.0)
     w4 = min(w4,18.0)
+    #if w3 == 18.0 || w4 == 18.0
+    #    println("Warning: Weighting rapidity capped at 18.0, consider increasing scale or checking kinematics.")
+    #end
     #w3::Float64 = w3Limit#+scale*wC #+scale*(wScale)
     #w4::Float64 = w4Limit#+scale*wC #+scale*(wScale) 
 
