@@ -698,9 +698,9 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
         p3_offset = length(axes(GainMatrix3,1))
         p4_offset = length(axes(GainMatrix4,1))
 
-        if E3_d[p1] > 1e0*E4_d[p2] && m1 > m2
+        if E1_d[p1] > 1e0*E2_d[p2] && m1 > m2
             p1Big = true
-        elseif E4_d[p2] > 1e0*E3_d[p1] && m2 > m1
+        elseif E2_d[p2] > 1e0*E1_d[p1] && m2 > m1
             p2Big = true
         end
 
