@@ -676,6 +676,14 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
             LossSumE1 = LossMatrix1[p1,u1,h1,p2,u2,h2]*(E1_d[p1]+E2_d[p2])/2
             LossSumE2 = 0.0#LossMatrix1[p1,u1,h1,p2,u2,h2]*(E1_d[p1]+E2_d[p2])/2
         end
+
+        if LossSumN1 + LossSumN2 == 0e0
+            # no loss term so no interaction at these incoming states
+
+            num_right += 1
+
+            continue
+        end
         
         wrong = true
         nonzero_gain = true
