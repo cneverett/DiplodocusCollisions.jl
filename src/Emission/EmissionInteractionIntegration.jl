@@ -45,15 +45,40 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
         
         filePath = joinpath(fileLocation,fileName)
 
-        (OldGainTallyK2,OldGainTallyK3,OldLossTallyK1,OldGainTallyN2,OldGainTallyN3,OldLossTallyN1,OldGainMatrix2,OldGainMatrix3,OldLossMatrix1) = OldMonteCarloArraysEmission(Parameters,filePath)
+        (OldGainTallyK2_All,OldGainTallyK3_All,OldLossTallyK1_All,OldGainTallyN2_All,OldGainTallyN3_All,OldLossTallyN1_All,OldGainMatrix2_All,OldGainMatrix3_All,OldLossMatrix1_All) = OldMonteCarloArraysEmission(Parameters,filePath)
 
-        (GainTotal2,GainTotal3,LossTotal1,GainTallyN2,GainTallyK2,GainTallyN3,GainTallyK3,LossTallyN1,LossTallyK1,GainMatrix2,GainMatrix3,LossMatrix1) = MonteCarloArraysEmission(Parameters)
+        (GainTotal2_All,GainTotal3_All,LossTotal1_All,GainTallyN2_All,GainTallyK2_All,GainTallyN3_All,GainTallyK3_All,LossTallyN1_All,LossTallyK1_All,GainMatrix2_All,GainMatrix3_All,LossMatrix1_All) = MonteCarloArraysEmission(Parameters)
 
     # ================================= #
 
     # ===== Run MonteCarlo Integration ==== #
 
         println("Running Monte Carlo Integration")
+
+        for (ee,Ext_val) in enumerate(Ext)
+            println("")
+            println("Ext Value = $Ext_val  ($(ee) out of $(length(Ext)))")
+            println("")
+
+            OldGainTallyK2 = view(OldGainTallyK2_All,:,:,:,:,:,:,ee)
+            OldGainTallyK3 = view(OldGainTallyK3_All,:,:,:,:,:,:,ee)
+            OldLossTallyK1 = view(OldLossTallyK1_All,:,:,:,ee)
+            OldGainTallyN2 = view(OldGainTallyN2_All,:,:,:,:,:,:,ee)
+            OldGainTallyN3 = view(OldGainTallyN3_All,:,:,:,:,:,:,ee)
+            OldLossTallyN1 = view(OldLossTallyN1_All,:,:,:,ee)
+            OldGainMatrix2 = view(OldGainMatrix2_All,:,:,:,:,:,:,ee)
+            OldGainMatrix3 = view(OldGainMatrix3_All,:,:,:,:,:,:,ee)
+            OldLossMatrix1 = view(OldLossMatrix1_All,:,:,:,ee)
+
+            GainTallyK2 = view(GainTallyK2_All,:,:,:,:,:,:,ee)
+            GainTallyK3 = view(GainTallyK3_All,:,:,:,:,:,:,ee)
+            LossTallyK1 = view(LossTallyK1_All,:,:,:,ee)
+            GainTallyN2 = view(GainTallyN2_All,:,:,:,:,:,:,ee)
+            GainTallyN3 = view(GainTallyN3_All,:,:,:,:,:,:,ee)
+            LossTallyN1 = view(LossTallyN1_All,:,:,:,ee)
+            GainMatrix2 = view(GainMatrix2_All,:,:,:,:,:,:,ee)
+            GainMatrix3 = view(GainMatrix3_All,:,:,:,:,:,:,ee)
+            LossMatrix1 = view(LossMatrix1_All,:,:,:,ee)
 
         for (ii,scale_val) in enumerate(scale)
 
@@ -87,12 +112,12 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             if numThreads == 1
                 numProgress = numLoss*index_range[end]*u1_num*h1_num
                 prog = Progress(numProgress)
-                EmissionMonteCarlo_Debug!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numLoss,numGain,indices[1:end],scale_val,prog,1)
+                EmissionMonteCarlo_Debug!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numLoss,numGain,indices[1:end],scale_val,Ext_val,prog,1)
                 finish!(prog)
             else 
                 numProgress = numLoss*index_range[1+1]*u1_num*h1_num
                 prog = Progress(numProgress)
-                workers  = [EmissionMonteCarlo!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
+                workers  = [EmissionMonteCarlo!(GainTotal2,GainTallyN2,GainTallyK2,GainTotal3,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1,ArrayOfLocks,EmissionKernel,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,Ext_val,prog,thread) for thread in 1:(length(index_range)-1)]
                 wait.(workers) # Allow all workers to finish#
                 finish!(prog)
             end
@@ -127,7 +152,9 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             WeightedAverageGainEmission!(GainMatrix2,OldGainMatrix2,GainTallyN2,OldGainTallyN2,GainMatrix3,OldGainMatrix3,GainTallyN3,OldGainTallyN3)
             WeightedAverageLossEmission!(LossMatrix1,OldLossMatrix1,LossTallyN1,OldLossTallyN1)
 
-        end # scale loop 
+        end # scale loop
+        
+        end # Ext loop
 
     # ===================================== #
 
