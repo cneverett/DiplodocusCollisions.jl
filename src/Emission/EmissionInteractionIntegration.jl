@@ -80,6 +80,10 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             GainMatrix3 = view(GainMatrix3_All,:,:,:,:,:,:,ee)
             LossMatrix1 = view(LossMatrix1_All,:,:,:,ee)
 
+            LossTotal1 = view(LossTotal1_All,:,:,:,ee)
+            GainTotal2 = view(GainTotal2_All,:,:,:,:,:,:,ee)
+            GainTotal3 = view(GainTotal3_All,:,:,:,:,:,:,ee)
+
         for (ii,scale_val) in enumerate(scale)
 
             println("")
