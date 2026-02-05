@@ -103,21 +103,21 @@ function BinaryFileName(Parameters::Tuple{String,String,String,String,Float64,Fl
     (name1,name2,name3,name4,mu1,mu2,mu3,mu4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
     
     fileName = name1*name2*name3*name4
-    fileName *= "#"*string(p1_low)*"-"*string(p1_up)*p1_grid*string(p1_num)
-    fileName *= "#"*u1_grid*string(u1_num)
-    fileName *= "#"*h1_grid*string(h1_num)
+    fileName *= "_"*string(p1_low)*"-"*string(p1_up)*p1_grid*string(p1_num)
+    fileName *= "_"*u1_grid*string(u1_num)
+    fileName *= "_"*h1_grid*string(h1_num)
 
-    fileName *= "#"*string(p2_low)*"-"*string(p2_up)*p2_grid*string(p2_num)
-    fileName *= "#"*u2_grid*string(u2_num)
-    fileName *= "#"*h2_grid*string(h2_num)
+    fileName *= "_"*string(p2_low)*"-"*string(p2_up)*p2_grid*string(p2_num)
+    fileName *= "_"*u2_grid*string(u2_num)
+    fileName *= "_"*h2_grid*string(h2_num)
 
-    fileName *= "#"*string(p3_low)*"-"*string(p3_up)*p3_grid*string(p3_num)
-    fileName *= "#"*u3_grid*string(u3_num)
-    fileName *= "#"*h3_grid*string(h3_num)
+    fileName *= "_"*string(p3_low)*"-"*string(p3_up)*p3_grid*string(p3_num)
+    fileName *= "_"*u3_grid*string(u3_num)
+    fileName *= "_"*h3_grid*string(h3_num)
 
-    fileName *= "#"*string(p4_low)*"-"*string(p4_up)*p4_grid*string(p4_num)
-    fileName *= "#"*u4_grid*string(u4_num)
-    fileName *= "#"*h4_grid*string(h4_num)
+    fileName *= "_"*string(p4_low)*"-"*string(p4_up)*p4_grid*string(p4_num)
+    fileName *= "_"*u4_grid*string(u4_num)
+    fileName *= "_"*h4_grid*string(h4_num)
     
     fileName *= ".jld2";
 
@@ -134,20 +134,20 @@ function EmissionFileName(Parameters::Tuple{String,String,String,String,Float64,
     (name1,name2,name3,type,mu1,mu2,mu3,z1,z2,z3,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,Ext) = Parameters
     
     fileName = type*name1*name2*name3
-    fileName *= "#"*string(p1_low)*"-"*string(p1_up)*p1_grid*string(p1_num)
-    fileName *= "#"*u1_grid*string(u1_num)
-    fileName *= "#"*h1_grid*string(h1_num)
+    fileName *= "_"*string(p1_low)*"-"*string(p1_up)*p1_grid*string(p1_num)
+    fileName *= "_"*u1_grid*string(u1_num)
+    fileName *= "_"*h1_grid*string(h1_num)
 
-    fileName *= "#"*string(p2_low)*"-"*string(p2_up)*p2_grid*string(p2_num)
-    fileName *= "#"*u2_grid*string(u2_num)
-    fileName *= "#"*h2_grid*string(h2_num)
+    fileName *= "_"*string(p2_low)*"-"*string(p2_up)*p2_grid*string(p2_num)
+    fileName *= "_"*u2_grid*string(u2_num)
+    fileName *= "_"*h2_grid*string(h2_num)
 
-    fileName *= "#"*string(p3_low)*"-"*string(p3_up)*p3_grid*string(p3_num)
-    fileName *= "#"*u3_grid*string(u3_num)
-    fileName *= "#"*h3_grid*string(h3_num)
+    fileName *= "_"*string(p3_low)*"-"*string(p3_up)*p3_grid*string(p3_num)
+    fileName *= "_"*u3_grid*string(u3_num)
+    fileName *= "_"*h3_grid*string(h3_num)
 
     for i in eachindex(Ext)
-        fileName *= "#"*string(Ext[i])
+        fileName *= "_"*string(Ext[i])
     end
     
     fileName *= ".jld2";
