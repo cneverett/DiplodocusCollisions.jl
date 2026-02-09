@@ -178,17 +178,17 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
         println("Saving Arrays")
 
         f = jldopen(filePath,"w") # creates file and overwrites previous file if one existed
-        write(f,"GainTallyK2",OldGainTallyK2)
-        write(f,"GainTallyN2",OldGainTallyN2)
-        write(f,"GainMatrix2",OldGainMatrix2)
+        write(f,"GainTallyK2",OldGainTallyK2_All)
+        write(f,"GainTallyN2",OldGainTallyN2_All)
+        write(f,"GainMatrix2",OldGainMatrix2_All)
 
-        write(f,"GainTallyK3",OldGainTallyK3)
-        write(f,"GainTallyN3",OldGainTallyN3)
-        write(f,"GainMatrix3",OldGainMatrix3)
-
-        write(f,"LossTallyK1",OldLossTallyK1)
-        write(f,"LossTallyN1",OldLossTallyN1)
-        write(f,"LossMatrix1",OldLossMatrix1)
+        write(f,"GainTallyK3",OldGainTallyK3_All)
+        write(f,"GainTallyN3",OldGainTallyN3_All)
+        write(f,"GainMatrix3",OldGainMatrix3_All)
+        
+        write(f,"LossTallyK1",OldLossTallyK1_All)
+        write(f,"LossTallyN1",OldLossTallyN1_All)
+        write(f,"LossMatrix1",OldLossMatrix1_All)
 
         write(f,"Parameters",Parameters)
 
