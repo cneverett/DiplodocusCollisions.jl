@@ -16,6 +16,7 @@ export UserBinaryParameters, UserEmissionParameters
         include("Common/RandomPoints.jl")
         include("Common/Location.jl")
         include("Common/UserParameters.jl")
+        include("Common/UsefulGridValueFunctions.jl")
 
     # include Binary files
         #include("Binary/Structs.jl")
@@ -25,7 +26,6 @@ export UserBinaryParameters, UserEmissionParameters
         include("Binary/MomentumValues.jl")
         include("Binary/MandelstramChecks.jl")
         include("Binary/GainLossValue.jl")
-        include("Binary/UsefulGridValueFunctions.jl")
         include("Binary/MomentumSpaceFactors.jl")
         include("Binary/Sampling.jl")
         include("Binary/BinaryInteractionIntegration.jl")

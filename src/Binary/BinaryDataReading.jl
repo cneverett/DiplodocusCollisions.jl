@@ -735,7 +735,7 @@ function GainCorrection2(Parameters::Tuple{String, String, String, String, Float
                 a = GainN1
                 if a == 0e0 # loop has not produced any gain terms
                     nonzero_gain = false
-                    println("No gain terms for p1=$p1,p2=$p2")
+                    #println("No gain terms for p1=$p1,p2=$p2")
                     num_wrong += 1
                     continue
                 end
@@ -757,14 +757,14 @@ function GainCorrection2(Parameters::Tuple{String, String, String, String, Float
                     #println("alpha = $alpha, beta = $beta, a+b-L = f = $(a+b-LossN), ac+bd-LE = e = $(ac+bd-LossE), ac = $ac, bd = $bd, c = $c, d = $d, a = $a, b = $b")
                     #println("Old method N Correct = $(LossN/(GainN1+GainN2))")
                     #println("Old method E Correct = $((LossE)/(GainE1+GainE2))")
-                    println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins")
+                    #println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins")
 
                     max_high_bins += 1
 
                     continue # redo calculation
                 else
-                    println("p1=$p1,p2=$p2")
-                    println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins")
+                    #println("p1=$p1,p2=$p2")
+                    #println("alpha: $alpha, beta: $beta, max_high_bins: $max_high_bins")
                     wrong = false
                     num_right += 1
                 end

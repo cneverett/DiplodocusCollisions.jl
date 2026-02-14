@@ -66,6 +66,20 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
     h3_grid::GridType = Grid_String_to_Type(h3_grid_st)
     h4_grid::GridType = Grid_String_to_Type(h4_grid_st)
 
+    u1_r::Vector{Float64} = bounds(u_low,u_up,u1_num,u1_grid_st)
+    h1_r::Vector{Float64} = bounds(h_low,h_up,h1_num,h1_grid_st)
+    u2_r::Vector{Float64} = bounds(u_low,u_up,u2_num,u2_grid_st)
+    h2_r::Vector{Float64} = bounds(h_low,h_up,h2_num,h2_grid_st)
+
+    u1_up::Float64 = 0.0
+    u1_low::Float64 = 0.0
+    h1_up::Float64 = 0.0
+    h1_low::Float64 = 0.0
+    u2_up::Float64 = 0.0
+    u2_low::Float64 = 0.0
+    h2_up::Float64 = 0.0
+    h2_low::Float64 = 0.0
+    
     LocalGainTotal3::Array{Float64,3} = zeros(Float64,size(GainTotal3)[1:3])
     LocalGainTally3::Array{UInt32,3} = zeros(UInt32,size(GainTally3)[1:3])
     if m3 != m4
@@ -78,20 +92,31 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
         p1loc = indices[index][1]
         p2loc = indices[index][2]
 
-        for _ in 1:(numLoss*u1_num*h1_num*u2_num*h2_num) # sample incoming sates
+        for u1loc in 1:u1_num, h1loc in 1:h1_num, u2loc in 1:u2_num, h2loc in 1:h2_num
+
+            u1_up = u1_r[u1loc+1]
+            u1_low = u1_r[u1loc]
+            h1_up = h1_r[h1loc+1]
+            h1_low = h1_r[h1loc]
+            u2_up = u2_r[u2loc+1]
+            u2_low = u2_r[u2loc]
+            h2_up = h2_r[h2loc+1]
+            h2_low = h2_r[h2loc]
+            loc12 = CartesianIndex(p1loc,u1loc,h1loc,p2loc,u2loc,h2loc)
+
+        for _ in 1:numLoss # sample incoming sates
         
             # generate p1 and p2 vectors initially as to not have to re-calculate
-            RPointSphereCosThetaPhi!(p1v)
-            RPointSphereCosThetaPhi!(p2v)
+            RPointSphereCosThetaPhiBounds!(p1v,u1_low,u1_up,h1_low,h1_up)
+            RPointSphereCosThetaPhiBounds!(p2v,u2_low,u2_up,h2_low,h2_up)
             RPointLogMomentum!(p1v,p1_up,p1_low,p1_num,p1loc)
             RPointLogMomentum!(p2v,p2_up,p2_low,p2_num,p2loc)
 
             # Calculate T Array Location
-            u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
-            u2loc = location(u_low,u_up,u2_num,p2v[2],u2_grid)
-            h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
-            h2loc = location(h_low,h_up,h2_num,p2v[3],h2_grid)
-            loc12 = CartesianIndex(p1loc,u1loc,h1loc,p2loc,u2loc,h2loc)
+            #u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
+            #u2loc = location(u_low,u_up,u2_num,p2v[2],u2_grid)
+            #h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
+            #h2loc = location(h_low,h_up,h2_num,p2v[3],h2_grid)
 
             fill!(LocalGainTally3,UInt32(0))
             if m3 != m4
@@ -219,27 +244,29 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
                 end
             end
 
-        # assign values to arrays
-        @lock ArrayOfLocks[p1loc] begin
-            LossTotal[loc12] += LossVal
-            LossTally[loc12] += UInt32(1)
-            @view(GainTally3[:,:,:,loc12]) .+= LocalGainTally3
-            if m3 != m4 
-                @view(GainTally4[:,:,:,loc12]) .+= LocalGainTally4
-            end
-            if LossVal != 0e0
-                @view(GainTotal3[:,:,:,loc12]) .+= LocalGainTotal3
-                if m3 != m4
-                    @view(GainTotal4[:,:,:,loc12]) .+= LocalGainTotal4
+            # assign values to arrays
+            @lock ArrayOfLocks[p1loc] begin
+                LossTotal[loc12] += LossVal
+                LossTally[loc12] += UInt32(1)
+                @view(GainTally3[:,:,:,loc12]) .+= LocalGainTally3
+                if m3 != m4 
+                    @view(GainTally4[:,:,:,loc12]) .+= LocalGainTally4
                 end
+                if LossVal != 0e0
+                    @view(GainTotal3[:,:,:,loc12]) .+= LocalGainTotal3
+                    if m3 != m4
+                        @view(GainTotal4[:,:,:,loc12]) .+= LocalGainTotal4
+                    end
+                end
+            end 
+
+            if thread_id == 1 # on main thread
+                next!(prog)
             end
-        end 
 
-        if thread_id == 1 # on main thread
-            next!(prog)
-        end
+        end # numLoss loop
 
-        end # T loop
+        end # u1,h1,u2,h2 loop
 
     end # indices loop
 
