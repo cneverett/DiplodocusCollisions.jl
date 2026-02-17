@@ -217,7 +217,7 @@ function DoesConserve(Output::Tuple{Tuple,Array{Float64,9},Array{Float64,9},Arra
     #E4_d_full = E4_Δ_full ./ p4_d_full
     E4_d = E4_Δ ./ p4_d
 
-    println("E1_d: $E1_d \n E2_d: $E2_d \n E3_d: $E3_d \n E4_d: $E4_d")
+    #println("E1_d: $E1_d \n E2_d: $E2_d \n E3_d: $E3_d \n E4_d: $E4_d")
 
     SsumN3 = 0
     TsumN1 = 0
