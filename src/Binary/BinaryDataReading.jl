@@ -394,7 +394,7 @@ function DoesConserve(Output::Tuple{Tuple{String, String, String, String, Float6
     #E4_d_full = E4_Δ_full ./ p4_d_full
     E4_d = E4_Δ ./ p4_d
 
-    println("E1_d: $E1_d, E2_d: $E2_d, E3_d: $E3_d, E4_d: $E4_d")
+    #println("E1_d: $E1_d, E2_d: $E2_d, E3_d: $E3_d, E4_d: $E4_d")
 
     SsumN3 = 0
     TsumN1 = 0
@@ -1107,22 +1107,6 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
 
                     continue
 
-                end
-
-                if p1 == 5 && p2 == 52 && u1 == 1 && u2 == 2
-                    println("p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2, alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset")
-                    println("a1: $a1, b1: $b1, a2: $a2, b2: $b2, Loss1: $LossSumN1, Loss2: $LossSumN2")
-                    println("ac1: $ac1, bd1: $bd1, ac2: $ac2, bd2: $bd2. LossE1: $LossSumE1, LossE2: $LossSumE2")
-                    println("GainSumN31: $GainSumN31, GainSumN32: $GainSumN32, GainSumN41: $GainSumN41, GainSumN42: $GainSumN42")
-                    println("p1Big: $p1Big, p2Big: $p2Big")
-                    println("c1: $c1, d1: $d1, c2: $c2, d2: $d2")
-                    println("E3_d[p1]: $(E3_d[p1]), E4_d[p2]: $(E4_d[p2])")
-                end
-                if max_high_bins > 200
-                    print("\r p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2, max_high_bins: $max_high_bins, p3_offset: $p3_offset, p4_offset: $p4_offset        ")
-                    println("a1: $a1, b1: $b1, ac1: $ac1, bd1: $bd1, e1: $e1, a2: $a2, b2: $b2, ac2: $ac2, bd2: $bd2, e2: $e2, f: $f, c1: $c1, d1: $d1, c2: $c2, d2: $d2")
-                    println("GainSumN31: $GainSumN31, GainSumN32: $GainSumN32, GainSumN41: $GainSumN41, GainSumN42: $GainSumN42")
-                    error("Exceeded maximum number of high bins in GainCorrection")
                 end
 
                 if isnan(alpha1) || isnan(alpha2) || isnan(beta)
