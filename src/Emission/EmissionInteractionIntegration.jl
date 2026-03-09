@@ -177,22 +177,21 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
         println("")
         println("Saving Arrays")
 
-        f = jldopen(filePath,"w") # creates file and overwrites previous file if one existed
-        write(f,"GainTallyK2",OldGainTallyK2_All)
-        write(f,"GainTallyN2",OldGainTallyN2_All)
-        write(f,"GainMatrix2",OldGainMatrix2_All)
+        jldopen(filePath,"w";compress=true) do f # creates file and overwrites previous file if one existed
+            write(f,"GainTallyK2",OldGainTallyK2_All)
+            write(f,"GainTallyN2",OldGainTallyN2_All)
+            write(f,"GainMatrix2",OldGainMatrix2_All)
 
-        write(f,"GainTallyK3",OldGainTallyK3_All)
-        write(f,"GainTallyN3",OldGainTallyN3_All)
-        write(f,"GainMatrix3",OldGainMatrix3_All)
-        
-        write(f,"LossTallyK1",OldLossTallyK1_All)
-        write(f,"LossTallyN1",OldLossTallyN1_All)
-        write(f,"LossMatrix1",OldLossMatrix1_All)
+            write(f,"GainTallyK3",OldGainTallyK3_All)
+            write(f,"GainTallyN3",OldGainTallyN3_All)
+            write(f,"GainMatrix3",OldGainMatrix3_All)
+            
+            write(f,"LossTallyK1",OldLossTallyK1_All)
+            write(f,"LossTallyN1",OldLossTallyN1_All)
+            write(f,"LossMatrix1",OldLossMatrix1_All)
 
-        write(f,"Parameters",Parameters)
-
-        close(f)
+            write(f,"Parameters",Parameters)
+        end
 
     # ===================================== #
 

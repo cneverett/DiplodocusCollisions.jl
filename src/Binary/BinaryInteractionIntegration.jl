@@ -233,25 +233,25 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
         println("Saving Arrays")
 
-        f = jldopen(filePath,"w") # creates file and overwrites previous file if one existed
-        write(f,"GainWeights3",OldGainWeights3)
-        write(f,"GainMatrix3",OldGainMatrix3)
+        jldopen(filePath,"w";compress=true) do f # creates file and overwrites previous file if one existed
+            write(f,"GainWeights3",OldGainWeights3)
+            write(f,"GainMatrix3",OldGainMatrix3)
 
-        write(f,"GainWeights4",OldGainWeights4)
-        write(f,"GainMatrix4",OldGainMatrix4)
+            write(f,"GainWeights4",OldGainWeights4)
+            write(f,"GainMatrix4",OldGainMatrix4)
 
-        write(f,"LossTally",OldLossTally)
-        write(f,"LossMatrix1",OldLossMatrix1)
-        write(f,"LossMatrix2",OldLossMatrix2)
+            write(f,"LossTally",OldLossTally)
+            write(f,"LossMatrix1",OldLossMatrix1)
+            write(f,"LossMatrix2",OldLossMatrix2)
 
-        write(f,"Parameters",Parameters)
-        write(f,"ErrorEstimates",ErrorOutput)
+            write(f,"Parameters",Parameters)
+            write(f,"ErrorEstimates",ErrorOutput)
 
-        write(f,"CorrectedGainMatrix3",CorrectedGainMatrix3)
-        write(f,"CorrectedGainMatrix4",CorrectedGainMatrix4)
-        write(f,"CorrectedLossMatrix1",CorrectedLossMatrix1)
-        write(f,"CorrectedLossMatrix2",CorrectedLossMatrix2)
-        close(f)
+            write(f,"CorrectedGainMatrix3",CorrectedGainMatrix3)
+            write(f,"CorrectedGainMatrix4",CorrectedGainMatrix4)
+            write(f,"CorrectedLossMatrix1",CorrectedLossMatrix1)
+            write(f,"CorrectedLossMatrix2",CorrectedLossMatrix2)
+        end
 
     # ===================================== #
 
