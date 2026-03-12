@@ -85,7 +85,11 @@ function UserBinaryParameters()
     numGain::Int64 = getfield(Main,Symbol("numGain"))  
     numThreads::Int64 = getfield(Main,Symbol("numThreads"))
 
-    fileLocation::String = getfield(Main,Symbol("fileLocation"))
+    fileLocation::String = try 
+        getfield(Main,Symbol("fileLocation"))
+    catch
+        joinpath(pwd(),"Data")
+    end
     fileName::String = BinaryFileName(Parameters)
 
     Setup::Tuple = (Parameters,bins,scale, numLoss, numGain, numThreads, fileLocation, fileName)
@@ -242,7 +246,11 @@ function UserEmissionParameters()
     numGain::Int64 = getfield(Main,Symbol("numGain"))  
     numThreads::Int64 = getfield(Main,Symbol("numThreads"))
 
-    fileLocation::String = getfield(Main,Symbol("fileLocation"))
+    fileLocation::String = try 
+        getfield(Main,Symbol("fileLocation"))
+    catch
+        joinpath(pwd(),"Data")
+    end
     fileName::String = EmissionFileName(Parameters)
 
     Setup::Tuple = (Parameters,bins,scale, numLoss, numGain, numThreads, fileLocation, fileName)
