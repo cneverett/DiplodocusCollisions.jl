@@ -67,7 +67,18 @@ function LossValue(p1v::Vector{Float64},p2v::Vector{Float64},sigma::Function,m1:
     Es2s::Float64 = Es2/p2
 
     sBig::Float64 = max((m1+m2)^2,(m3+m4)^2)
-    sSmol::Float64 = ((m1+m2)^2-sBig) + 2*p1*p2*(-ctheta12 + Es1s*Es2s + m1*Es2s/p1 + m2*Es1s/p2)
+    #sSmol::Float64 = ((m1+m2)^2-sBig) + 2*p1*p2*(-ctheta12 + Es1s*Es2s + m1*Es2s/p1 + m2*Es1s/p2)
+    sSmol::Float64 = 0.0
+    if m1 == 0.0 && m2 == 0.0
+        sSmol += 2*p1*p2*(1.0-ctheta12) - sBig
+    elseif m1 == 0.0 && m2 != 0.0
+        sSmol += m2^2 + 2*p1*m22/(sqrt(m22+p2^2)+p2) + 2*p1*p2*(1-ctheta12) - sBig
+    elseif m1 != 0.0 && m2 == 0.0
+        sSmol += m1^2 + 2*p2*m12/(sqrt(m12+p1^2)+p1) + 2*p2*p1*(1-ctheta12) - sBig
+    else 
+        sSmol += m1^2 + m2^2 + 2*(p1*m22/(sqrt(m22+p2^2)+p2) + p2*m12/(sqrt(m12+p1^2)+p1) +m22/(sqrt(m22+p2^2)+p2)*m12/(sqrt(m12+p1^2)+p1)) + 2*p1*p2*(1-ctheta12) - sBig
+    end
+   
 
     if sCheck(sSmol,sBig,m1,m2,m3,m4) # check if s value is valid for interaction
 
@@ -84,8 +95,11 @@ function LossValue(p1v::Vector{Float64},p2v::Vector{Float64},sigma::Function,m1:
             println("sBig = $sBig")
             error("ST1 Inf or -ve#")
         end
+
     else # if not valid set T value to zero
+
         LossVal = 0e0
+        
     end
 
     return LossVal, sBig, sSmol
@@ -179,11 +193,11 @@ function GainValue3(p3v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
     #uSmol::Float64 = 2*p2*p3*(ctheta23 - Es2s*Es3s - m3*Es2s/p3 - m2*Es3s/p2)
     uSmol::Float64 = 0.0
     if m2 == 0.0 && m3 == 0.0
-        uSmol += 2*p4*p1*(ctheta14b + ctheta14c)
+        uSmol += 2*p2*p3*(ctheta23b + ctheta23c)
     elseif m2 == 0.0 && m3 != 0.0
         #E = sqrt(p^2+m^2) = p + (m^2)/(sqrt(m^2+p^2)+p)
         #E-p = (m^2)/(sqrt(m^2+p^2)+p) 
-        uSmol += -2*(m32/(sqrt(m32+p3^2)+p3))*p1 + 2*p3*p2*(ctheta23b + ctheta23c)
+        uSmol += -2*(m32/(sqrt(m32+p3^2)+p3))*p2 + 2*p3*p2*(ctheta23b + ctheta23c)
     elseif m2 != 0.0 && m3 == 0.0
         uSmol += -2*(m22/(sqrt(m22+p2^2)+p2))*p3 + 2*p3*p2*(ctheta23b + ctheta23c)
     else 

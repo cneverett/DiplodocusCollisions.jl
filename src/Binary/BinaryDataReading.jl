@@ -983,7 +983,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
                     tmpN += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]
                     tmpE += GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2]*E3_d[p3]
                 end
-                if searching && tmpN == 0e0
+                if searching && tmpN == 0e0 #&& p3_offset > 0
                     p3_offset -= 1
                     # keep looking at a lower p3 bin
                 elseif high_bins <= max_high_bins && !p2Big
@@ -1008,7 +1008,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
                     tmpN += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]
                     tmpE += GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2]*E4_d[p4]
                 end
-                if searching && tmpN == 0e0
+                if searching && tmpN == 0e0 #&& p4_offset > 0
                     p4_offset -= 1
                     # keep looking at a lower p4 bin
                 elseif high_bins <= max_high_bins && !p1Big
@@ -1041,9 +1041,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
                 bd2 = GainSumE42
                 d2 = bd2 != 0.0 ? GainSumE42/GainSumN42 : 0.0
                 
-                if (a1+b1 == 0e0 || (max_high_bins==0 && a1==0.0 && b1!=0.0)) #&& p1!=1 && p1!=p1_num # There is not gain term produced by MC or only a single bin
-                    #TODO: Remove p!=1 condition when in v0.2.0 as will not be needed with underflow bins
-                    #TODO: replace p1 and p1-1 with p1+1 and p1 when underflow bins are added
+                if (a1+b1 == 0e0 || (max_high_bins==0 && a1==0.0 && b1!=0.0))# There is not gain term produced by MC or only a single bin
                     #c1 = p2Big ? E3_d[p1] : E3_d[p1-1]
                     #d1 = p2Big ? E3_d[p1+1] : E3_d[p1]
                     # underflow bins adds 1 to value of p3 index compared to p1 index for same energy bin.
@@ -1062,9 +1060,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
                     Gain3False = true
                 end
 
-                if (a2+b2 == 0e0 || (max_high_bins==0 && a2==0.0 && b2!=0.0))# && p2!=1 && p2!=p2_num # There is not gain term produced by MC or only a single bin
-                    #TODO: Remove p!=1 condition when in v0.2.0 as will not be needed with underflow bins
-                    #TODO: replace p2 and p2-1 with p2+1 and p2 when underflow bins are added
+                if (a2+b2 == 0e0 || (max_high_bins==0 && a2==0.0 && b2!=0.0))# There is not gain term produced by MC or only a single bin
                     #c2 = p1Big ? E4_d[p2] : E4_d[p2-1]
                     #d2 = p1Big ? E4_d[p2+1] : E4_d[p2]
                     # underflow bins adds 1 to value of p4 index compared to p2 index for same energy bin.
@@ -1090,7 +1086,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
                 alpha2 = (b1*(d1-c1)*e2+b2*(d2*e2+c1*e1-f))/(a2*(b1*(c1-d1)+b2*(c2-d2))) + 1
                 beta = (f-c1*e1-c2*e2)/(b1*(c1-d1)+b2*(c2-d2)) + 1
 
-                if a1 == 0e0 || a2 == 0e0 # loop has not produced any corrected gain terms
+                if a1 == 0e0 || a2 == 0e0 || max_high_bins > max(size(GainMatrix3,1),size(GainMatrix4,1))# loop has not produced any corrected gain terms
 
                     nonzero_gain = false
                     #println("No valid correction for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2")
@@ -1239,6 +1235,8 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
                 end
             end
         end
+
+        println("p1=$p1,p2=$p2,u1=$u1,u2=$u2,h1=$h1, h2=$h2")
 
         #println("$(sum(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])) , $(sum(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])) , $(CorrectedLossMatrix1[p1,u1,h1,p2,u2,h2]) , $(CorrectedLossMatrix2[p2,u2,h2,p1,u1,h1])")
 
