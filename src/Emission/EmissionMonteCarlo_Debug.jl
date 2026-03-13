@@ -19,7 +19,7 @@
 - Take random points (p1,p2,t1,t2) and calculate Synchrotron emissivity
 - Find position in S arrays and allocated tallies and totals accordingly.
 """
-function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Array{UInt32,6},GainTallyK2::Array{UInt32,6},GainTotal3::Array{Float64,6},GainTallyN3::Array{UInt32,6},GainTallyK3::Array{UInt32,6},LossTotal1::Array{Float64,3},LossTallyN1::Array{UInt32,3},LossTallyK1::Array{UInt32,3},ArrayOfLocks,EmissionKernel::Function,Parameters::Tuple{String,String,String,String,Float64,Float64,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Vector{Float64}},numLoss::Int64,numGain::Int64,indices::Vector{CartesianIndex{2}},scale::Float64,prog::Progress,thread_id::Int64)
+function EmissionMonteCarlo_Debug!(GainTotal2::AbstractArray{Float64,6},GainTallyN2::AbstractArray{UInt32,6},GainTallyK2::AbstractArray{UInt32,6},GainTotal3::AbstractArray{Float64,6},GainTallyN3::AbstractArray{UInt32,6},GainTallyK3::AbstractArray{UInt32,6},LossTotal1::AbstractArray{Float64,3},LossTallyN1::AbstractArray{UInt32,3},LossTallyK1::AbstractArray{UInt32,3},ArrayOfLocks,EmissionKernel::Function,Parameters::Tuple{String,String,String,String,Float64,Float64,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Vector{Float64}},numLoss::Int64,numGain::Int64,indices::Vector{CartesianIndex{2}},scale::Float64,Ext_val::Float64,prog::Progress,thread_id::Int64)
 
     # Set Parameters
     (name1,name2,name3,type,m1,m2,m3,z1,z2,z3,p1_low,p1_up,p1_grid_st,p1_num,u1_grid_st,u1_num,h1_grid_st,h1_num,p2_low,p2_up,p2_grid_st,p2_num,u2_grid_st,u2_num,h2_grid_st,h2_num,p3_low,p3_up,p3_grid_st,p3_num,u3_grid_st,u3_num,h3_grid_st,h3_num,Ext) = Parameters
@@ -58,6 +58,14 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
     h2loc::Int64 = 0
     h3loc::Int64 = 0
 
+    u1_r::Vector{Float64} = bounds(u_low,u_up,u1_num,u1_grid_st)
+    h1_r::Vector{Float64} = bounds(h_low,h_up,h1_num,h1_grid_st)
+
+    u1_up::Float64 = 0.0
+    u1_low::Float64 = 0.0
+    h1_up::Float64 = 0.0
+    h1_low::Float64 = 0.0
+
     #SmallParameters = (p3_low,p3_up,p3_num,p3_grid,u3_num,u3_grid,h3_num,h3_grid,m1,m2,m3,z1,z2,z3,BMag)
 
     localGainTotal2::Array{Float64,3} = zeros(Float64,size(GainTotal2)[1:3])
@@ -73,13 +81,21 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
         p1loc = indices[index][1]
         p3loc = indices[index][2]
 
-        for _ in 1:(numLoss*u1_num*h1_num)
+        for u1loc in 1:u1_num, h1loc in 1:h1_num
+
+            u1_up = u1_r[u1loc+1]
+            u1_low = u1_r[u1loc]
+            h1_up = h1_r[h1loc+1]
+            h1_low = h1_r[h1loc]
+
+        for _ in 1:numLoss
 
             # generate p1v (emitting particle)
-            RPointSphereCosThetaPhi!(p1v)
+            RPointSphereCosThetaPhiBounds!(p1v,u1_low,u1_up,h1_low,h1_up)
             RPointLogMomentum!(p1v,p1_up,p1_low,p1_num,p1loc)
-            u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
-            h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
+
+            #u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
+            #h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
 
             #WeightFactors = WeightedFactorsEmission(p1v,m1,scale)
             (w,t,h) = WeightedFactorsEmission(p1v,m1,scale)
@@ -95,7 +111,7 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
                 RPointLogMomentum!(p3v,p3_up,p3_low,p3_num,p3loc)
 
                 # calculate S value
-                Sval = EmissionKernel(p3v,p1v,m1,z1,Ext)
+                Sval = EmissionKernel(p3v,p1v,m1,z1,Ext_val)
 
                 # find S array location 
                 u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
@@ -120,7 +136,9 @@ function EmissionMonteCarlo_Debug!(GainTotal2::Array{Float64,6},GainTallyN2::Arr
                 next!(prog)
             end
 
-        end # T loop
+        end # numLoss loop
+
+        end # u1,h1 loop 
 
     end # indices loop
 

@@ -64,6 +64,20 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
     h3_grid::GridType = Grid_String_to_Type(h3_grid_st)
     h4_grid::GridType = Grid_String_to_Type(h4_grid_st)
 
+    u1_r::Vector{Float64} = bounds(u_low,u_up,u1_num,u1_grid_st)
+    h1_r::Vector{Float64} = bounds(h_low,h_up,h1_num,h1_grid_st)
+    u2_r::Vector{Float64} = bounds(u_low,u_up,u2_num,u2_grid_st)
+    h2_r::Vector{Float64} = bounds(h_low,h_up,h2_num,h2_grid_st)
+
+    u1_up::Float64 = 0.0
+    u1_low::Float64 = 0.0
+    h1_up::Float64 = 0.0
+    h1_low::Float64 = 0.0
+    u2_up::Float64 = 0.0
+    u2_low::Float64 = 0.0
+    h2_up::Float64 = 0.0
+    h2_low::Float64 = 0.0
+
     LocalGainTotal3::Array{Float64,3} = zeros(Float64,size(GainTotal3)[1:3])
     LocalGainTally3::Array{UInt32,3} = zeros(UInt32,size(GainTally3)[1:3])
     if m3 != m4
@@ -76,20 +90,31 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
         p1loc = indices[index][1]
         p2loc = indices[index][2]
 
-        for _ in 1:(numLoss*u1_num*h1_num*u2_num*h2_num) # sample incoming sates
+        for u1loc in 1:u1_num, h1loc in 1:h1_num, u2loc in 1:u2_num, h2loc in 1:h2_num
+
+            u1_up = u1_r[u1loc+1]
+            u1_low = u1_r[u1loc]
+            h1_up = h1_r[h1loc+1]
+            h1_low = h1_r[h1loc]
+            u2_up = u2_r[u2loc+1]
+            u2_low = u2_r[u2loc]
+            h2_up = h2_r[h2loc+1]
+            h2_low = h2_r[h2loc]
+            loc12 = CartesianIndex(p1loc,u1loc,h1loc,p2loc,u2loc,h2loc)
+
+        for _ in 1:numLoss # sample incoming sates
         
             # generate p1 and p2 vectors initially as to not have to re-calculate
-            RPointSphereCosThetaPhi!(p1v)
-            RPointSphereCosThetaPhi!(p2v)
+            RPointSphereCosThetaPhiBounds!(p1v,u1_low,u1_up,h1_low,h1_up)
+            RPointSphereCosThetaPhiBounds!(p2v,u2_low,u2_up,h2_low,h2_up)
             RPointLogMomentum!(p1v,p1_up,p1_low,p1_num,p1loc)
             RPointLogMomentum!(p2v,p2_up,p2_low,p2_num,p2loc)
 
             # Calculate T Array Location
-            u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
-            u2loc = location(u_low,u_up,u2_num,p2v[2],u2_grid)
-            h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
-            h2loc = location(h_low,h_up,h2_num,p2v[3],h2_grid)
-            loc12 = CartesianIndex(p1loc,u1loc,h1loc,p2loc,u2loc,h2loc)
+            #u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
+            #u2loc = location(u_low,u_up,u2_num,p2v[2],u2_grid)
+            #h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
+            #h2loc = location(h_low,h_up,h2_num,p2v[3],h2_grid)
 
             fill!(LocalGainTally3,UInt32(0))
             if m3 != m4
@@ -119,16 +144,14 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
 
                     # Gain Array Tallies
                     # For each u3,h3 sampled, p3 will be + or -ve, corresponding to a change in sign of u3 and a rotation of h3 by pi i.e. mod(h3+1,2). Therefore by sampling one u3,h3 we are actually sampling u3 and -u3 and h3, mod(h3+1,2) with one or both having valid p3 states. NOTE: This has been removed due to difference in sampling probability not being accounted for  
-                    #if NumStates != 0
-                        u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
-                        h3loc = location(h_low,h_up,h3_num,p3v[3],h3_grid)
-                        LocalGainTally3[end,u3loc,h3loc] += UInt32(1)
-                    #end
+                    u3loc = location(u_low,u_up,u3_num,p3v[2],u3_grid)
+                    h3loc = location(h_low,h_up,h3_num,p3v[3],h3_grid)
+                    LocalGainTally3[end,u3loc,h3loc] += UInt32(1)  # only need to do once even if there are two states 
 
                     # Calculate Gain Array totals
                     if NumStates == 1
                         if p_physical
-                            p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)
+                            p3loc = locationUnderOver(p3_low,p3_up,p3_num,p3v[1],p3_grid)
                             GainVal = GainValue3(p3v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                             LocalGainTotal3[p3loc,u3loc,h3loc] += GainVal/prob3
                             LocalGainTally3[p3loc,u3loc,h3loc] += UInt32(1)
@@ -137,7 +160,7 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
 
                     if NumStates == 2
                         if p_physical
-                            p3loc = location(p3_low,p3_up,p3_num,p3v[1],p3_grid)
+                            p3loc = locationUnderOver(p3_low,p3_up,p3_num,p3v[1],p3_grid)
                             GainVal = GainValue3(p3v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                             LocalGainTotal3[p3loc,u3loc,h3loc] += GainVal/prob3
                             LocalGainTally3[p3loc,u3loc,h3loc] += UInt32(1)
@@ -145,10 +168,11 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                         if pp_physical
                             u3ploc = location(u_low,u_up,u3_num,p3pv[2],u3_grid)
                             h3ploc = location(h_low,h_up,h3_num,p3pv[3],h3_grid)
-                            p3ploc = location(p3_low,p3_up,p3_num,p3pv[1],p3_grid)
+                            p3ploc = locationUnderOver(p3_low,p3_up,p3_num,p3pv[1],p3_grid)
                             GainValp = GainValue3(p3pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                             LocalGainTotal3[p3ploc,u3ploc,h3ploc] += GainValp/prob3
                             LocalGainTally3[p3ploc,u3ploc,h3ploc] += UInt32(1)
+                            #LocalGainTally3[end,u3ploc,h3ploc] += UInt32(1)
                         end
                     end
 
@@ -169,16 +193,13 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                         # For each u3,h4 sampled, p4 will be + or -ve, corresponding to a change in sign of u3 and a shift in h4 by pi i.e. Mod(h4+1,2). Therefore by sampling one u3 we are actually sampling u3/h4 and -u3/mod(h4+1,2) with one or both having valid p4 states. NOTE: This has been removed due to difference in sampling probability not being accounted for 
                         u4loc = location(u_low,u_up,u4_num,p4v[2],u4_grid)
                         h4loc = location(h_low,h_up,h4_num,p4v[3],h4_grid)
-                        #u4locMirror = location(u_low,u_up,u4_num,-p4v[2],u4_grid)
-                        #h4locMirror = location(h_low,h_up,h4_num,mod(p4v[3]+1e0,2e0),h4_grid)
-                        LocalGainTally4[end,u4loc,h4loc] += UInt32(1)
-                        #LocalGainTally4[end,u4locMirror,h4locMirror] += UInt32(1)
+                        LocalGainTally4[end,u4loc,h4loc] += UInt32(1) # only need to do once even if there are two states 
 
                         # Calculate S Array totals
                         if NumStates == 1
                             if p_physical
-                                p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
-                                GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+                                p4loc = locationUnderOver(p4_low,p4_up,p4_num,p4v[1],p4_grid)
+                                GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                                 LocalGainTotal4[p4loc,u4loc,h4loc] += GainVal/prob4
                                 LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
                             end
@@ -186,16 +207,16 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
 
                         if NumStates == 2
                             if p_physical
-                                p4loc = location(p4_low,p4_up,p4_num,p4v[1],p4_grid)
-                                GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+                                p4loc = locationUnderOver(p4_low,p4_up,p4_num,p4v[1],p4_grid)
+                                GainVal = GainValue4(p4v,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                                 LocalGainTotal4[p4loc,u4loc,h4loc] += GainVal/prob4
                                 LocalGainTally4[p4loc,u4loc,h4loc] += UInt32(1)
                             end
                             if pp_physical
                                 u4ploc = location(u_low,u_up,u4_num,p4pv[2],u4_grid)
                                 h4ploc = location(h_low,h_up,h4_num,p4pv[3],h4_grid)
-                                p4ploc = location(p4_low,p4_up,p4_num,p4pv[1],p4_grid)
-                                GainValp = GainValue4(p4pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4,prob4)
+                                p4ploc = locationUnderOver(p4_low,p4_up,p4_num,p4pv[1],p4_grid)
+                                GainValp = GainValue4(p4pv,p1v,p2v,sBig,sSmol,dsigmadt,m1,m2,m3,m4)
                                 LocalGainTotal4[p4ploc,u4ploc,h4ploc] += GainValp/prob4
                                 LocalGainTally4[p4ploc,u4ploc,h4ploc] += UInt32(1)
                             end
@@ -213,27 +234,29 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
                 end
             end
 
-        # assign values to arrays
-        @lock ArrayOfLocks[p1loc] begin
-            LossTotal[loc12] += LossVal
-            LossTally[loc12] += UInt32(1)
-            @view(GainTally3[:,:,:,loc12]) .+= LocalGainTally3
-            if m3 != m4 
-                @view(GainTally4[:,:,:,loc12]) .+= LocalGainTally4
-            end
-            if LossVal != 0e0
-                @view(GainTotal3[:,:,:,loc12]) .+= LocalGainTotal3
-                if m3 != m4
-                    @view(GainTotal4[:,:,:,loc12]) .+= LocalGainTotal4
+            # assign values to arrays
+            @lock ArrayOfLocks[p1loc] begin
+                LossTotal[loc12] += LossVal
+                LossTally[loc12] += UInt32(1)
+                @view(GainTally3[:,:,:,loc12]) .+= LocalGainTally3
+                if m3 != m4 
+                    @view(GainTally4[:,:,:,loc12]) .+= LocalGainTally4
                 end
+                if LossVal != 0e0
+                    @view(GainTotal3[:,:,:,loc12]) .+= LocalGainTotal3
+                    if m3 != m4
+                        @view(GainTotal4[:,:,:,loc12]) .+= LocalGainTotal4
+                    end
+                end
+            end 
+
+            if thread_id == 1 # on main thread
+                next!(prog)
             end
-        end 
 
-        if thread_id == 1 # on main thread
-            next!(prog)
-        end
+        end # numLoss loop
 
-        end # T loop
+        end # u1,h1,u2,h2 loop
 
     end # indices loop
 

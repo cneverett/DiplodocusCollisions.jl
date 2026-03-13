@@ -45,3 +45,5 @@ abstract type LogTenGridType end
 struct LogTenGrid <: GridType end
 abstract type BinaryGridType end
 struct BinaryGrid <: GridType end
+abstract type BoostGridType end
+struct BoostGrid <: GridType end

@@ -3,7 +3,7 @@
 
 Computes the integral estimate by weighted average of the old and new gain matrices, weighted by the number of non-zero samples obtained. Mutating the old gain and tally terms.
 """
-function WeightedAverageGainEmission!(GainMatrix2::Array{Float64,6},OldGainMatrix2::Array{Float64,6},GainTallyK2::Array{UInt32,6},OldGainTallyK2::Array{UInt32,6},GainMatrix3::Array{Float64,6},OldGainMatrix3::Array{Float64,6},GainTallyK3::Array{UInt32,6},OldGainTallyK3::Array{UInt32,6})
+function WeightedAverageGainEmission!(GainMatrix2::AbstractArray{Float64,6},OldGainMatrix2::AbstractArray{Float64,6},GainTallyK2::AbstractArray{UInt32,6},OldGainTallyK2::AbstractArray{UInt32,6},GainMatrix3::AbstractArray{Float64,6},OldGainMatrix3::AbstractArray{Float64,6},GainTallyK3::AbstractArray{UInt32,6},OldGainTallyK3::AbstractArray{UInt32,6})
 
     # weighted average
     @. OldGainMatrix2 = (GainMatrix2*GainTallyK2+OldGainMatrix2*OldGainTallyK2)/(GainTallyK2+OldGainTallyK2) 
@@ -23,7 +23,7 @@ end
 
 Computes the integral estimate by weighted average of the old and new gain matrices, weighted by the number of non-zero samples obtained. Mutating the old gain and tally terms.
 """
-function WeightedAverageLossEmission!(LossMatrix1::Array{Float64,3},OldLossMatrix1::Array{Float64,3},LossTallyK1::Array{UInt32,3},OldLossTallyK1::Array{UInt32,3})
+function WeightedAverageLossEmission!(LossMatrix1::AbstractArray{Float64,3},OldLossMatrix1::AbstractArray{Float64,3},LossTallyK1::AbstractArray{UInt32,3},OldLossTallyK1::AbstractArray{UInt32,3})
 
     # weighted average 
     @. OldLossMatrix1 = (LossMatrix1*LossTallyK1+OldLossMatrix1*OldLossTallyK1)/(LossTallyK1+OldLossTallyK1)

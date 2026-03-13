@@ -18,6 +18,12 @@ function bounds(low_bound::T,up_bound::T,num::Int64,spacing::String) where T <: 
         pow = [range(1,(num-1)/2); Inf]
         a = 1 .-(1/2) .^(pow)
         return [reverse(-a) ; a]
+    elseif spacing == "B" # boosted (2^n) fractional spacing
+        pow = [range(0,num-3); Inf]
+        a = 1 .-(1/2) .^(pow)
+        pow = [1 ; Inf]
+        b = 1 .-(1/2) .^(pow)
+        return [reverse(-b) ; a]
     else
         error("Spacing type not recognized")
     end

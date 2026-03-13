@@ -126,7 +126,7 @@ function MomentumValue!(pv::Vector{Float64},ppv::Vector{Float64},p1v::Vector{Flo
         C3 = 4*(E1+E2)*sqrt(C3sqr)
         p = (C2-C3)/C4
 
-        if (p <= 0e0 || p < 10.0^p_low || p > 10.0^p_up) # no negative or under or overflow
+        if (p <= 0e0 #=|| p < 10.0^p_low || p > 10.0^p_up=#) # no negative
             NumStates = 1
             p_physical = false
         else
@@ -138,7 +138,7 @@ function MomentumValue!(pv::Vector{Float64},ppv::Vector{Float64},p1v::Vector{Flo
 
         if NumStates == 2
             pp = (C2+C3)/C4
-            if (pp <= 0e0 || pp < 10.0^p_low || pp > 10.0^p_up) # no negative or under or overflow
+            if (pp <= 0e0 #=|| pp < 10.0^p_low || pp > 10.0^p_up=#) # no negative
                 NumStates = 1
                 pp_physical = false
             else
@@ -149,7 +149,7 @@ function MomentumValue!(pv::Vector{Float64},ppv::Vector{Float64},p1v::Vector{Flo
             end
         else # NumStates == 1
             p = (C2+C3)/C4
-            if (p <= 0e0 || p < 10.0^p_low || p > 10.0^p_up) # no negative or under or overflow
+            if (p <= 0e0 #=|| p < 10.0^p_low || p > 10.0^p_up=#) # no negative
                 NumStates = 0
                 p_physical = false
             else

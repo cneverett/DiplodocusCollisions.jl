@@ -66,15 +66,26 @@ function LossValue(p1v::Vector{Float64},p2v::Vector{Float64},sigma::Function,m1:
     Es2::Float64 = (p2^2)/(sqrt(m22+p2^2)+m2)
     Es2s::Float64 = Es2/p2
 
-    sBig::Float64 = (m1+m2)^2
-    sSmol::Float64 = 2*p1*p2*(-ctheta12 +Es1s*Es2s +m1*Es2s/p1 +m2*Es1s/p2)
+    sBig::Float64 = max((m1+m2)^2,(m3+m4)^2)
+    #sSmol::Float64 = ((m1+m2)^2-sBig) + 2*p1*p2*(-ctheta12 + Es1s*Es2s + m1*Es2s/p1 + m2*Es1s/p2)
+    sSmol::Float64 = 0.0
+    if m1 == 0.0 && m2 == 0.0
+        sSmol += 2*p1*p2*(1.0-ctheta12) - sBig
+    elseif m1 == 0.0 && m2 != 0.0
+        sSmol += m2^2 + 2*p1*m22/(sqrt(m22+p2^2)+p2) + 2*p1*p2*(1-ctheta12) - sBig
+    elseif m1 != 0.0 && m2 == 0.0
+        sSmol += m1^2 + 2*p2*m12/(sqrt(m12+p1^2)+p1) + 2*p2*p1*(1-ctheta12) - sBig
+    else 
+        sSmol += m1^2 + m2^2 + 2*(p1*m22/(sqrt(m22+p2^2)+p2) + p2*m12/(sqrt(m12+p1^2)+p1) +m22/(sqrt(m22+p2^2)+p2)*m12/(sqrt(m12+p1^2)+p1)) + 2*p1*p2*(1-ctheta12) - sBig
+    end
+   
 
     if sCheck(sSmol,sBig,m1,m2,m3,m4) # check if s value is valid for interaction
 
         E1::Float64 = Es1 + m1
         E2::Float64 = Es2 + m2
         
-        LossVal = (1/E1)*(1/E2)*(InvariantFluxSmall(sSmol,m1,m2))*sigma(sSmol,sBig)
+        LossVal = (1/E1)*(1/E2)*(InvariantFluxSmall(sSmol,sBig,m1,m2))*sigma(sSmol,sBig)
         if LossVal==Inf || LossVal < 0e0
             println("")
             println("p1v = $p1v")
@@ -84,8 +95,11 @@ function LossValue(p1v::Vector{Float64},p2v::Vector{Float64},sigma::Function,m1:
             println("sBig = $sBig")
             error("ST1 Inf or -ve#")
         end
+
     else # if not valid set T value to zero
+
         LossVal = 0e0
+        
     end
 
     return LossVal, sBig, sSmol
@@ -110,10 +124,14 @@ function GainValue3(p3v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
     st1::Float64,ct1::Float64 = sincospi(p1v[4])
     st2::Float64,ct2::Float64 = sincospi(p2v[4])
 
+    # cos(A-B) = 1.0 + b, so "a" part is 1.0, "b" part is the cos(A-B)-a
+    ch1h2a::Float64, ch1h2b::Float64 = abs(p1v[3]-p2v[3]) < 1e-8 ? (1.0, -pi^2*(p1v[3]-p2v[3])^2/2) : (1.0,cospi(p1v[3]-p2v[3])-1.0)
     ch1h2::Float64 = cospi(p1v[3]-p2v[3])
 
     p3::Float64 = p3v[1]
     st3::Float64,ct3::Float64 = sincospi(p3v[4])
+    ch3h1a::Float64, ch3h1b::Float64 = abs(p3v[3]-p1v[3]) < 1e-8 ? (1.0, -pi^2*(p3v[3]-p1v[3])^2/2) : (1.0,cospi(p3v[3]-p1v[3])-1.0)
+    ch3h2a::Float64, ch3h2b::Float64 = abs(p3v[3]-p2v[3]) < 1e-8 ? (1.0, -pi^2*(p3v[3]-p2v[3])^2/2) : (1.0,cospi(p3v[3]-p2v[3])-1.0)
     ch3h1::Float64 = cospi(p3v[3]-p1v[3])
     ch3h2::Float64 = cospi(p3v[3]-p2v[3])
 
@@ -134,10 +152,16 @@ function GainValue3(p3v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
     Es3s::Float64 = Es3/p3
     E3::Float64 = Es3 + m3
 
+    ctheta12a::Float64, ctheta12b::Float64, ctheta12c::Float64 =  abs(p1v[4]-p2v[4]) < 1e-8 ? (1.0, -pi^2*(p1v[4]-p2v[4])^2/2, ch1h2b*st1*st2) : (1.0,cospi(p1v[4]-p2v[4])-1.0, ch1h2b*st1*st2)
     ctheta12::Float64 = ct1*ct2+ch1h2*st1*st2
+
+    ctheta13a::Float64, ctheta13b::Float64, ctheta13c::Float64 = abs(p3v[4]-p1v[4]) < 1e-8 ? (1.0, -pi^2*(p3v[4]-p1v[4])^2/2, ch3h1b*st3*st1) : (1.0,cospi(p3v[4]-p1v[4])-1.0, ch3h1b*st3*st1)
     ctheta13::Float64 = ct3*ct1+ch3h1*st3*st1
+
+    ctheta23a::Float64, ctheta23b::Float64, ctheta23c::Float64 = abs(p3v[4]-p2v[4]) < 1e-8 ? (1.0, -pi^2*(p3v[4]-p2v[4])^2/2, ch3h2b*st3*st2) : (1.0,cospi(p3v[4]-p2v[4])-1.0, ch3h2b*st3*st2)
     ctheta23::Float64 = ct3*ct2+ch3h2*st3*st2
     
+    # TODO: mak this more accurate for large separations of p1 and p3 consistent with the new definitions of ctheta a,b,c above
     deltacorrect::Float64 = Es1*p3 - Es3*p1*ctheta13
     deltacorrect += m1*p3 - m3*p1*ctheta13
     deltacorrect += Es2*p3 - Es3*p2*ctheta23    
@@ -147,14 +171,40 @@ function GainValue3(p3v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
     tBig::Float64 = (m3-m1)^2
     #tSmol::Float64 = -2*(m1*Es3 + m3*Es1 + Es3*Es1 - p3*p1*(ct3*ct1+ch3h1*st3*st1))
     #tSmol::Float64 = -2*m1*m3 - 2*E1*E3 + 2*p1*p3*ctheta13
-    tSmol::Float64 = 2*p3*p1*(ctheta13 - Es3s*Es1s - m1*Es3s/p1 - m3*Es1s/p3)
+    #tSmol::Float64 = 2*p3*p1*(ctheta13 - Es3s*Es1s - m1*Es3s/p1 - m3*Es1s/p3)
+    tSmol::Float64 = 0.0
+    if m1 == 0.0 && m3 == 0.0
+        tSmol += 2*p1*p3*(ctheta13b + ctheta13c)
+    elseif m1 == 0.0 && m3 != 0.0
+        #E = sqrt(p^2+m^2) = p + (m^2)/(sqrt(m^2+p^2)+p)
+        #E-p = (m^2)/(sqrt(m^2+p^2)+p) 
+        tSmol += -2*(m32/(sqrt(m32+p3^2)+p3))*p1 + 2*p3*p1*(ctheta13b + ctheta13c)
+    elseif m1 != 0.0 && m3 == 0.0
+        tSmol += -2*(m12/(sqrt(m12+p1^2)+p1))*p3 + 2*p3*p1*(ctheta13b + ctheta13c)
+    else 
+        tSmol += -2*(E1*E3) + 2*(p1*p3+m1*m3) + 2*p1*p3*(ctheta13b + ctheta13c)
+    end
+
+
     # u = uBig + uSmol
     uBig::Float64 = (m2-m3)^2
     #uSmol::Float64 = m12+m22+m32+m42 - sBig - tBig - uBig - sSmol - tSmol  # this leads to Float64 issues better to calculate directly
     #uSmol::Float64 = -2*(m3*Es2 + m2*Es3 + Es2*Es3 - p2*p3*(ct2*ct3+ch3h2*st2*st3))
-    uSmol::Float64 = 2*p2*p3*(ctheta23 - Es2s*Es3s - m3*Es2s/p3 - m2*Es3s/p2)
+    #uSmol::Float64 = 2*p2*p3*(ctheta23 - Es2s*Es3s - m3*Es2s/p3 - m2*Es3s/p2)
+    uSmol::Float64 = 0.0
+    if m2 == 0.0 && m3 == 0.0
+        uSmol += 2*p2*p3*(ctheta23b + ctheta23c)
+    elseif m2 == 0.0 && m3 != 0.0
+        #E = sqrt(p^2+m^2) = p + (m^2)/(sqrt(m^2+p^2)+p)
+        #E-p = (m^2)/(sqrt(m^2+p^2)+p) 
+        uSmol += -2*(m32/(sqrt(m32+p3^2)+p3))*p2 + 2*p3*p2*(ctheta23b + ctheta23c)
+    elseif m2 != 0.0 && m3 == 0.0
+        uSmol += -2*(m22/(sqrt(m22+p2^2)+p2))*p3 + 2*p3*p2*(ctheta23b + ctheta23c)
+    else 
+        uSmol += -2*(E2*E3) + 2*(p2*p3+m2*m3) + 2*p3*p2*(ctheta23b + ctheta23c)
+    end
 
-    val::Float64 = (1/E1)*(1/E2)*(InvariantFlux2Small(sSmol,m1,m2))/pi
+    val::Float64 = (1/E1)*(1/E2)*(InvariantFlux2Small(sSmol,sBig,m1,m2))/pi
 
     #=if (stuCheck(sSmol,sBig,tSmol,tBig,uSmol,uBig,m1,m2,m3,m4) == false || tCheck(tSmol,tBig,m1,m2,m3,m4) == false || uCheck(uSmol,uBig,m1,m2,m3,m4) == false)
         println("p1v = $p1v")
@@ -170,14 +220,18 @@ function GainValue3(p3v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
         println("GainVal = $GainVal")
         println("deltacorrect = $deltacorrect")
         println("dsdt = $(dsigmadt(sSmol,sBig,tSmol,tBig,uSmol,uBig))")
-        println("sSmol = $sSmol")
-        println("tSmol = $tSmol")
-        println("uSmol = $uSmol")
+        println("sSmol = $sSmol, tSmol = $tSmol, uSmol = $uSmol, sSmol+tSmol+uSmol = $(sSmol+tSmol+uSmol), sBig+tBig+uBig = $(sBig+tBig+uBig)")
+        println("ch1h2 = $ch1h2, ch3h1 = $ch3h1, ch3h2 = $ch3h2")
+        println("ctheta12 = $ctheta12, ctheta13 = $ctheta13, ctheta23 = $ctheta23")
         println("p1v = $p1v")
         println("p2v = $p2v")
         println("p3v = $p3v")
         error("GainVal Inf")  
     end
+
+    #=if abs(sSmol+tSmol+uSmol) > 1e-15
+        println("sSmol+tSmol+uSmol = $(sSmol+tSmol+uSmol)")
+    end=#
 
     return GainVal
 
@@ -190,7 +244,7 @@ end
 Returns `GainVal` based on initial momentum states `p1v` and `p2v` and final state `p4v` and differential cross section `dsigmadt` based on particle selection 12->34.  
 Assumes f(x,p,μ)=constant over bin
 """
-function GainValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float64},sBig::Float64,sSmol::Float64,dsigmadt::Function,m1::Float64,m2::Float64,m3::Float64,m4::Float64,prob::Float64)
+function GainValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float64},sBig::Float64,sSmol::Float64,dsigmadt::Function,m1::Float64,m2::Float64,m3::Float64,m4::Float64)
 
     # pre-defining terms for efficiency 
     p1::Float64 = p1v[1]
@@ -198,10 +252,14 @@ function GainValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
     st1::Float64,ct1::Float64 = sincospi(p1v[4])
     st2::Float64,ct2::Float64 = sincospi(p2v[4])
 
+    # cos(A-B) = 1.0 + b, so "a" part is 1.0, "b" part is the cos(A-B)-a
+    ch1h2a::Float64, ch1h2b::Float64 = abs(p1v[3]-p2v[3]) < 1e-8 ? (1.0, -pi^2*(p1v[3]-p2v[3])^2/2) : (1.0,cospi(p1v[3]-p2v[3])-1.0)
     ch1h2::Float64 = cospi(p1v[3]-p2v[3])
 
     p4::Float64 = p4v[1]
     st4::Float64,ct4::Float64 = sincospi(p4v[4])
+    ch4h1a::Float64, ch4h1b::Float64 = abs(p4v[3]-p1v[3]) < 1e-8 ? (1.0, -pi^2*(p4v[3]-p1v[3])^2/2) : (1.0,cospi(p4v[3]-p1v[3])-1.0)
+    ch4h2a::Float64, ch4h2b::Float64 = abs(p4v[3]-p2v[3]) < 1e-8 ? (1.0, -pi^2*(p4v[3]-p2v[3])^2/2) : (1.0,cospi(p4v[3]-p2v[3])-1.0)
     ch4h1::Float64 = cospi(p4v[3]-p1v[3])
     ch4h2::Float64 = cospi(p4v[3]-p2v[3])
 
@@ -222,10 +280,16 @@ function GainValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
     Es4s::Float64 = Es4/p4
     E4::Float64 = Es4 + m4
 
-    ctheta12::Float64 = ct1*ct2+ch1h2*st1*st2
+    ctheta12a::Float64, ctheta12b::Float64, ctheta12c::Float64 =  abs(p1v[4]-p2v[4]) < 1e-8 ? (1.0, -pi^2*(p1v[4]-p2v[4])^2/2, ch1h2b*st1*st2) : (1.0,cospi(p1v[4]-p2v[4])-1.0, ch1h2b*st1*st2)
+    ctheta12::Float64 = ct1*ct2+ch1h2*st1*st2 
+
+    ctheta14a::Float64, ctheta14b::Float64, ctheta14c::Float64 = abs(p4v[4]-p1v[4]) < 1e-8 ? (1.0, -pi^2*(p4v[4]-p1v[4])^2/2, ch4h1b*st4*st1) : (1.0,cospi(p4v[4]-p1v[4])-1.0, ch4h1b*st4*st1)
     ctheta14::Float64 = ct4*ct1+ch4h1*st4*st1
+
+    ctheta24a::Float64, ctheta24b::Float64, ctheta24c::Float64 = abs(p4v[4]-p2v[4]) < 1e-8 ? (1.0, -pi^2*(p4v[4]-p2v[4])^2/2, ch4h2b*st4*st2) : (1.0,cospi(p4v[4]-p2v[4])-1.0, ch4h2b*st4*st2)
     ctheta24::Float64 = ct4*ct2+ch4h2*st4*st2
 
+    # TODO: make this more accurate for large separation of p1 p4 consistent with the new definitions of ctheta a,b,c above
     deltacorrect::Float64 = Es1*p4 - Es4*p1*ctheta14
     deltacorrect += m1*p4 - m4*p1*ctheta14
     deltacorrect += Es2*p4 - Es4*p2*ctheta24
@@ -234,14 +298,43 @@ function GainValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
     # u = uBig + uSmol
     uBig::Float64 = (m4-m1)^2
     #uSmol::Float64 = -2*(m1*Es4 + m4*Es1 + Es4*Es1 - p4*p1*(ct4*ct1+ch4h1*st4*st1))
-    uSmol::Float64 = 2*p4*p1*(ctheta14 - Es4s*Es1s - m1*Es4s/p1 - m4*Es1s/p4)
+    #uSmol::Float64 = 2*p4*p1*(ctheta14 - Es4s*Es1s - m1*Es4s/p1 - m4*Es1s/p4)
+    #uSmol::Float64 = -2*E1*E4 + 2*(p1*p4+m1*m4) + 2*p4*p1*(ctheta14b + ctheta14c)
+    uSmol::Float64 = 0.0
+    if m1 == 0.0 && m4 == 0.0
+        uSmol += 2*p4*p1*(ctheta14b + ctheta14c)
+    elseif m1 == 0.0 && m4 != 0.0
+        #E = sqrt(p^2+m^2) = p + (m^2)/(sqrt(m^2+p^2)+p)
+        #E-p = (m^2)/(sqrt(m^2+p^2)+p) 
+        uSmol += -2*(m42/(sqrt(m42+p4^2)+p4))*p1 + 2*p4*p1*(ctheta14b + ctheta14c)
+    elseif m1 != 0.0 && m4 == 0.0
+        uSmol += -2*(m12/(sqrt(m12+p1^2)+p1))*p4 + 2*p4*p1*(ctheta14b + ctheta14c)
+    else 
+        uSmol += -2*(E1*E4) + 2*(p1*p4+m1*m4) + 2*p4*p1*(ctheta14b + ctheta14c)
+    end
+
     # t = tBig + tSmol
     tBig::Float64 = (m2-m4)^2
     #tSmol::Float64 = m12+m22+m32+m42 - sBig - uBig - tBig - sSmol - uSmol # Leads to Float64 issues, better to calculate directly 
     #tSmol::Float64 = -2*(m4*Es2 + m2*Es4 + Es2*Es4 - p2*p4*(ct2*ct4+ch4h2*st2*st4))
-    tSmol::Float64 = 2*p2*p4*(ctheta24 - Es2s*Es4s - m4*Es2s/p4 - m2*Es4s/p2)
+    #tSmol::Float64 = 2*p2*p4*(ctheta24 - Es2s*Es4s - m4*Es2s/p4 - m2*Es4s/p2)
+    #tSmol::Float64 = -2*E2*E4 + 2*(p2*p4+m2*m4) + 2*p2*p4*(ctheta24b + ctheta24c)
+    tSmol::Float64 = 0.0
+    if m2 == 0.0 && m4 == 0.0
+        tSmol += 2*p2*p4*(ctheta24b + ctheta24c)
+    elseif m2 == 0.0 && m4 != 0.0
+        #E = sqrt(p^2+m^2) = p + (m^2)/(sqrt(m^2+p^2)+p)
+        #E-p = (m^2)/(sqrt(m^2+p^2)+p) 
+        tSmol += -2*(m42/(sqrt(m42+p4^2)+p4))*p2 + 2*p4*p2*(ctheta24b + ctheta24c)
+    elseif m2 != 0.0 && m4 == 0.0
+        tSmol += -2*(m22/(sqrt(m22+p2^2)+p2))*p4 + 2*p4*p2*(ctheta24b + ctheta24c)
+    else 
+        tSmol += -2*(E2*E4) + 2*(p2*p4+m2*m4) + 2*p2*p4*(ctheta24b + ctheta24c)
+    end
+
+    #p2*p4 -E2*E4 +m2*m4
     
-    val::Float64 = (1/E1)*(1/E2)*(InvariantFlux2Small(sSmol,m1,m2))/pi
+    val::Float64 = (1/E1)*(1/E2)*(InvariantFlux2Small(sSmol,sBig,m1,m2))/pi
 
     #=if (stuCheck(sSmol,sBig,tSmol,tBig,uSmol,uBig,m1,m2,m3,m4) == false || tCheck(tSmol,tBig,m1,m2,m3,m4) == false || uCheck(uSmol,uBig,m1,m2,m3,m4) == false)
         error("stu check")
@@ -254,14 +347,18 @@ function GainValue4(p4v::Vector{Float64},p1v::Vector{Float64},p2v::Vector{Float6
         println("GainVal = $GainVal")
         println("deltacorrect = $deltacorrect")
         println("dsdt = $(dsigmadt(sSmol,sBig,tSmol,tBig,uSmol,uBig))")
-        println("sSmol = $sSmol")
-        println("tSmol = $tSmol")
-        println("uSmol = $uSmol")
+        println("sSmol = $sSmol, tSmol = $tSmol, uSmol = $uSmol, sSmol+tSmol+uSmol = $(sSmol+tSmol+uSmol), sBig+tBig+uBig = $(sBig+tBig+uBig)")
+        println("ch1h2 = $ch1h2, ch4h1 = $ch4h1, ch4h2 = $ch4h2")
+        println("ctheta12 = $ctheta12, ctheta14 = $ctheta14, ctheta24 = $ctheta24")
         println("p1v = $p1v")
         println("p2v = $p2v")
         println("p4v = $p4v")
         error("GainVal Inf")  
     end
+
+    #=if abs(sSmol+tSmol+uSmol) > 1e-15
+        println("sSmol+tSmol+uSmol = $(sSmol+tSmol+uSmol)")
+    end=#
 
     return GainVal
 
@@ -280,15 +377,21 @@ function InvariantFlux(s::Float64,mu12::Float64,mu22::Float64)
 end
 
 """
-    InvariantFluxSmall(sSmol,mu12,mu22)
+    InvariantFluxSmall(sSmol,sBig,m1,m2)
 
-returns the value of the invariant flux with smalled 's' Mandelstram variable (sSmol = s - (m1+m2)^2)
+returns the value of the invariant flux with smalled 's' Mandelstram variable (sSmol = s - max((m1+m2)^2,(m3+m4)^2))
 """
-function InvariantFluxSmall(sSmol::Float64,m1::Float64,m2::Float64)
+function InvariantFluxSmall(sSmol::Float64,sBig::Float64,m1::Float64,m2::Float64)
     # Better accuracy for small s
 
     # sqrt(lambda(s,m1^2,m2^2))/2 = sqrt(s)|p*|
-    return sqrt(sSmol*(sSmol+4*m1*m2))/2
+
+    if sBig == (m1+m2)^2
+        # lambda(s,m1^2,m2^2) = sSmol*(sSmol+4*m1*m2)
+        return sqrt(sSmol*(sSmol+4*m1*m2))/2
+    else
+        return sqrt(sSmol*(sSmol+2(sBig-(m1^2+m2^2)))+(sBig^2-2sBig*(m1^2+m2^2)+(m1^2-m2^2)^2))/2
+    end
 
 end
 
@@ -305,15 +408,20 @@ function InvariantFlux2(s::Float64,mu12::Float64,mu22::Float64)
 end
 
 """
-    InvariantFluxSmall(sSmol,mass12,mass22)
+    InvariantFluxSmall(sSmol,mass1,mass2)
 
 returns the value of the squared invariant flux with smalled 's' Mandelstram variable (sSmol = s - (m1+m2)^2)
 """
-function InvariantFlux2Small(sSmol::Float64,m1::Float64,m2::Float64)
+function InvariantFlux2Small(sSmol::Float64,sBig::Float64,m1::Float64,m2::Float64)
     # Better accuracy for small s
 
     # lambda(s,m1^2,m2^2)/4 = s|p*|^2
-    return (sSmol*(sSmol+4*m1*m2))/4
+    if sBig == (m1+m2)^2
+        # lambda(s,m1^2,m2^2) = sSmol*(sSmol+4*m1*m2)
+        return sSmol*(sSmol+4*m1*m2)/4
+    else
+        return (sSmol*(sSmol+2(sBig-(m1^2+m2^2)))+(sBig^2-2sBig*(m1^2+m2^2)+(m1^2-m2^2)^2))/4
+    end
 
 end
 

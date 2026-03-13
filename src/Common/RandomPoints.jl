@@ -59,6 +59,26 @@ function RPointSphereCosThetaPhi!(a::Vector{Float64})
 end
 
 """
+    RPointSphereThetaPhiBounds!()
+
+Assigns the second (cos(theta)) and third (phi) elements of 'a' with a randomly, uniformly sampled values of spherical angles cos(theta) and phi (phi normalised by pi), within the bounds of ``u_low ≤ u ≤ u_up`` and ``h_low ≤ h ≤ h_up``. 
+"""
+function RPointSphereCosThetaPhiBounds!(a::Vector{Float64},u_low,u_up,h_low,h_up) 
+    # Inputs a 4 element vector [p, cos(theta), phi/pi,theta/pi] and mutates said vector with new random values using form given in https://mathworld.wolfram.com/SpherePointPicking.html (with theta and phi changed places)
+    # phi points are normalised by pi
+
+    u::Float64 = rand(Float64)
+    v::Float64 = rand(Float64)
+
+    a[2] = u_low + (u_up-u_low)*v     # cos(theta) bound by u_low ≤ u ≤ u_up, where u = cos(theta)
+    a[3] = h_low + (h_up-h_low)*u       # phi bound by h_low ≤ h ≤ h_up, normalised by pi 
+    a[4] = acos(a[2])/pi # theta bound by [0,1]
+
+    return nothing
+    
+end
+
+"""
     RPointSphereTheta!()
 
 Assigns the second (cos(theta)) element of 'a' with a randomly, uniformly sampled values of spherical angles cos(theta). 
@@ -222,7 +242,7 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
     h::Float64 = mod(atan(y,x)/pi,2)   
 
     # outgoing COM frame momentum
-    pC::Float64 = InvariantFluxSmall(sSmol,m3,m4)/sqrt(s)
+    pC::Float64 = InvariantFluxSmall(sSmol,sBig,m3,m4)/sqrt(s)
 
     # pre allocate types
     w3Limit::Float64 = 0e0
