@@ -11,6 +11,8 @@ Implemented grid spacing types are:
         - binary spacing is used for u=cos(theta) grids and therefore bounds should always be [-1 1] and num must be odd!
     - boosted (1/2^n) spacing: `spacing = "B"`
         - boosted spacing is used for u=cos(theta) grids and therefore bounds should always be [-1 1] and num must be at least 5. This acts like binary grid but in a single direction, reducing resolution in the backwards direction and increasing resolution in the forwards direction.
+    - reverse boosted (1/2^n) spacing: `spacing = "R"`
+        - reverse boosted spacing is used for u=cos(theta) grids and therefore bounds should always be [-1 1] and num must be at least 5. This acts like binary grid but in a single direction, reducing resolution in the forwards direction and increasing resolution in the backwards direction.
 
 # Examples
 ```julia-repl
@@ -54,6 +56,16 @@ function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,s
             loc = logval > num-5 ? num : floor(Int64,logval)+6
             return loc
         end 
+    elseif spacing == "R" # reverse boosted (2^n) fractional spacing
+        Rval = -val
+        if Rval <= 0.6
+            loc = floor(Int64,40*(Rval-low_bound)/(10*(0.6-low_bound))) # factor of 10 helps with float rounding issues
+            return num-(loc)
+        else
+            logval = log(1/2,(1-Rval)*5)
+            loc = logval > num-5 ? num : floor(Int64,logval)+6
+            return num-loc+1
+        end  
     else
         error("Spacing type not recognized")
     end
@@ -138,6 +150,24 @@ function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,:
     end      
 end
 
+function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::ReBoostGrid)
+    # grid location for reverse boosted grid
+    #= e.g. for num = 7, for each additional bin the first bin (closest to low) gets divided into two.
+      | 1/10 | 1/10 |  1/5  |    2/5    |    2/5    |    2/5    |    2/5    |
+      low                                                                  up
+    "Central" bin is symmetric about midpoint for good perpendicular motion.   
+    =#
+    Rval = -val
+    if Rval <= 0.6
+        loc = floor(Int64,40*(Rval-low_bound)/(10*(0.6-low_bound))) # factor of 10 helps with float rounding issues
+        return num-(loc)
+    else
+        logval = log(1/2,(1-Rval)*5)
+        loc = logval > num-5 ? num : floor(Int64,logval)+6
+        return num-loc+1
+    end      
+end
+
 function Grid_String_to_Type(grid_string)
     if grid_string == "u"
         return UniformGrid()
@@ -147,6 +177,8 @@ function Grid_String_to_Type(grid_string)
         return BinaryGrid()
     elseif grid_string == "B"
         return BoostGrid()
+    elseif grid_string == "R"
+        return ReBoostGrid()
     else
         error("Spacing type not recognized")
     end

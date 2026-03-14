@@ -47,3 +47,5 @@ abstract type BinaryGridType end
 struct BinaryGrid <: GridType end
 abstract type BoostGridType end
 struct BoostGrid <: GridType end
+abstract type ReBoostGridType end
+struct ReBoostGrid <: GridType end

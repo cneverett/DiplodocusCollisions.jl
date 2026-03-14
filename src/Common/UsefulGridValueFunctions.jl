@@ -7,7 +7,8 @@ Returns a `num+1` long `Vector{Float}` of grid bounds. These grid bounds can spa
     - linear spacing: `spacing = "u"`
     - log10 spacing: `spacing = "l"`
     - binary (1/2^n) spacing: `spacing = "b"` (Boosted in two directions)
-    - boosted (1/2^n) spacing: `spacing = "B"` (Boosted in one direction)
+    - boosted (1/2^n) spacing: `spacing = "B"` (Boosted in the forward direction)
+    - reverse boosted (1/2^n) spacing: `spacing = "R"` (Boosted in the reverse direction)
 """
 function bounds(low_bound::T,up_bound::T,num::Int64,spacing::String) where T <: Union{Float32,Float64}
 
@@ -58,6 +59,21 @@ function bounds(low_bound::T,up_bound::T,num::Int64,spacing::String) where T <: 
             next = next/2
         end
         return push!(grid,1.0)
+    elseif spacing == "R" # reverse boosted (2^n) fractional spacing in the reverse boost direction
+    # grid location for reverse boosted grid
+    #= e.g. for num = 7, for each additional bin the first bin (closest to low) gets divided into two.
+      | 1/10 | 1/10 |  1/5  |    2/5    |    2/5    |    2/5    |    2/5    |
+      low                                                                  up
+    "Central" bin is symmetric about midpoint for good perpendicular motion.   
+    =#
+        @assert num >= 5 "Number of grid cells must be at least 5 for reverse boosted grid"
+        grid = [-0.6, -0.2, 0.2, 0.6, 1.0]
+        next = 0.2
+        for i in 1:num-5
+            insert!(grid,1,grid[1]-next)
+            next = next/2
+        end
+        return insert!(grid,1,-1.0)
     else
         error("Spacing type not recognized")
     end
