@@ -9,6 +9,8 @@ Implemented grid spacing types are:
         - up and low bounds should be supplied as log10 values
     - binary (1/2^n) spacing: `spacing = "b"` 
         - binary spacing is used for u=cos(theta) grids and therefore bounds should always be [-1 1] and num must be odd!
+    - boosted (1/2^n) spacing: `spacing = "B"`
+        - boosted spacing is used for u=cos(theta) grids and therefore bounds should always be [-1 1] and num must be at least 5. This acts like binary grid but in a single direction, reducing resolution in the backwards direction and increasing resolution in the forwards direction.
 
 # Examples
 ```julia-repl
@@ -26,19 +28,32 @@ function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,s
         loc = logval != up_bound ? floor(Int64,num*(logval-low_bound)/(up_bound-low_bound)+1) : num
         return loc 
     elseif spacing == "b" # binary (2^n) fractional spacing
-        logval = log(1/2,1-abs(val))
-        num_half = Int64((num-1)/2)
-        loc = logval < num_half ? floor(Int64,logval/up_bound) : num_half
-        return sign(val) == -1 ? num_half+1-loc : num_half+1+loc
-    elseif spacing == "B" # boosted (2^n) fractional spacing
-        if val < 0.0
-            loc = val < -0.5 ? 1 : 2
+        if iseven(num)
+            logval = log(1/2,1-abs(val))
+            num_half = Int64(num/2)
+            loc = logval < num_half ? floor(Int64,logval/up_bound) : num_half-1
+            return sign(val) == -1 ? Int64(num_half-loc) : Int64(num_half+1+loc)
         else
-            logval = log(1/2,1-val)
-            num_plus = Int64(num-2)
-            loc = logval < num_plus ? floor(Int64,logval/up_bound+1)+2 : num
+            logval = log(1/2,1-abs(val))
+            num_half = Int64((num-1)/2)
+            if logval >= num_half
+                loc = num_half
+            elseif logval < 1.0 # in the thirds region
+                loc = abs(val) < 1/6 ? 0 : 1
+            else                
+                loc = ceil(Int64,logval/up_bound)
+            end
+            return sign(val) == -1 ? Int64(num_half+1-loc) : Int64(num_half+1+loc)
         end
-        return loc
+    elseif spacing == "B" # boosted (2^n) fractional spacing
+        if val <= 0.6
+            loc = floor(Int64,40*(val-low_bound)/(10*(0.6-low_bound))) # factor of 10 helps with float rounding issues
+            return loc+1
+        else
+            logval = log(1/2,(1-val)*5)
+            loc = logval > num-5 ? num : floor(Int64,logval)+6
+            return loc
+        end 
     else
         error("Spacing type not recognized")
     end
@@ -108,18 +123,19 @@ end
 
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::BoostGrid)
     # grid location for boosted grid
-    #= e.g. 
-      |     1/2     |     1/2     |    1/2    |  1/4  | 1/8 | 1/8 |
-    u=-1                          0                               1
+    #= e.g. for num = 7, for each additional bin the last bin (closest to up) gets divided into two.
+      |    2/5    |    2/5    |    2/5    |    2/5    |  1/5  | 1/10 | 1/10 |
+      low                                                                  up
+    "Central" bin is symmetric about midpoint for good perpendicular motion.   
     =#
-    if val < 0.0
-        loc = val < -0.5 ? 1 : 2
+    if val <= 0.6
+        loc = floor(Int64,40*(val-low_bound)/(10*(0.6-low_bound))) # factor of 10 helps with float rounding issues
+        return loc+1
     else
-        logval = log(1/2,1-val)
-        num_plus = Int64(num-2)
-        loc = logval < num_plus ? floor(Int64,logval/up_bound+1)+2 : num
-    end
-    return loc
+        logval = log(1/2,(1-val)*5)
+        loc = logval > num-5 ? num : floor(Int64,logval)+6
+        return loc
+    end      
 end
 
 function Grid_String_to_Type(grid_string)

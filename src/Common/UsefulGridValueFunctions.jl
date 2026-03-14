@@ -43,12 +43,21 @@ function bounds(low_bound::T,up_bound::T,num::Int64,spacing::String) where T <: 
             a = 1 .- (1/2) .^(pow)
             return [reverse(-a) ; -1/6 ; 1/6 ;  a]
         end
-    elseif spacing == "B" # boosted (2^n) fractional spacing
-        pow = [range(0,num-3); Inf]
-        a = 1 .-(1/2) .^(pow)
-        pow = [1 ; Inf]
-        b = 1 .-(1/2) .^(pow)
-        return [reverse(-b) ; a]
+    elseif spacing == "B" # boosted (2^n) fractional spacing in the boost direction
+    # grid location for boosted grid
+    #= e.g. for num = 7, for each additional bin the last bin (closest to up) gets divided into two.
+      |    2/5    |    2/5    |    2/5    |    2/5    |  1/5  | 1/10 | 1/10 |
+      low                                                                  up
+    "Central" bin is symmetric about midpoint for good perpendicular motion.   
+    =#
+        @assert num >= 5 "Number of grid cells must be at least 5 for boosted grid"
+        grid = [-1.0, -0.6, -0.2, 0.2, 0.6]
+        next = 0.2
+        for i in 1:num-5
+            push!(grid, grid[end]+next)
+            next = next/2
+        end
+        return push!(grid,1.0)
     else
         error("Spacing type not recognized")
     end
