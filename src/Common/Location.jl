@@ -79,14 +79,31 @@ end
 
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::BinaryGrid)
     # grid location for binary grid
-    #= e.g. 
-      | 1/8 | 1/8 |  1/4  |    1/2    |    1/2    |  1/4  | 1/8 | 1/8 |
-    u=-1                              0                               1
+    #= 
+    if num is even then grid is symmetric about midpoint with with num/2 cells in each direction, e.g. for num=8
+    | 1/8 | 1/8 |  1/4  |    1/2    |    1/2    |  1/4  | 1/8 | 1/8 |
+    low                                                              up
+    if num is odd then grid is symmetric about midpoint with with (num-1)/2 cells in each direction, e.g. for num=9
+    | 1/8 | 1/8 |  1/4  |  1/3  |  1/3  |  1/3  |  1/4  | 1/8 | 1/8 |
+    low                                                              up
     =#
-    logval = log(1/2,1-abs(val))
-    num_half = Int64((num-1)/2)
-    loc = logval < num_half ? floor(Int64,logval/up_bound) : num_half
-    return sign(val) == -1 ? Int64(num_half+1-loc) : Int64(num_half+1+loc)
+    if iseven(num)
+        logval = log(1/2,1-abs(val))
+        num_half = Int64(num/2)
+        loc = logval < num_half ? floor(Int64,logval/up_bound) : num_half-1
+        return sign(val) == -1 ? Int64(num_half-loc) : Int64(num_half+1+loc)
+    else
+        logval = log(1/2,1-abs(val))
+        num_half = Int64((num-1)/2)
+        if logval >= num_half
+            loc = num_half
+        elseif logval < 1.0 # in the thirds region
+            loc = abs(val) < 1/6 ? 0 : 1
+        else                
+            loc = ceil(Int64,logval/up_bound)
+        end
+        return sign(val) == -1 ? Int64(num_half+1-loc) : Int64(num_half+1+loc)
+    end
 end
 
 function location(low_bound::Float64,up_bound::Float64,num::Int64,val::Float64,::BoostGrid)

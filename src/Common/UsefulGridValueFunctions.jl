@@ -6,18 +6,43 @@
 Returns a `num+1` long `Vector{Float}` of grid bounds. These grid bounds can spaced either by 
     - linear spacing: `spacing = "u"`
     - log10 spacing: `spacing = "l"`
-    - binary (1/2^n) spacing: `spacing = "b"`
+    - binary (1/2^n) spacing: `spacing = "b"` (Boosted in two directions)
+    - boosted (1/2^n) spacing: `spacing = "B"` (Boosted in one direction)
 """
 function bounds(low_bound::T,up_bound::T,num::Int64,spacing::String) where T <: Union{Float32,Float64}
 
     if spacing == "u" # uniform spacing
+        #=
+            | a | a | a | a | a | 
+           low                  up
+
+           a = (up - low)/num
+        =#
         return [range(low_bound,up_bound,num+1);]
     elseif spacing == "l" # log spacing
+        #=
+            | 1 | 10 | 100 | 1000 | 10000 | 
+           low                            up
+        =#
         return 10 .^[range(low_bound,up_bound,num+1);]
     elseif spacing == "b" # binary (2^n) fractional spacing
-        pow = [range(1,(num-1)/2); Inf]
-        a = 1 .-(1/2) .^(pow)
-        return [reverse(-a) ; a]
+        #= 
+        if num is even then grid is symmetric about midpoint with with num/2 cells in each direction, e.g. for num=8
+        | 1/8 | 1/8 |  1/4  |    1/2    |    1/2    |  1/4  | 1/8 | 1/8 |
+       low                                                              up
+        if num is odd then grid is symmetric about midpoint with with (num-1)/2 cells in each direction, e.g. for num=9
+        | 1/8 | 1/8 |  1/4  |  1/3  |  1/3  |  1/3  |  1/4  | 1/8 | 1/8 |
+       low                                                              up
+        =#
+        if iseven(num)
+            pow = [range(1,(num-2)/2); Inf]
+            a = 1 .-(1/2) .^(pow)
+            return [reverse(-a) ; 0.0 ;  a]
+        else
+            pow = [range(1,(num-3)/2); Inf]
+            a = 1 .- (1/2) .^(pow)
+            return [reverse(-a) ; -1/6 ; 1/6 ;  a]
+        end
     elseif spacing == "B" # boosted (2^n) fractional spacing
         pow = [range(0,num-3); Inf]
         a = 1 .-(1/2) .^(pow)
