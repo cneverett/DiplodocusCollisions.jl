@@ -20,11 +20,9 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
     # ====================================== #
 
-    # ========= Valid Grids? =============== #
+    # ========= u Symmetric Grids? =============== #
         
-        if u1_grid == "b" && u1_num%2 == 0 || u2_grid == "b" && u2_num%2 == 0 || u3_grid == "b" && u3_num%2 == 0 || u4_grid == "b" && u4_num%2 == 0
-            error("Binary grid must have odd number of bins")
-        end
+        symmetric_grid::Bool = (u1_grid == "u" || u1_grid == "b") && (u2_grid == "u" || u2_grid == "b") && (u3_grid == "u" || u3_grid == "b") && (u4_grid == "u" || u4_grid == "b")
 
     # ====================================== #
 
@@ -141,7 +139,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             println("Applying Symmetries")
 
             # Apply Symmetries to the Gain and Loss Totals and Tallies
-            GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,LossTotal,LossTally,m1,m2,m3,m4)
+            GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,LossTotal,LossTally,m1,m2,m3,m4,symmetric_grid)
 
             println("Generating New Sampling Arrays")
 

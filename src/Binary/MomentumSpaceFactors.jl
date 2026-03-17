@@ -3,7 +3,7 @@
 
 Applies various physical symmetries to the Gain and Loss terms for Binary (12->34) interactions to improve Monte Carlo sampling error. 
 """
-function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,LossTotal,LossTally,m1,m2,m3,m4)
+function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,LossTotal,LossTally,m1,m2,m3,m4,symmetric_grid::Bool)
 
     # if the outgoing particles are indistinguishable or have identical masses (both conditions give m3==m4) then the Gain terms are identical assuming they have the same discretisation
     #if m3 == m4
@@ -15,6 +15,7 @@ function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,Los
 
     # The Gain and Loss matrices are symmetric in two ways. 
     # FIRST: they are ALWAYS symmetric with respect to θ->π-θ for all particle momentum states
+    #   (This FIRST condition only applies if the grids are symmetric in u, e.g. uniform or binary grids)
     # SECOND: if the incident masses are equal (m1==m2) then Gain and Loss are symmetric to swapping the incident particles
     
     tmp_total3 = zeros(Float64,size(GainTotal3)[1:2])
@@ -33,25 +34,42 @@ function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,Los
         ViewGainTally3Mirror123 = @view(GainTally3[:,end:-1:1,h3,p1,nu1-u1+1,h1,p2,nu2-u2+1,h2])
 
         if m1 == m2 # Both first and second Symmetry true
+
             ViewGainTotal3Swap12 = @view(GainTotal3[:,1:end,h3,p2,u2,h2,p1,u1,h1])
-            ViewGainTotal3Swap12Mirror123 = @view(GainTotal3[:,end:-1:1,h3,p2,nu2-u2+1,h2,p1,nu1-u1+1,h1])
             ViewGainTally3Swap12 = @view(GainTally3[:,1:end,h3,p2,u2,h2,p1,u1,h1])
-            ViewGainTally3Swap12Mirror123 = @view(GainTally3[:,end:-1:1,h3,p2,nu2-u2+1,h2,p1,nu1-u1+1,h1])
 
-            @. tmp_total3 = ViewGainTotal3 + ViewGainTotal3Mirror123 + ViewGainTotal3Swap12 + ViewGainTotal3Swap12Mirror123
-            @. tmp_tally3 = ViewGainTally3 + ViewGainTally3Mirror123 + ViewGainTally3Swap12 + ViewGainTally3Swap12Mirror123
+            if symmetric_grid
 
-            @. ViewGainTotal3 = tmp_total3
-            @. ViewGainTotal3Mirror123 = tmp_total3
-            @. ViewGainTotal3Swap12 = tmp_total3
-            @. ViewGainTotal3Swap12Mirror123 = tmp_total3
+                ViewGainTotal3Swap12Mirror123 = @view(GainTotal3[:,end:-1:1,h3,p2,nu2-u2+1,h2,p1,nu1-u1+1,h1])
+                ViewGainTally3Swap12Mirror123 = @view(GainTally3[:,end:-1:1,h3,p2,nu2-u2+1,h2,p1,nu1-u1+1,h1])
 
-            @. ViewGainTally3 = tmp_tally3
-            @. ViewGainTally3Mirror123 = tmp_tally3
-            @. ViewGainTally3Swap12 = tmp_tally3
-            @. ViewGainTally3Swap12Mirror123 = tmp_tally3
+                @. tmp_total3 = ViewGainTotal3 + ViewGainTotal3Mirror123 + ViewGainTotal3Swap12 + ViewGainTotal3Swap12Mirror123
+                @. tmp_tally3 = ViewGainTally3 + ViewGainTally3Mirror123 + ViewGainTally3Swap12 + ViewGainTally3Swap12Mirror123
 
-        else # only first symmetry true
+                @. ViewGainTotal3 = tmp_total3
+                @. ViewGainTotal3Mirror123 = tmp_total3
+                @. ViewGainTotal3Swap12 = tmp_total3
+                @. ViewGainTotal3Swap12Mirror123 = tmp_total3
+
+                @. ViewGainTally3 = tmp_tally3
+                @. ViewGainTally3Mirror123 = tmp_tally3
+                @. ViewGainTally3Swap12 = tmp_tally3
+                @. ViewGainTally3Swap12Mirror123 = tmp_tally3
+
+            else
+
+                @. tmp_total3 = ViewGainTotal3 + ViewGainTotal3Swap12 
+                @. tmp_tally3 = ViewGainTally3 + ViewGainTally3Swap12
+
+                @. ViewGainTotal3 = tmp_total3
+                @. ViewGainTotal3Swap12 = tmp_total3
+
+                @. ViewGainTally3 = tmp_tally3
+                @. ViewGainTally3Swap12 = tmp_tally3
+
+            end
+
+        elseif symmetric_grid # only first symmetry true
 
             tmp_total3 = ViewGainTotal3 + ViewGainTotal3Mirror123
             tmp_tally3 = ViewGainTally3 + ViewGainTally3Mirror123
@@ -84,25 +102,42 @@ function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,Los
             ViewGainTally4Mirror123 = @view(GainTally4[:,end:-1:1,h4,p1,nu1-u1+1,h1,p2,nu2-u2+1,h2])
 
             if m1 == m2 # Both first and second Symmetry true
+
                 ViewGainTotal4Swap12 = @view(GainTotal4[:,1:end,h4,p2,u2,h2,p1,u1,h1])
-                ViewGainTotal4Swap12Mirror123 = @view(GainTotal4[:,end:-1:1,h4,p2,nu2-u2+1,h2,p1,nu1-u1+1,h1])
                 ViewGainTally4Swap12 = @view(GainTally4[:,1:end,h4,p2,u2,h2,p1,u1,h1])
-                ViewGainTally4Swap12Mirror123 = @view(GainTally4[:,end:-1:1,h4,p2,nu2-u2+1,h2,p1,nu1-u1+1,h1])
 
-                @. tmp_total4 = ViewGainTotal4 + ViewGainTotal4Mirror123 + ViewGainTotal4Swap12 + ViewGainTotal4Swap12Mirror123
-                @. tmp_tally4 = ViewGainTally4 + ViewGainTally4Mirror123 + ViewGainTally4Swap12 + ViewGainTally4Swap12Mirror123
+                if symmetric_grid
 
-                @. ViewGainTotal4 = tmp_total4
-                @. ViewGainTotal4Mirror123 = tmp_total4
-                @. ViewGainTotal4Swap12 = tmp_total4
-                @. ViewGainTotal4Swap12Mirror123 = tmp_total4
+                    ViewGainTotal4Swap12Mirror123 = @view(GainTotal4[:,end:-1:1,h4,p2,nu2-u2+1,h2,p1,nu1-u1+1,h1])
+                    ViewGainTally4Swap12Mirror123 = @view(GainTally4[:,end:-1:1,h4,p2,nu2-u2+1,h2,p1,nu1-u1+1,h1])
 
-                @. ViewGainTally4 = tmp_tally4
-                @. ViewGainTally4Mirror123 = tmp_tally4
-                @. ViewGainTally4Swap12 = tmp_tally4
-                @. ViewGainTally4Swap12Mirror123 = tmp_tally4
+                    @. tmp_total4 = ViewGainTotal4 + ViewGainTotal4Mirror123 + ViewGainTotal4Swap12 + ViewGainTotal4Swap12Mirror123
+                    @. tmp_tally4 = ViewGainTally4 + ViewGainTally4Mirror123 + ViewGainTally4Swap12 + ViewGainTally4Swap12Mirror123
 
-            else # only first symmetry true
+                    @. ViewGainTotal4 = tmp_total4
+                    @. ViewGainTotal4Mirror123 = tmp_total4
+                    @. ViewGainTotal4Swap12 = tmp_total4
+                    @. ViewGainTotal4Swap12Mirror123 = tmp_total4
+
+                    @. ViewGainTally4 = tmp_tally4
+                    @. ViewGainTally4Mirror123 = tmp_tally4
+                    @. ViewGainTally4Swap12 = tmp_tally4
+                    @. ViewGainTally4Swap12Mirror123 = tmp_tally4
+
+                else
+
+                    @. tmp_total4 = ViewGainTotal4 + ViewGainTotal4Swap12
+                    @. tmp_tally4 = ViewGainTally4 + ViewGainTally4Swap12
+
+                    @. ViewGainTotal4 = tmp_total4
+                    @. ViewGainTotal4Swap12 = tmp_total4
+
+                    @. ViewGainTally4 = tmp_tally4
+                    @. ViewGainTally4Swap12 = tmp_tally4
+
+                end
+
+            elseif symmetric_grid # only first symmetry true
 
                 @. tmp_total4 = ViewGainTotal4 + ViewGainTotal4Mirror123
                 @. tmp_tally4 = ViewGainTally4 + ViewGainTally4Mirror123
@@ -127,20 +162,35 @@ function GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,Los
 
         if m1==m2 # Both first and second Symmetry true
 
-            tmp_total = LossTotal[p1,u1,h1,p2,u2,h2] + LossTotal[p2,u2,h2,p1,u1,h1] + LossTotal[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2] + LossTotal[p2,nu2-u2+1,h2,p1,nu1-u1+1,h1]
-            tmp_tally = LossTally[p1,u1,h1,p2,u2,h2] + LossTally[p2,u2,h2,p1,u1,h1] + LossTally[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2] + LossTally[p2,nu2-u2+1,h2,p1,nu1-u1+1,h1]
+            if symmetric_grid
 
-            LossTotal[p1,u1,h1,p2,u2,h2] = tmp_total
-            LossTotal[p2,u2,h2,p1,u1,h1] = tmp_total
-            LossTotal[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2] = tmp_total
-            LossTotal[p2,nu2-u2+1,h2,p1,nu1-u1+1,h1] = tmp_total
+                tmp_total = LossTotal[p1,u1,h1,p2,u2,h2] + LossTotal[p2,u2,h2,p1,u1,h1] + LossTotal[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2] + LossTotal[p2,nu2-u2+1,h2,p1,nu1-u1+1,h1]
+                tmp_tally = LossTally[p1,u1,h1,p2,u2,h2] + LossTally[p2,u2,h2,p1,u1,h1] + LossTally[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2] + LossTally[p2,nu2-u2+1,h2,p1,nu1-u1+1,h1]
 
-            LossTally[p1,u1,h1,p2,u2,h2] = tmp_tally
-            LossTally[p2,u2,h2,p1,u1,h1] = tmp_tally
-            LossTally[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2] = tmp_tally
-            LossTally[p2,nu2-u2+1,h2,p1,nu1-u1+1,h1] = tmp_tally
+                LossTotal[p1,u1,h1,p2,u2,h2] = tmp_total
+                LossTotal[p2,u2,h2,p1,u1,h1] = tmp_total
+                LossTotal[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2] = tmp_total
+                LossTotal[p2,nu2-u2+1,h2,p1,nu1-u1+1,h1] = tmp_total
 
-        else # only first symmetry true
+                LossTally[p1,u1,h1,p2,u2,h2] = tmp_tally
+                LossTally[p2,u2,h2,p1,u1,h1] = tmp_tally
+                LossTally[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2] = tmp_tally
+                LossTally[p2,nu2-u2+1,h2,p1,nu1-u1+1,h1] = tmp_tally
+
+            else
+
+                tmp_total = LossTotal[p1,u1,h1,p2,u2,h2] + LossTotal[p2,u2,h2,p1,u1,h1]
+                tmp_tally = LossTally[p1,u1,h1,p2,u2,h2] + LossTally[p2,u2,h2,p1,u1,h1] 
+
+                LossTotal[p1,u1,h1,p2,u2,h2] = tmp_total
+                LossTotal[p2,u2,h2,p1,u1,h1] = tmp_total
+
+                LossTally[p1,u1,h1,p2,u2,h2] = tmp_tally
+                LossTally[p2,u2,h2,p1,u1,h1] = tmp_tally
+
+            end
+
+            elseif symmetric_grid # only first symmetry true
 
             tmp_total = LossTotal[p1,u1,h1,p2,u2,h2] + LossTotal[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2]
             tmp_tally = LossTally[p1,u1,h1,p2,u2,h2] + LossTally[p1,nu1-u1+1,h1,p2,nu2-u2+1,h2]
