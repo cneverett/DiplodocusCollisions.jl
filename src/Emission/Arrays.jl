@@ -44,6 +44,7 @@ function OldMonteCarloArraysEmission(Parameters::Tuple{String,String,String,Stri
 
     if fileExist
 
+        println("Previous Monte Carlo arrays found, loading from file.")
         f = jldopen(filePath,"r+");
         OldGainTallyK2 = f["GainTallyK2"];
         OldGainTallyN2 = f["GainTallyN2"];

@@ -1050,7 +1050,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
                     e2 = a2 + b2 - LossSumN2
                     #c2 = GainSumE41/GainSumN41
 
-                    a1 = (ac2+d1*L-c2*e2-LE)/(d1-c1)
+                    a1 = ((ac2-c2*e2)+(d1*L-LE))/(d1-c1)
                     b1 = L-a1
                     ac1 = a1*c1
                     bd1 = b1*d1
@@ -1069,7 +1069,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
                     e1 = a1 + b1 - LossSumN1
                     #c1 = GainSumE31/GainSumN31
 
-                    a2 = (ac1+d2*L-c1*e1-LE)/(d2-c2)
+                    a2 = ((ac1-c1*e1)+(d2*L-LE))/(d2-c2)
                     b2 = L-a2
                     ac2 = a2*c2
                     bd2 = b2*d2
@@ -1084,7 +1084,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
                 alpha2 = (b1*(d1-c1)*e2+b2*(d2*e2+c1*e1-f))/(a2*(b1*(c1-d1)+b2*(c2-d2))) + 1
                 beta = (f-c1*e1-c2*e2)/(b1*(c1-d1)+b2*(c2-d2)) + 1
 
-                if a1 == 0e0 || a2 == 0e0 || max_high_bins > max(size(GainMatrix3,1),size(GainMatrix4,1))# loop has not produced any corrected gain terms
+                if a1 <= 0e0 || a2 <= 0e0 || max_high_bins > max(size(GainMatrix3,1),size(GainMatrix4,1))# loop has not produced any corrected gain terms
 
                     nonzero_gain = false
                     #println("No valid correction for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2")
@@ -1204,7 +1204,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
             # underflow bins adds 1 to value of p3 index compared to p1 index for same energy bin.
             CorrectedGainMatrix3[p1+1+1,u1,h1,p1,u1,h1,p2,u2,h2] = p2Big * b1 * beta
             CorrectedGainMatrix3[p1+1,u1,h1,p1,u1,h1,p2,u2,h2] = p2Big ? a1 * alpha1 : b1 * beta
-            CorrectedGainMatrix3[p1-1+1,u1,h1,p1,u1,h1,p2,u2,h2] = !p2Big * a1 * alpha1   
+            CorrectedGainMatrix3[p1-1+1,u1,h1,p1,u1,h1,p2,u2,h2] = !p2Big * a1 * alpha1  
         else
             for p3 in axes(GainMatrix3,1)
                 for u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
@@ -1234,7 +1234,7 @@ function GainCorrection3(Parameters::Tuple{String, String, String, String, Float
             end
         end
 
-        println("p1=$p1,p2=$p2,u1=$u1,u2=$u2,h1=$h1, h2=$h2")
+        #println("p1=$p1,p2=$p2,u1=$u1,u2=$u2,h1=$h1, h2=$h2")
 
         #println("$(sum(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])) , $(sum(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])) , $(CorrectedLossMatrix1[p1,u1,h1,p2,u2,h2]) , $(CorrectedLossMatrix2[p2,u2,h2,p1,u1,h1])")
 
