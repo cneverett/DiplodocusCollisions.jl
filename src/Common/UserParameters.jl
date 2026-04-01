@@ -133,7 +133,7 @@ end
 
 Generates a file name for an emissive interaction based on user provided parameters
 """
-function EmissionFileName(Parameters::Tuple{String,String,String,String,Float64,Float64,Float64, Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Vector{Float64}})
+function EmissionFileName(Parameters::Tuple{String,String,String,String,Float64,Float64,Float64, Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64})
     
     (name1,name2,name3,type,mu1,mu2,mu3,z1,z2,z3,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,Ext) = Parameters
     
@@ -150,9 +150,7 @@ function EmissionFileName(Parameters::Tuple{String,String,String,String,Float64,
     fileName *= "_"*u3_grid*string(u3_num)
     fileName *= "_"*h3_grid*string(h3_num)
 
-    for i in eachindex(Ext)
-        fileName *= "_"*string(Ext[i])
-    end
+    fileName *= "_"*string(Ext)
     
     fileName *= ".jld2";
 
@@ -211,11 +209,12 @@ function UserEmissionParameters()
 
     z1::Float64 = getfield(DiplodocusCollisions,Symbol("z"*name1))
     z2::Float64 = getfield(DiplodocusCollisions,Symbol("z"*name2))
-    z3::Float64 = getfield(DiplodocusCollisions,Symbol("z"*name2))
+    z3::Float64 = getfield(DiplodocusCollisions,Symbol("z"*name3))
 
     scale::StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64} = getfield(Main,Symbol("scale"))
 
-    Ext::Vector{Float64} = getfield(Main,Symbol("Ext"))
+    Ext::Float64 = getfield(Main,Symbol("Ext"))
+    println("Ext = $Ext")
 
     p1loc_low::Int64 = try 
         getfield(Main,Symbol("ploc_low_"*name1))
