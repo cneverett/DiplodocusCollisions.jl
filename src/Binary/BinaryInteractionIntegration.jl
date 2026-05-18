@@ -184,7 +184,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 MomentumSpaceFactorsBinary!(GainMatrix3,GainMatrix4,u3val,h3val,u4val,h4val,Indistinguishable_12)
             end
                                         
-            println(stout,"Weighting average of New and Old Sampling Arrays")
+            println(stdout,"Weighting average of New and Old Sampling Arrays")
             flush(stdout)
 
             # old arrays are modified in this process
