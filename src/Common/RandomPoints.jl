@@ -214,22 +214,22 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
         γC = 1.0 # avoid numerical issues
     end
     wC::Float64 = acosh(γC)
-    if (pSmol::Float64 = p2/p1) < 1e-6
+    if (pSmol::Float64 = p2/p1) < sqrt(eps(Float64))
         #z = sqrt(1e0+pSmol^2+2*pSmol*(ct1*ct2+ch1h2*st1*st2))
         a = (ct1*ct2+ch1h2*st1*st2)
         b = ct1
         c = ct2 
         # 1/sqrt(1+smol^2) approx 1-smol^2/2
-        val =  b + (-a*b+c)*pSmol + ((-1+3*a^2)*b/2-a*c)*pSmol^2 + (3*a*b/2-5*a^3*b/2-c+3*a^2*c/2)*pSmol^3 
+        val =  b + (c-a*b)*pSmol + ((-1+3*a^2)*b/2-a*c)*pSmol^2 #+ (3*a*b/2-5*a^3*b/2-c+3*a^2*c/2)*pSmol^3 
         x = st1*ch1 + pSmol*st2*ch2
         y = st1*sh1 + pSmol*st2*sh2
-    elseif (pSmol = p1/p2) < 1e-6
+    elseif (pSmol = p1/p2) < sqrt(eps(Float64))
         #z = sqrt(1e0+pSmol^2+2*pSmol*(ct1*ct2+ch1h2*st1*st2))
         a = (ct1*ct2+ch1h2*st1*st2)
         b = ct1
         c = ct2 
         # 1/sqrt(1+smol^2) approx 1-smol^2/2
-        val =  c + (-a*c+b)*pSmol + ((-1+3*a^2)*c/2-a*b)*pSmol^2 + (-b+3*a*c/2-5*a^3*c/2+3*a^2*b/2)*pSmol^3 
+        val =  c + (b-a*c)*pSmol + ((-1+3*a^2)*c/2-a*b)*pSmol^2 #+ (-b+3*a*c/2-5*a^3*c/2+3*a^2*b/2)*pSmol^3 
         x = pSmol*st1*ch1 + st2*ch2
         y = pSmol*st1*sh1 + st2*sh2
     else
@@ -254,7 +254,7 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
         w4Limit = 0e0
         tmp =  pC/(m3*sinh(wC))
         if tmp < 1e0 
-            if tmp > 1e-7
+            if tmp > sqrt(eps(Float64)) 
                 w3Limit = atanh(sqrt(1-tmp^2))
             else # small tmp
                 w3Limit = log(2e0)-log(tmp)-tmp^2/4
@@ -267,7 +267,7 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
         w3Limit = 0e0
         tmp = pC/(m4*sinh(wC))
         if tmp < 1e0
-            if tmp > 1e-7
+            if tmp > sqrt(eps(Float64)) 
                 w4Limit = atanh(sqrt(1-tmp^2))
             else # small tmp
                 w4Limit = log(2e0)-log(tmp)-tmp^2/4
