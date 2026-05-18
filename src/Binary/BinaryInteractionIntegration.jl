@@ -50,7 +50,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
     # =========== Load Old and Generate New Arrays ========= #
 
-        println("Loading Old and Allocating New Sampling Arrays")
+        println(stdout,"Loading Old and Allocating New Sampling Arrays")
+        flush(stdout)
 
         if isdir(fileLocation) == false
             mkpath(fileLocation)
@@ -66,13 +67,15 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
     # ===== Run MonteCarlo Integration ==== #
 
-        println("Running Monte Carlo Integration")
+        println(stdout,"Running Monte Carlo Integration")
+        flush(stdout)
 
         for (ii,scale_val) in enumerate(scale)
 
-            println("")
-            println("scale = $scale_val, iteration = $ii out of $(length(scale))")
-            println("")
+            println(stdout,"")
+            println(stdout,"scale = $scale_val, iteration = $ii out of $(length(scale))")
+            println(stdout,"")
+            flush(stdout)
 
             indices::Vector{CartesianIndex{2}} = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))[1:end]
             shuffle!(indices) # better balances workload between threads
@@ -135,13 +138,14 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 GainTally4_K = @view(GainTally4[1:end-1,:,:,:,:,:,:,:,:])
             end
 
-            println("")
-            println("Applying Symmetries")
+            println(stdout,"Applying Symmetries")
+            flush(stdout)
 
             # Apply Symmetries to the Gain and Loss Totals and Tallies
             GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,LossTotal,LossTally,m1,m2,m3,m4,symmetric_grid)
 
-            println("Generating New Sampling Arrays")
+            println(stdout,"Generating New Sampling Arrays")
+            flush(stdout)
 
             # calculate the gain and loss matrices
             if m3 == m4
@@ -164,7 +168,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             @. LossMatrix1 = LossTotal / LossTally;
             replace!(LossMatrix1,NaN=>0e0);
 
-            println("Applying Momentum Space Factors")
+            println(stdout,"Applying Momentum Space Factors")
+            flush(stdout)
 
             # Angle / Momentum Ranges
             u3val = bounds(u_low,u_up,u3_num,u3_grid)
@@ -179,7 +184,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 MomentumSpaceFactorsBinary!(GainMatrix3,GainMatrix4,u3val,h3val,u4val,h4val,Indistinguishable_12)
             end
                                         
-            println("Weighting average of New and Old Sampling Arrays")
+            println(stout,"Weighting average of New and Old Sampling Arrays")
+            flush(stdout)
 
             # old arrays are modified in this process
             if m3 == m4
@@ -213,7 +219,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
     # ============= Error Estimates ======= # 
 
-        println("Calculating Error Estimates")
+        println(stdout,"Calculating Error Estimates")
+        flush(stdout)
 
         ErrorOutput =  DoesConserve((Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2))
 
@@ -221,7 +228,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
     # ===== Generate Corrected Arrays ===== # 
 
-        println("Calculating Noise Corrected Arrays")
+        println(stdout,"Calculating Noise Corrected Arrays")
+        flush(stdout)
 
         CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2 =  GainCorrection3(Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)
 
@@ -229,7 +237,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
     # ========== Save Arrays ============== #
 
-        println("Saving Arrays")
+        println(stdout,"Saving Arrays")
+        flush(stdout)
 
         jldopen(filePath,"w";compress=true) do f # creates file and overwrites previous file if one existed
             write(f,"GainWeights3",OldGainWeights3)
