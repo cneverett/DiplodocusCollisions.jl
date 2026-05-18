@@ -11,6 +11,9 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
     # Set up worker
     Threads.@spawn begin
 
+        println(stdout,"Thread ",thread_id," starting...")
+        flush(stdout)
+
     # allocate arrays for each thread
     p1v::Vector{Float64} = zeros(Float64,4)
     p2v::Vector{Float64} = zeros(Float64,4)
@@ -259,6 +262,9 @@ function BinaryMonteCarlo!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float6
         end # u1,h1,u2,h2 loop
 
     end # indices loop
+
+        println(stdout,"Thread ",thread_id," finished")
+        flush(stdout)
 
     end # Thread spawn 
 
