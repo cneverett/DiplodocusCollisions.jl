@@ -70,7 +70,6 @@ function OldMonteCarloArraysEmission(Parameters::Tuple{String,String,String,Stri
 
     end
 
-
     return (OldGainTallyK2,OldGainTallyK3,OldLossTallyK1,OldGainTallyN2,OldGainTallyN3,OldLossTallyN1,OldGainMatrix2,OldGainMatrix3,OldLossMatrix1)
 
 end

@@ -102,13 +102,14 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
 
     # ===== Update Gain and Loss Matrices === #
 
-            # Apply symmetries 
-            GainLossSymmetryEmission!(GainTotal2,GainTotal3,GainTallyN2,GainTallyK2,GainTallyN3,GainTallyK3,LossTotal1,LossTallyN1,LossTallyK1)
-
             # Calculate Gain and Loss matrix
             GainMatrix2 = GainTotal2 ./ GainTallyN2
             GainMatrix3 = GainTotal3 ./ GainTallyN3
             LossMatrix1 = LossTotal1 ./ LossTallyN1
+
+            replace!(GainMatrix2,NaN=>0e0)
+            replace!(GainMatrix3,NaN=>0e0)
+            replace!(LossMatrix1,NaN=>0e0)
 
             println("")
             println("Applying Momentum Space Factors")
@@ -128,6 +129,9 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
             WeightedAverageLossEmission!(LossMatrix1,OldLossMatrix1,LossTallyN1,OldLossTallyN1)
 
         end # scale loop
+
+        # Apply symmetries 
+        GainLossSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
 
     # ===================================== #
 
