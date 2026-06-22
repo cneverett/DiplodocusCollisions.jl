@@ -323,6 +323,8 @@ function WeightedFactorsEmission(p1v::Vector{Float64},m1::Float64,scale::Float64
     t = p1v[4]
     h = p1v[3]
 
+    #println("E1 = $E1, gamma = $gamma, w = $w")
+
     return (w,t,h)
     
 end

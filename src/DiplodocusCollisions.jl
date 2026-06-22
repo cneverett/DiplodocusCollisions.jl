@@ -10,6 +10,8 @@ export UserBinaryParameters, UserEmissionParameters
     using Bessels
     using ProgressMeter
     using Random: shuffle!
+    using LinearAlgebra
+    using Statistics
 
     # include Common files
         include("Common/Constants.jl")
@@ -17,6 +19,7 @@ export UserBinaryParameters, UserEmissionParameters
         include("Common/Location.jl")
         include("Common/UserParameters.jl")
         include("Common/UsefulGridValueFunctions.jl")
+        include("Common/SpectrumFilters.jl")
 
     # include Binary files
         #include("Binary/Structs.jl")

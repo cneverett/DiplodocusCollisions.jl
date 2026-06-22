@@ -138,11 +138,13 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 GainTally4_K = @view(GainTally4[1:end-1,:,:,:,:,:,:,:,:])
             end
 
-            println(stdout,"Applying Symmetries")
-            flush(stdout)
+            #println(stdout,"Applying Symmetries")
+            #flush(stdout)
 
             # Apply Symmetries to the Gain and Loss Totals and Tallies
-            GainLossSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,LossTotal,LossTally,m1,m2,m3,m4,symmetric_grid)
+            #GainLossPolarSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,LossTotal,LossTally,m1,m2,m3,m4,symmetric_grid)
+            #GainLossAzimuthalSymmetryBinary!(GainTotal3,GainTotal4,GainTally3,GainTally4,LossTotal,LossTally,m1,m2,m3,m4,symmetric_grid)
+            # Now done at the matrix level after the weighted averaging step, see below
 
             println(stdout,"Generating New Sampling Arrays")
             flush(stdout)
@@ -201,13 +203,6 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
         end # scale loop 
 
-        if Indistinguishable_12 == false # particles are distinguishable
-            perm = [4,5,6,1,2,3]
-            OldLossMatrix2 .= permutedims(OldLossMatrix1,perm)
-        else
-            fill!(OldLossMatrix2,Float64(0))
-        end
-
     # ===================================== #
 
     # =========== Garbage Collection ====== #
@@ -216,6 +211,29 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
         GC.gc()
         
     # ===================================== #
+
+    # ========= Apply Symmetries ========== # 
+
+        println(stdout,"Applying Symmetries")
+        flush(stdout)
+
+        # Apply Symmetries to the Gain and Loss Matrices, this does not affect the weighting of the average, which is already done in the previous step
+        # TODO: improve this averaging to account for the weights and tallies to do a weighted average symmetrising
+        GainLossPolarSymmetryMatrixBinary!(OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldGainWeights3,OldGainWeights4,OldLossTally,m1,m2,m3,m4,symmetric_grid)
+        GainLossAzimuthalSymmetryMatrixBinary!(OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldGainWeights3,OldGainWeights4,OldLossTally,m1,m2,m3,m4,symmetric_grid)
+
+    # ===================================== #
+
+    # =========== Generate LossMatrix2 ==== #
+
+        if Indistinguishable_12 == false # particles are distinguishable
+            perm = [4,5,6,1,2,3]
+            OldLossMatrix2 .= permutedims(OldLossMatrix1,perm)
+        else
+            fill!(OldLossMatrix2,Float64(0))
+        end
+
+    # ===================================== # 
 
     # ============= Error Estimates ======= # 
 
@@ -231,7 +249,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
         println(stdout,"Calculating Noise Corrected Arrays")
         flush(stdout)
 
-        CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2 =  GainCorrection3(Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)
+        CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2 =  GainCorrection4(Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)
 
     # ===================================== #
 

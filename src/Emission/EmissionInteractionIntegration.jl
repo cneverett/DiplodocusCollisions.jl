@@ -130,8 +130,11 @@ function EmissionInteractionIntegration(Setup::Tuple{Tuple{String,String,String,
 
         end # scale loop
 
+        println("Applying Symmetries to Gain and Loss Matrices")
+
         # Apply symmetries 
-        GainLossSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
+        GainLossPolarSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
+        GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
 
     # ===================================== #
 
