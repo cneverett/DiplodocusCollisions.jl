@@ -12,6 +12,7 @@ export UserBinaryParameters, UserEmissionParameters
     using Random: shuffle!
     using LinearAlgebra
     using Statistics
+    using Zarr
 
     # include Common files
         include("Common/Constants.jl")
@@ -25,6 +26,8 @@ export UserBinaryParameters, UserEmissionParameters
         #include("Binary/Structs.jl")
         include("Binary/Arrays.jl")
         include("Binary/Averaging.jl")
+        include("Binary/Correction.jl")
+        include("Binary/Symmetries.jl")
         include("Binary/DifferentialCrossSectionFunctions.jl")
         include("Binary/MomentumValues.jl")
         include("Binary/MandelstramChecks.jl")

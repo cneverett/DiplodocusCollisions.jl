@@ -124,7 +124,7 @@ function betaVec!(βv::Vector{Float64},p1v,p2v,m1,m2)
     βv[2] = (1/(E1+E2)) * (p1*ct1 + p2*ct2) / βv[1] # cos(theta) bounded by [-1,1]
     x = p1*st1*ch1 + p2*st2*ch2
     y = p1*st1*sh1 + p2*st2*sh2
-    βv[3] = mod(atan(y,x)/pi,2) # atan(y,x), note 1/(E1+E2) is common factor in y,x so ignored. phi bounded by [0,2]
+    βv[3] = mod2pi(atan(y,x))/pi # atan(y,x), note 1/(E1+E2) is common factor in y,x so ignored. phi bounded by [0,2]
 
     #gamma
     βv[4] = (E1+E2)
@@ -155,7 +155,7 @@ function RPointSphereBoost!(pLv::Vector{Float64},βv::Vector{Float64},pCv::Vecto
     x = -stC*shC*shβ + chβ*(stC*chC*ctβ + ctC*stβ)
     y = stC*shC*chβ + shβ*(stC*chC*ctβ + ctC*stβ)
 
-    pLv[3] = mod(atan(y,x)/pi,2)
+    pLv[3] = mod2pi(atan(y,x))/pi
 
     # deboost ctC to lab frame for probability calculation
     γ = βv[4]
@@ -239,7 +239,7 @@ function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m
         val  = (p1*ct1+p2*ct2)/z
     end 
     t::Float64 = acos(val)/pi
-    h::Float64 = mod(atan(y,x)/pi,2)   
+    h::Float64 = mod2pi(atan(y,x))/pi   
 
     # outgoing COM frame momentum
     pC::Float64 = InvariantFluxSmall(sSmol,sBig,m3,m4)/sqrt(s)

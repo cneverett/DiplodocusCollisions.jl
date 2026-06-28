@@ -59,9 +59,9 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 
         filePath = joinpath(fileLocation,fileName)
 
-        (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2) = OldMonteCarloArraysBinary(Parameters,filePath)
+        (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix1,CorrectedChunkLossMatrix2) = OldMonteCarloArraysBinary(Parameters,filePath)
 
-        (GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = MonteCarloArraysBinary(Parameters)
+        #(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = MonteCarloArraysBinary(Parameters)
 
     # ===================================== #
 
@@ -70,12 +70,12 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
         println(stdout,"Running Monte Carlo Integration")
         flush(stdout)
 
-        for (ii,scale_val) in enumerate(scale)
+        #for (ii,scale_val) in enumerate(scale)
 
-            println(stdout,"")
+            #=println(stdout,"")
             println(stdout,"scale = $scale_val, iteration = $ii out of $(length(scale))")
             println(stdout,"")
-            flush(stdout)
+            flush(stdout)=#
 
             indices::Vector{CartesianIndex{2}} = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))[1:end]
             shuffle!(indices) # better balances workload between threads
@@ -90,13 +90,13 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             end
 
             # reset arrays
-            fill!(GainTotal3,Float64(0))
+            #=fill!(GainTotal3,Float64(0))
             fill!(LossTotal,Float64(0))
             fill!(GainTally3,UInt32(0))
             fill!(LossTally,UInt32(0))
 
             fill!(GainTotal4,Float64(0))
-            fill!(GainTally4,UInt32(0))
+            fill!(GainTally4,UInt32(0))=#
 
             #if numThreads == 1
             #    # Run in serial if only one thread, easier to use for debugging
@@ -107,15 +107,15 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             #end
 
             if numThreads == 1
-                numProgress = numLoss*index_range[end]*u1_num*h1_num*u2_num*h2_num
+                numProgress = length(indices)
                 prog = Progress(numProgress)
                 # Run in serial if only one thread, easier to use for debugging
-                BinaryMonteCarlo_Debug!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[1:end],scale_val,prog,1)
+                BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix1,CorrectedChunkLossMatrix2,sigma,dsigmadt,Parameters,numLoss,numGain,indices[1:end],scale,prog,1)
                 finish!(prog)
             else
-                numProgress = numLoss*index_range[1+1]*u1_num*h1_num*u2_num*h2_num
+                numProgress = length(indices[index_range[1]+1:index_range[1+1]])
                 prog = Progress(numProgress)
-                workers = [BinaryMonteCarlo!(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,ArrayOfLocks,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale_val,prog,thread) for thread in 1:(length(index_range)-1)]
+                workers = [BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix1,CorrectedChunkLossMatrix2,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale,prog,thread) for thread in 1:(length(index_range)-1)]
                 wait.(workers) # Allow all workers to finish
                 finish!(prog)
             end
@@ -129,7 +129,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
     # === Update Gain and Loss Matrices === #
 
-            # N values are last element of the tally array
+        #=    # N values are last element of the tally array
             GainTally3_N = @view(GainTally3[end,:,:,:,:,:,:,:,:])
             # K value are all but last element of the tally array
             GainTally3_K = @view(GainTally3[1:end-1,:,:,:,:,:,:,:,:])
@@ -201,37 +201,37 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             end
             WeightedAverageLossBinary!(LossMatrix1,OldLossMatrix1,LossTally,OldLossTally)
 
-        end # scale loop 
+        end # scale loop =#
 
     # ===================================== #
 
     # =========== Garbage Collection ====== #
 
-        (GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = (0,0,0,0,0,0,0,0,0,0)
-        GC.gc()
+        #=(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = (0,0,0,0,0,0,0,0,0,0)
+        GC.gc()=#
         
     # ===================================== #
 
     # ========= Apply Symmetries ========== # 
 
-        println(stdout,"Applying Symmetries")
+        #=println(stdout,"Applying Symmetries")
         flush(stdout)
 
         # Apply Symmetries to the Gain and Loss Matrices, this does not affect the weighting of the average, which is already done in the previous step
         # TODO: improve this averaging to account for the weights and tallies to do a weighted average symmetrising
         GainLossPolarSymmetryMatrixBinary!(OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldGainWeights3,OldGainWeights4,OldLossTally,m1,m2,m3,m4,symmetric_grid)
-        GainLossAzimuthalSymmetryMatrixBinary!(OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldGainWeights3,OldGainWeights4,OldLossTally,m1,m2,m3,m4,symmetric_grid)
+        GainLossAzimuthalSymmetryMatrixBinary!(OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldGainWeights3,OldGainWeights4,OldLossTally,m1,m2,m3,m4,symmetric_grid)=#
 
     # ===================================== #
 
     # =========== Generate LossMatrix2 ==== #
 
-        if Indistinguishable_12 == false # particles are distinguishable
+        #=if Indistinguishable_12 == false # particles are distinguishable
             perm = [4,5,6,1,2,3]
             OldLossMatrix2 .= permutedims(OldLossMatrix1,perm)
         else
             fill!(OldLossMatrix2,Float64(0))
-        end
+        end=#
 
     # ===================================== # 
 
@@ -240,42 +240,25 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
         println(stdout,"Calculating Error Estimates")
         flush(stdout)
 
+        # TODO: update 
         ErrorOutput =  DoesConserve((Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2))
 
     # ===================================== #
 
     # ===== Generate Corrected Arrays ===== # 
 
-        println(stdout,"Calculating Noise Corrected Arrays")
+        #=println(stdout,"Calculating Noise Corrected Arrays")
         flush(stdout)
 
-        CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2 =  GainCorrection4(Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)
+        CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2 =  GainCorrection4(Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2)=#
 
     # ===================================== #
 
-    # ========== Save Arrays ============== #
+    # ========== Save Error estimate and Parameters============== #
 
-        println(stdout,"Saving Arrays")
-        flush(stdout)
-
-        jldopen(filePath,"w";compress=true) do f # creates file and overwrites previous file if one existed
-            write(f,"GainWeights3",OldGainWeights3)
-            write(f,"GainMatrix3",OldGainMatrix3)
-
-            write(f,"GainWeights4",OldGainWeights4)
-            write(f,"GainMatrix4",OldGainMatrix4)
-
-            write(f,"LossTally",OldLossTally)
-            write(f,"LossMatrix1",OldLossMatrix1)
-            write(f,"LossMatrix2",OldLossMatrix2)
-
+        jldopen(filePath*"/data.jld2","w") do f # creates file and overwrites previous file if one existed
             write(f,"Parameters",Parameters)
             write(f,"ErrorEstimates",ErrorOutput)
-
-            write(f,"CorrectedGainMatrix3",CorrectedGainMatrix3)
-            write(f,"CorrectedGainMatrix4",CorrectedGainMatrix4)
-            write(f,"CorrectedLossMatrix1",CorrectedLossMatrix1)
-            write(f,"CorrectedLossMatrix2",CorrectedLossMatrix2)
         end
 
     # ===================================== #

@@ -252,7 +252,7 @@ function pVector!(p4v::Vector{Float64},p3v::Vector{Float64},p1v::Vector{Float64}
     x = p1*st1*ch1+p2*st2*ch2-p3*st3*ch3 
     y = p1*st1*sh1+p2*st2*sh2-p3*st3*sh3
 
-    p4v[3] = mod(atan(y,x)/pi,2)
+    p4v[3] = mod2pi(atan(y,x))/pi
 
     return nothing
 

@@ -8,7 +8,7 @@ This module provides functions for MonteCarlo Integration of S and T Matrices
 
 Debug version of `BinaryMonteCarlo` which is only run when `numThreads=1`, useful for testing. Function performs the Monte-Carlo sampling of incoming and outgoing particle states for binary interactions.
 """
-function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{Float64,9},LossTotal::Array{Float64,6},GainTally3::Array{UInt32,9},GainTally4::Array{UInt32,9},LossTally::Array{UInt32,6},ArrayOfLocks,sigma::Function,dsigmadt::Function,Parameters::Tuple{String,String,String,String,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64},numLoss::Int64,numGain::Int64,indices::Vector{CartesianIndex{2}},scale::Float64,prog::Progress,thread_id::Int64)
+function BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedGainMatrix3,CorrectedGainMatrix4,CorrectedLossMatrix1,CorrectedLossMatrix2,sigma::Function,dsigmadt::Function,Parameters::Tuple{String,String,String,String,Float64,Float64,Float64,Float64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64, Float64,Float64,String,Int64,String,Int64,String,Int64},numLoss::Int64,numGain::Int64,indices::Vector{CartesianIndex{2}},scale::StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64},Int64},prog::Progress,thread_id::Int64)
 
     # Set Parameters
     (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid_st,p1_num,u1_grid_st,u1_num,h1_grid_st,h1_num,p2_low,p2_up,p2_grid_st,p2_num,u2_grid_st,u2_num,h2_grid_st,h2_num,p3_low,p3_up,p3_grid_st,p3_num,u3_grid_st,u3_num,h3_grid_st,h3_num,p4_low,p4_up,p4_grid_st,p4_num,u4_grid_st,u4_num,h4_grid_st,h4_num) = Parameters
@@ -51,7 +51,7 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
     p4ploc::Int64 = 0
     u4ploc::Int64 = 0
     h4ploc::Int64 = 0
-    loc12::CartesianIndex{6} = CartesianIndex(0,0,0,0,0,0)
+    loc12::CartesianIndex{4} = CartesianIndex(0,0,0,0)
 
     p1_grid::GridType = Grid_String_to_Type(p1_grid_st)
     p2_grid::GridType = Grid_String_to_Type(p2_grid_st)
@@ -66,6 +66,11 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
     h3_grid::GridType = Grid_String_to_Type(h3_grid_st)
     h4_grid::GridType = Grid_String_to_Type(h4_grid_st)
 
+    symmetric_grid::Bool = (u1_grid == "u" || u1_grid == "b") && (u2_grid == "u" || u2_grid == "b") && (u3_grid == "u" || u3_grid == "b") && (u4_grid == "u" || u4_grid == "b")
+
+    Indistinguishable_12::Bool = name1 == name2
+    Indistinguishable_34::Bool = name3 == name4
+
     u1_r::Vector{Float64} = bounds(u_low,u_up,u1_num,u1_grid_st)
     h1_r::Vector{Float64} = bounds(h_low,h_up,h1_num,h1_grid_st)
     u2_r::Vector{Float64} = bounds(u_low,u_up,u2_num,u2_grid_st)
@@ -79,18 +84,65 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
     u2_low::Float64 = 0.0
     h2_up::Float64 = 0.0
     h2_low::Float64 = 0.0
+
+    # Angle / Momentum Ranges
+    u3val = bounds(u_low,u_up,u3_num,u3_grid_st)
+    u4val = bounds(u_low,u_up,u4_num,u4_grid_st)
+    h3val = bounds(h_low,h_up,h3_num,h3_grid_st).*pi
+    h4val = bounds(h_low,h_up,h4_num,h4_grid_st).*pi
     
-    LocalGainTotal3::Array{Float64,3} = zeros(Float64,size(GainTotal3)[1:3])
-    LocalGainTally3::Array{UInt32,3} = zeros(UInt32,size(GainTally3)[1:3])
+    # local arrays are size of each chunk of Zarr that store data
+    # for gain arrays this is p3_num+2,u3_num,h3_num,u1_num,h1_num,u2_num,h2_num
+    # as p1 and p2 are what define the chunks
+    # for loss arrays this is u1_num,h1_num,u2_num,h2_num as p1 and p2 are what define the chunks
+    # these local arrays are in-memory and per thread
+    # tallies for Gain terms are [k_underflow,k1,k2,k3,...,kn,k_overflow,N]
+    ChunkGainTotal3::Array{Float64,7} = zeros(Float64,(p3_num+2),u3_num,h3_num,u1_num,h1_num,u2_num,h2_num)
+    ChunkGainTally3::Array{UInt32,7} = zeros(UInt32,(p3_num+3),u3_num,h3_num,u1_num,h1_num,u2_num,h2_num)
+    ChunkGainMatrix3::Array{Float64,7} = zeros(Float64,(p3_num+2),u3_num,h3_num,u1_num,h1_num,u2_num,h2_num)
+    ChunkLossTotal::Array{Float64,4} = zeros(Float64,u1_num,h1_num,u2_num,h2_num)
+    ChunkLossTally::Array{UInt32,4} = zeros(UInt32,u1_num,h1_num,u2_num,h2_num)
     if m3 != m4
-        LocalGainTotal4::Array{Float64,3} = zeros(Float64,size(GainTotal4)[1:3])
-        LocalGainTally4::Array{UInt32,3} = zeros(UInt32,size(GainTally4)[1:3])
+        ChunkGainTotal4::Array{Float64,7} = zeros(Float64,(p4_num+2),u4_num,h4_num,u1_num,h1_num,u2_num,h2_num)
+        ChunkGainTally4::Array{UInt32,7} = zeros(UInt32,(p4_num+3),u4_num,h4_num,u1_num,h1_num,u2_num,h2_num)
+        ChunkGainMatrix4::Array{Float64,7} = zeros(Float64,(p4_num+2),u4_num,h4_num,u1_num,h1_num,u2_num,h2_num)
+    end
+    ChunkLossMatrix1::Array{Float64,4} = zeros(Float64,u1_num,h1_num,u2_num,h2_num)
+
+    # local arrays for faster memory access that will be written to chunk arrays 
+    LocalGainTotal3::Array{Float64,3} = zeros(Float64,size(ChunkGainTotal3)[1:3])
+    LocalGainTally3::Array{UInt32,3} = zeros(UInt32,size(ChunkGainTally3)[1:3])
+    if m3 != m4
+        LocalGainTotal4::Array{Float64,3} = zeros(Float64,size(ChunkGainTotal4)[1:3])
+        LocalGainTally4::Array{UInt32,3} = zeros(UInt32,size(ChunkGainTally4)[1:3])
     end
 
     for index in eachindex(indices)
-        
+
+        # define chunk indices of Zarr
         p1loc = indices[index][1]
         p2loc = indices[index][2]
+
+        # Load old chunk arrays from Zarr
+        OldChunkGainMatrix3::Array{Float64,7} = OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:]
+        OldChunkGainMatrix4::Array{Float64,7} = OldGainMatrix4[:,:,:,p1loc,:,:,p2loc,:,:]
+        OldChunkLossMatrix1::Array{Float64,4} = OldLossMatrix1[p1loc,:,:,p2loc,:,:]
+        OldChunkLossMatrix2::Array{Float64,4} = OldLossMatrix2[p2loc,:,:,p1loc,:,:]
+        OldChunkGainWeights3::Array{Float64,7} = OldGainWeights3[:,:,:,p1loc,:,:,p2loc,:,:]
+        OldChunkGainWeights4::Array{Float64,7} = OldGainWeights4[:,:,:,p1loc,:,:,p2loc,:,:]
+        OldChunkLossTally::Array{UInt32,4} = OldLossTally[p1loc,:,:,p2loc,:,:]
+
+        # reset in-memory local chunk arrays to zero 
+        fill!(ChunkGainTotal3,Float64(0))
+        fill!(ChunkGainTally3,UInt32(0))
+        fill!(ChunkLossTotal,Float64(0))
+        fill!(ChunkLossTally,UInt32(0))
+        if m3 != m4
+            fill!(ChunkGainTotal4,Float64(0))
+            fill!(ChunkGainTally4,UInt32(0))
+        end
+
+        for (idx_scale,scale_val) in enumerate(scale)
 
         for u1loc in 1:u1_num, h1loc in 1:h1_num, u2loc in 1:u2_num, h2loc in 1:h2_num
 
@@ -102,7 +154,7 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
             u2_low = u2_r[u2loc]
             h2_up = h2_r[h2loc+1]
             h2_low = h2_r[h2loc]
-            loc12 = CartesianIndex(p1loc,u1loc,h1loc,p2loc,u2loc,h2loc)
+            loc12 = CartesianIndex(u1loc,h1loc,u2loc,h2loc)
 
         for _ in 1:numLoss # sample incoming sates
         
@@ -112,12 +164,7 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
             RPointLogMomentum!(p1v,p1_up,p1_low,p1_num,p1loc)
             RPointLogMomentum!(p2v,p2_up,p2_low,p2_num,p2loc)
 
-            # Calculate T Array Location
-            #u1loc = location(u_low,u_up,u1_num,p1v[2],u1_grid)
-            #u2loc = location(u_low,u_up,u2_num,p2v[2],u2_grid)
-            #h1loc = location(h_low,h_up,h1_num,p1v[3],h1_grid)
-            #h2loc = location(h_low,h_up,h2_num,p2v[3],h2_grid)
-
+            # reset local array tallies 
             fill!(LocalGainTally3,UInt32(0))
             if m3 != m4
                 fill!(LocalGainTally4,UInt32(0))
@@ -128,8 +175,9 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
 
             if LossVal != 0e0 # i.e. it is a valid interaction state
 
-                (w3,w4,t,h) = WeightedFactors(p1v,p2v,m1,m2,m3,m4,sBig,sSmol,scale)
+                (w3,w4,t,h) = WeightedFactors(p1v,p2v,m1,m2,m3,m4,sBig,sSmol,scale_val)
 
+                # reset local arrays for gain totals 
                 fill!(LocalGainTotal3,Float64(0))
                 if m3 != m4
                     fill!(LocalGainTotal4,Float64(0))
@@ -244,29 +292,114 @@ function BinaryMonteCarlo_Debug!(GainTotal3::Array{Float64,9},GainTotal4::Array{
                 end
             end
 
-            # assign values to arrays
-            @lock ArrayOfLocks[p1loc] begin
-                LossTotal[loc12] += LossVal
-                LossTally[loc12] += UInt32(1)
-                @view(GainTally3[:,:,:,loc12]) .+= LocalGainTally3
-                if m3 != m4 
-                    @view(GainTally4[:,:,:,loc12]) .+= LocalGainTally4
+            # assign local arrays to chunk arrays
+            ChunkLossTotal[loc12] += LossVal
+            ChunkLossTally[loc12] += UInt32(1)
+            @view(ChunkGainTally3[:,:,:,loc12]) .+= LocalGainTally3
+            if m3 != m4 
+                @view(ChunkGainTally4[:,:,:,loc12]) .+= LocalGainTally4
+            end
+            if LossVal != 0e0
+                @view(ChunkGainTotal3[:,:,:,loc12]) .+= LocalGainTotal3
+                if m3 != m4
+                    @view(ChunkGainTotal4[:,:,:,loc12]) .+= LocalGainTotal4
                 end
-                if LossVal != 0e0
-                    @view(GainTotal3[:,:,:,loc12]) .+= LocalGainTotal3
-                    if m3 != m4
-                        @view(GainTotal4[:,:,:,loc12]) .+= LocalGainTotal4
-                    end
-                end
-            end 
-
-            if thread_id == 1 # on main thread
-                next!(prog)
             end
 
         end # numLoss loop
 
         end # u1,h1,u2,h2 loop
+
+        # === Update Gain and Loss Matrices === #
+
+            # N values are last element of the tally array
+            ChunkGainTally3_N = @view(ChunkGainTally3[end,:,:,:,:,:,:])
+            # K value are all but last element of the tally array
+            ChunkGainTally3_K = @view(ChunkGainTally3[1:end-1,:,:,:,:,:,:])
+            if m3 != m4 
+                ChunkGainTally4_N = @view(ChunkGainTally4[end,:,:,:,:,:,:])
+                ChunkGainTally4_K = @view(ChunkGainTally4[1:end-1,:,:,:,:,:,:])
+            end 
+
+            # calculate the gain and loss matrices
+            for i in axes(ChunkGainTotal3,1)
+                @view(ChunkGainMatrix3[i,:,:,:,:,:,:]) .= @view(ChunkGainTotal3[i,:,:,:,:,:,:]) ./ ChunkGainTally3_N
+            end
+            replace!(ChunkGainMatrix3,NaN=>0e0); # remove NaN caused by / 0
+            if m3 != m4
+                for i in axes(ChunkGainTotal4,1)
+                    @view(ChunkGainMatrix4[i,:,:,:,:,:,:]) .= @view(ChunkGainTotal4[i,:,:,:,:,:,:]) ./ ChunkGainTally4_N
+                end
+                replace!(ChunkGainMatrix4,NaN=>0e0); # remove NaN caused by /0e0
+            end
+            @. ChunkLossMatrix1 = ChunkLossTotal / ChunkLossTally;
+            replace!(ChunkLossMatrix1,NaN=>0e0);
+
+            # Momentum space volume elements
+            if m3 == m4
+                MomentumSpaceFactorsBinaryChunk!(ChunkGainMatrix3,u3val,h3val,Indistinguishable_12)
+            else
+                MomentumSpaceFactorsBinaryChunk!(ChunkGainMatrix3,ChunkGainMatrix4,u3val,h3val,u4val,h4val,Indistinguishable_12)
+            end
+
+            # perform weighted average of old and new gain matrices and loss matrices
+            # old arrays are modified in this process
+            if m3 == m4
+                WeightedAverageGainBinaryChunk!(ChunkGainMatrix3,OldChunkGainMatrix3,ChunkGainTally3_K,ChunkGainTally3_N,OldChunkGainWeights3)
+                if Indistinguishable_34 == false # particles are distinguishable 
+                    @. OldChunkGainMatrix4 = OldChunkGainMatrix3
+                    @. OldChunkGainWeights4 = OldChunkGainWeights3
+                end
+            else
+                WeightedAverageGainBinaryChunk!(ChunkGainMatrix3,OldChunkGainMatrix3,ChunkGainTally3_K,ChunkGainTally3_N,OldChunkGainWeights3,ChunkGainMatrix4,OldChunkGainMatrix4,ChunkGainTally4_K,ChunkGainTally4_N,OldChunkGainWeights4)
+            end
+            WeightedAverageLossBinaryChunk!(ChunkLossMatrix1,OldChunkLossMatrix1,ChunkLossTally,OldChunkLossTally)
+
+
+        end # scale loop   
+        
+        # ========= Apply Symmetries ========== # 
+
+            # Apply Symmetries to the Gain and Loss Matrices, this does not affect the weighting of the average, which is already done in the previous step
+            # TODO: improve this averaging to account for the weights and tallies to do a weighted average symmetrising
+            GainLossPolarSymmetryMatrixBinaryChunk!(OldChunkGainMatrix3,OldChunkGainMatrix4,OldChunkLossMatrix1,OldChunkGainWeights3,OldChunkGainWeights4,OldChunkLossTally,m1,m2,m3,m4,symmetric_grid)
+            GainLossAzimuthalSymmetryMatrixBinaryChunk!(OldChunkGainMatrix3,OldChunkGainMatrix4,OldChunkLossMatrix1,OldChunkGainWeights3,OldChunkGainWeights4,OldChunkLossTally,m1,m2,m3,m4)
+            replace!(OldChunkGainMatrix3,NaN=>0e0); # remove NaN caused by /0e0 if weights are zero
+            replace!(OldChunkGainMatrix4,NaN=>0e0); # remove NaN caused by /0e0 if weights are zero
+            replace!(OldChunkLossMatrix1,NaN=>0e0); # remove NaN caused by /0e0 if tallies are zero
+
+        # =========== Generate LossMatrix2 ==== #
+
+            if Indistinguishable_12 == false # particles are distinguishable
+                perm = [3,4,1,2]
+                OldChunkLossMatrix2 .= permutedims(OldChunkLossMatrix1,perm)
+            else
+                fill!(OldChunkLossMatrix2,Float64(0))
+            end
+
+        # ===== Generate Corrected Arrays ===== #
+
+            CorrectedChunkGainMatrix3, CorrectedChunkGainMatrix4, CorrectedChunkLossMatrix1, CorrectedChunkLossMatrix2 =  GainCorrectionChunk(Parameters,OldChunkGainMatrix3,OldChunkGainMatrix4,OldChunkLossMatrix1,OldChunkLossMatrix2,p1loc,p2loc)
+
+        # ========== Save Chunks to Zarr ============== #
+
+            OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:] = OldChunkGainMatrix3 
+            OldGainMatrix4[:,:,:,p1loc,:,:,p2loc,:,:] = OldChunkGainMatrix4
+            OldLossMatrix1[p1loc,:,:,p2loc,:,:] = OldChunkLossMatrix1
+            OldLossMatrix2[p2loc,:,:,p1loc,:,:] = OldChunkLossMatrix2
+            OldGainWeights3[:,:,:,p1loc,:,:,p2loc,:,:] = OldChunkGainWeights3
+            OldGainWeights4[:,:,:,p1loc,:,:,p2loc,:,:] = OldChunkGainWeights4
+            OldLossTally[p1loc,:,:,p2loc,:,:] = OldChunkLossTally
+
+            CorrectedGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:] = CorrectedChunkGainMatrix3
+            CorrectedGainMatrix4[:,:,:,p1loc,:,:,p2loc,:,:] = CorrectedChunkGainMatrix4
+            CorrectedLossMatrix1[p1loc,:,:,p2loc,:,:] = CorrectedChunkLossMatrix1
+            CorrectedLossMatrix2[p2loc,:,:,p1loc,:,:] = CorrectedChunkLossMatrix2
+
+            
+        if thread_id == 1 # on main thread
+            next!(prog)
+        end
 
     end # indices loop
 

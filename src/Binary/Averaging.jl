@@ -69,3 +69,79 @@ function WeightedAverageLossBinary!(LossMatrix::Array{Float64,6},OldLossMatrix::
     @. OldLossTally += LossTally
 
 end
+
+
+
+"""
+    WeightedAverageGainBinaryChunk!(ChunkGainMatrix3,OldChunkGainMatrix3,ChunkGainTally3_K,OldChunkGainWeights3,ChunkGainMatrix4,OldChunkGainMatrix4,ChunkGainTally4_K,OldChunkGainWeights4_K)
+
+Computes the integral estimate by weighted average of the old and new chunk gain matrices. Mutating the old gain and tally terms.
+```math
+    I = (I1w1 + I2w2)/(w1 + w2)
+```
+where `I1` and `I1` are the old and new gain matrix element estimates and `w1` and `w2` are the corresponding weights. Here the weights are taken to be `w=k`
+"""
+function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::Array{Float64,7},OldChunkGainMatrix3::Array{Float64,7},ChunkGainTally3_K::AbstractArray{UInt32,7},GainTally3_N::AbstractArray{UInt32,6},OldChunkGainWeights3::Array{Float64,7},ChunkGainMatrix4::Array{Float64,7},OldChunkGainMatrix4::Array{Float64,7},ChunkGainTally4_K::AbstractArray{UInt32,7},GainTally4_N::AbstractArray{UInt32,6},OldChunkGainWeights4::Array{Float64,7})
+
+    # new weights k^2/N
+    #NewGainWeights = similar(OldChunkGainWeights3)
+    #for i in axes(ChunkGainTally3_K,1)
+    #    @view(NewGainWeights[i,:,:,:,:,:,:,:,:]) .= @view(ChunkGainTally3_K[i,:,:,:,:,:,:,:,:]) #./ ChunkGainTally3_N
+    #end
+    #replace!(NewGainWeights,NaN=>0e0)
+    NewGainWeights3 = ChunkGainTally3_K
+    # weighted average
+    @. OldChunkGainMatrix3 = (ChunkGainMatrix3*NewGainWeights3+OldChunkGainMatrix3*OldChunkGainWeights3)/(NewGainWeights3+OldChunkGainWeights3)
+    replace!(OldChunkGainMatrix3,NaN=>0e0)
+    # adjust weights for next integration step
+    @. OldChunkGainWeights3 += NewGainWeights3
+    
+    # repeat above for 4 to save memory 
+    #NewGainWeights = similar(OldChunkGainWeights4)
+    #for i in axes(ChunkGainTally4_K,1)
+    #    @view(NewGainWeights[i,:,:,:,:,:,:,:,:]) .= @view(ChunkGainTally4_K[i,:,:,:,:,:,:,:,:]) #./ ChunkGainTally4_N
+    #end
+    #replace!(NewGainWeights,NaN=>0e0)
+    NewGainWeights4 = ChunkGainTally4_K
+    # weighted average
+    @. OldChunkGainMatrix4 = (ChunkGainMatrix4*NewGainWeights4+OldChunkGainMatrix4*OldChunkGainWeights4)/(NewGainWeights4+OldChunkGainWeights4)
+    replace!(OldChunkGainMatrix4,NaN=>0e0)
+    @. OldChunkGainWeights4 += NewGainWeights4
+
+end
+
+function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::Array{Float64,7},OldChunkGainMatrix3::Array{Float64,7},ChunkGainTally3_K::AbstractArray{UInt32,7},ChunkGainTally3_N::AbstractArray{UInt32,6},OldChunkGainWeights3::Array{Float64,7})
+
+    # Version for if mu3 == mu4
+
+    # new weights k^2/N
+    #NewGainWeights = similar(OldChunkGainWeights3)
+    #for i in axes(ChunkGainTally3_K,1)
+    #    @view(NewGainWeights[i,:,:,:,:,:,:,:,:]) .= @view(ChunkGainTally3_K[i,:,:,:,:,:,:,:,:]) #./ ChunkGainTally3_N
+    #end
+    #replace!(NewGainWeights,NaN=>0e0)
+    NewGainWeights3 = ChunkGainTally3_K
+    # weighted average
+    @. OldChunkGainMatrix3 = (ChunkGainMatrix3*NewGainWeights3+OldChunkGainMatrix3*OldChunkGainWeights3)/(NewGainWeights3+OldChunkGainWeights3)
+    replace!(OldChunkGainMatrix3,NaN=>0e0)
+    # adjust weights for next integration step
+    @. OldChunkGainWeights3 += NewGainWeights3
+
+end
+
+"""
+    WeightedAverageLossBinaryChunk!(ChunkLossMatrix,OldChunkLossMatrix,ChunkLossTally,OldChunkLossTally)
+
+Computes the integral estimate by weighted average of the old and new gain matrices. Mutating the old gain and tally terms.
+"""
+function WeightedAverageLossBinaryChunk!(ChunkLossMatrix::Array{Float64,4},OldChunkLossMatrix::Array{Float64,4},ChunkLossTally::Array{UInt32,4},OldChunkLossTally::Array{UInt32,4})
+
+    # weighted average 
+    @. OldChunkLossMatrix = (ChunkLossMatrix*ChunkLossTally+OldChunkLossMatrix*OldChunkLossTally)/(ChunkLossTally+OldChunkLossTally)
+
+    replace!(OldChunkLossMatrix,NaN=>0e0)
+
+    # adding tallies
+    @. OldChunkLossTally += ChunkLossTally
+
+end
