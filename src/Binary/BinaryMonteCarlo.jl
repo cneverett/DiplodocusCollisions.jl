@@ -386,8 +386,7 @@ function BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainM
             CorrectedLossMatrix1[p1loc,:,:,p2loc,:,:] = CorrectedChunkLossMatrix1
             CorrectedLossMatrix2[p2loc,:,:,p1loc,:,:] = CorrectedChunkLossMatrix2
 
-            # Update progress (thread safe)
-            println("here on thread ",thread_id," for p1loc=",p1loc,", p2loc=",p2loc)
+            # Update progress 
             if thread_id == 1
                 next!(prog)
             end

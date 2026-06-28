@@ -13,6 +13,7 @@ export UserBinaryParameters, UserEmissionParameters
     using LinearAlgebra
     using Statistics
     using Zarr
+    Zarr.Blosc.set_num_threads(1)
 
     # include Common files
         include("Common/Constants.jl")
