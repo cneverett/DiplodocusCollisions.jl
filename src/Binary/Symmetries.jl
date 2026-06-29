@@ -634,7 +634,7 @@ end
 
 Applies various physical polar angle symmetries to the Gain and Loss Matrices and Weights/Tally for Binary (12->34) interactions to improve Monte Carlo sampling error. 
 """
-function GainLossPolarSymmetryMatrixBinaryChunk!(GainMatrix3::Array{Float64,7},GainMatrix4::Array{Float64,7},LossMatrix::Array{Float64,4},GainWeights3::Array{Float64,7},GainWeights4::Array{Float64,7},LossTally::Array{UInt32,4},m1::Float64,m2::Float64,m3::Float64,m4::Float64,symmetric_grid::Bool)
+function GainLossPolarSymmetryMatrixBinaryChunk!(GainMatrix3::AbstractArray{Float64,7},GainMatrix4::AbstractArray{Float64,7},LossMatrix::AbstractArray{Float64,4},GainWeights3::AbstractArray{Float64,7},GainWeights4::AbstractArray{Float64,7},LossTally::AbstractArray{UInt32,4},m1::Float64,m2::Float64,m3::Float64,m4::Float64,symmetric_grid::Bool)
 
     # The Gain and Loss matrices are symmetric in two ways. 
     # FIRST: they are ALWAYS symmetric with respect to θ->π-θ for all particle momentum states
@@ -803,7 +803,7 @@ end
 
 Applies various physical azimuthal angle symmetries to the Gain and Loss Matrices and Weights/Tally for Binary (12->34) interactions to improve Monte Carlo sampling error. 
 """
-function GainLossAzimuthalSymmetryMatrixBinaryChunk!(GainMatrix3::Array{Float64,7},GainMatrix4::Array{Float64,7},LossMatrix::Array{Float64,4},GainWeights3::Array{Float64,7},GainWeights4::Array{Float64,7},LossTally::Array{UInt32,4},m1::Float64,m2::Float64,m3::Float64,m4::Float64)
+function GainLossAzimuthalSymmetryMatrixBinaryChunk!(GainMatrix3::AbstractArray{Float64,7},GainMatrix4::AbstractArray{Float64,7},LossMatrix::AbstractArray{Float64,4},GainWeights3::AbstractArray{Float64,7},GainWeights4::AbstractArray{Float64,7},LossTally::AbstractArray{UInt32,4},m1::Float64,m2::Float64,m3::Float64,m4::Float64)
 
     # The Gain and Loss matrices are symmetric in with respect to rotations of the azimuthal angle. 
     # If the azimuthal grid is uniform then we can apply this symmetry to all variations of the azimuthal bins.

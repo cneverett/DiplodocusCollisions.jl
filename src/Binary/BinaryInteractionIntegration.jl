@@ -78,7 +78,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             flush(stdout)=#
 
             indices::Vector{CartesianIndex{2}} = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))[1:end]
-            shuffle!(indices) # better balances workload between threads
+            #shuffle!(indices) # better balances workload between threads
             length_indices::Int64 = length(indices)
 
             if length_indices/numThreads > 1.0
@@ -107,7 +107,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             #end
 
             if numThreads == 1
-                numProgress = length(indices)
+                numProgress = length_indices
                 prog = Progress(numProgress)
                 # Run in serial if only one thread, easier to use for debugging
                 BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix1,CorrectedChunkLossMatrix2,sigma,dsigmadt,Parameters,numLoss,numGain,indices[1:end],scale,prog,1)

@@ -118,19 +118,34 @@ function BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainM
         LocalGainTally4::Array{UInt32,3} = zeros(UInt32,size(ChunkGainTally4)[1:3])
     end
 
+    # old chunk arrays 
+    OldChunkGainMatrix3::Array{Float64,7} = zeros(Float64,(p3_num+2),u3_num,h3_num,u1_num,h1_num,u2_num,h2_num)
+    OldChunkGainMatrix4::Array{Float64,7} = zeros(Float64,(p4_num+2),u4_num,h4_num,u1_num,h1_num,u2_num,h2_num)
+    OldChunkLossMatrix1::Array{Float64,4} = zeros(Float64,u1_num,h1_num,u2_num,h2_num)
+    OldChunkLossMatrix2::Array{Float64,4} = zeros(Float64,u2_num,h2_num,u1_num,h1_num)
+    OldChunkGainWeights3::Array{Float64,7} = zeros(Float64,(p3_num+2),u3_num,h3_num,u1_num,h1_num,u2_num,h2_num)
+    OldChunkGainWeights4::Array{Float64,7} = zeros(Float64,(p4_num+2),u4_num,h4_num,u1_num,h1_num,u2_num,h2_num)
+    OldChunkLossTally::Array{UInt32,4} = zeros(UInt32,u1_num,h1_num,u2_num,h2_num)
+
     for index in eachindex(indices)
         
         p1loc = indices[index][1]
         p2loc = indices[index][2]
 
-            # Load old chunk arrays from Zarr
-        OldChunkGainMatrix3::Array{Float64,7} = OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:]
-        OldChunkGainMatrix4::Array{Float64,7} = OldGainMatrix4[:,:,:,p1loc,:,:,p2loc,:,:]
-        OldChunkLossMatrix1::Array{Float64,4} = OldLossMatrix1[p1loc,:,:,p2loc,:,:]
-        OldChunkLossMatrix2::Array{Float64,4} = OldLossMatrix2[p2loc,:,:,p1loc,:,:]
-        OldChunkGainWeights3::Array{Float64,7} = OldGainWeights3[:,:,:,p1loc,:,:,p2loc,:,:]
-        OldChunkGainWeights4::Array{Float64,7} = OldGainWeights4[:,:,:,p1loc,:,:,p2loc,:,:]
-        OldChunkLossTally::Array{UInt32,4} = OldLossTally[p1loc,:,:,p2loc,:,:]
+        gainloc = CartesianIndices((1,1,1,p1loc,1,1,p2loc,1,1))
+        lossloc = CartesianIndices((p1loc,1,1,p2loc,1,1))
+
+        #println("reading data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+
+        # Load old chunk arrays from Zarr
+        OldChunkGainMatrix3 .= OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:]
+        OldChunkGainMatrix4 .= OldGainMatrix4[:,:,:,p1loc,:,:,p2loc,:,:]
+        OldChunkLossMatrix1 .= OldLossMatrix1[p1loc,:,:,p2loc,:,:]
+        OldChunkGainWeights3 .= OldGainWeights3[:,:,:,p1loc,:,:,p2loc,:,:]
+        OldChunkGainWeights4 .= OldGainWeights4[:,:,:,p1loc,:,:,p2loc,:,:]
+        OldChunkLossTally .= OldLossTally[p1loc,:,:,p2loc,:,:]
+
+        #println("read data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
 
         # reset in-memory local chunk arrays to zero 
         fill!(ChunkGainTotal3,Float64(0))
@@ -373,7 +388,9 @@ function BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainM
 
         # ========== Save Chunks to Zarr ============== #
 
-            OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:] = OldChunkGainMatrix3 
+            println("writing data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+
+            OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:] = OldChunkGainMatrix3
             OldGainMatrix4[:,:,:,p1loc,:,:,p2loc,:,:] = OldChunkGainMatrix4
             OldLossMatrix1[p1loc,:,:,p2loc,:,:] = OldChunkLossMatrix1
             OldLossMatrix2[p2loc,:,:,p1loc,:,:] = OldChunkLossMatrix2
@@ -385,6 +402,8 @@ function BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainM
             CorrectedGainMatrix4[:,:,:,p1loc,:,:,p2loc,:,:] = CorrectedChunkGainMatrix4
             CorrectedLossMatrix1[p1loc,:,:,p2loc,:,:] = CorrectedChunkLossMatrix1
             CorrectedLossMatrix2[p2loc,:,:,p1loc,:,:] = CorrectedChunkLossMatrix2
+
+            println("written data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
 
             # Update progress 
             if thread_id == 1
