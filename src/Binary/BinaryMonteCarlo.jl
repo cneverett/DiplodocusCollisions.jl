@@ -135,7 +135,8 @@ function BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainM
         gainloc = CartesianIndices((1,1,1,p1loc,1,1,p2loc,1,1))
         lossloc = CartesianIndices((p1loc,1,1,p2loc,1,1))
 
-        #println("reading data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+        println(stdout,"reading data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+        flush(stdout)
 
         # Load old chunk arrays from Zarr
         OldChunkGainMatrix3 .= OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:]
@@ -145,7 +146,8 @@ function BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainM
         OldChunkGainWeights4 .= OldGainWeights4[:,:,:,p1loc,:,:,p2loc,:,:]
         OldChunkLossTally .= OldLossTally[p1loc,:,:,p2loc,:,:]
 
-        #println("read data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+        println(stdout,"read data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+        flush(stdout)
 
         # reset in-memory local chunk arrays to zero 
         fill!(ChunkGainTotal3,Float64(0))
@@ -388,7 +390,8 @@ function BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainM
 
         # ========== Save Chunks to Zarr ============== #
 
-            println("writing data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+            println(stdout,"writing data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+            flush(stdout)
 
             OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:] = OldChunkGainMatrix3
             OldGainMatrix4[:,:,:,p1loc,:,:,p2loc,:,:] = OldChunkGainMatrix4
@@ -403,12 +406,11 @@ function BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainM
             CorrectedLossMatrix1[p1loc,:,:,p2loc,:,:] = CorrectedChunkLossMatrix1
             CorrectedLossMatrix2[p2loc,:,:,p1loc,:,:] = CorrectedChunkLossMatrix2
 
-            println("written data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+            println(stdout,"written data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+            flush(stdout)
 
             # Update progress 
-            if thread_id == 1
-                next!(prog)
-            end
+            next!(prog)
 
     end # indices loop
 

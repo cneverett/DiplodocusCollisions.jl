@@ -78,7 +78,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             flush(stdout)=#
 
             indices::Vector{CartesianIndex{2}} = CartesianIndices((p1loc_low:p1loc_up,p2loc_low:p2loc_up))[1:end]
-            #shuffle!(indices) # better balances workload between threads
+            shuffle!(indices) # better balances workload between threads
             length_indices::Int64 = length(indices)
 
             if length_indices/numThreads > 1.0
@@ -113,7 +113,8 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix1,CorrectedChunkLossMatrix2,sigma,dsigmadt,Parameters,numLoss,numGain,indices[1:end],scale,prog,1)
                 finish!(prog)
             else
-                numProgress = length(indices[index_range[1]+1:index_range[1+1]])
+                #numProgress = length(indices[index_range[1]+1:index_range[1+1]])
+                numProgress = length_indices
                 prog = Progress(numProgress)
                 workers = [BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix1,CorrectedChunkLossMatrix2,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale,prog,thread) for thread in 1:(length(index_range)-1)]
                 wait.(workers) # Allow all workers to finish
