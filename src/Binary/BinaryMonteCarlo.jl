@@ -145,13 +145,8 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
         loss1loc = CartesianIndices((p1loc:p1loc, 1:u1_num, 1:h1_num,p2loc:p2loc, 1:u2_num, 1:h2_num))
         loss2loc = CartesianIndices((p2loc:p2loc, 1:u2_num, 1:h2_num,p1loc:p1loc, 1:u1_num, 1:h1_num))
 
-        println(stdout,"reading data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
-        flush(stdout)
-
-        #println(size(OldChunkGainMatrix3Full)," ",OldGainMatrix3.#metadata.chunks)
-        blockr = CartesianIndices(map(Zarr.trans_ind, gain3loc.indices, OldGainMatrix3.metadata.chunks))
-        bI = Zarr.singlechunk_fastpath(OldChunkGainMatrix3Full, OldGainMatrix3, blockr)
-        println("bI: $bI")
+        #println(stdout,"reading data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+        #flush(stdout)
 
         # Load old chunk arrays from Zarr
         #OldChunkGainMatrix3 .= OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:]
@@ -169,8 +164,8 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
         Zarr.readblock!(OldChunkGainWeights4Full,OldGainWeights4,gain4loc)
         Zarr.readblock!(OldChunkLossTallyFull,OldLossTally,loss1loc)
 
-        println(stdout,"read data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
-        flush(stdout)
+        #println(stdout,"read data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+        #flush(stdout)
 
         # reset in-memory local chunk arrays to zero 
         fill!(ChunkGainTotal3,Float64(0))
@@ -409,8 +404,7 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
 
         # ===== Saving Uncorrected Arrays ===== #
 
-            println(stdout,"writing uncorrected data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
-            flush(stdout)
+
 
             Zarr.writeblock!(OldChunkGainMatrix3Full,OldGainMatrix3,gain3loc)
             Zarr.writeblock!(OldChunkGainMatrix4Full,OldGainMatrix4,gain4loc)
@@ -420,8 +414,8 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
             Zarr.writeblock!(OldChunkGainWeights4Full,OldGainWeights4,gain4loc)
             Zarr.writeblock!(OldChunkLossTallyFull,OldLossTally,loss1loc)
 
-            println(stdout,"written uncorrected data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
-            flush(stdout)
+            #println(stdout,"written uncorrected data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+            #flush(stdout)
 
         # ===== Generate Corrected Arrays ===== #
 
@@ -445,15 +439,16 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
             #CorrectedLossMatrix1[p1loc,:,:,p2loc,:,:] = CorrectedChunkLossMatrix1
             #CorrectedLossMatrix2[p2loc,:,:,p1loc,:,:] = CorrectedChunkLossMatrix2
 
-            println(stdout,"writing corrected data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
-            flush(stdout)
+            #println(stdout,"writing corrected data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+            #flush(stdout)
 
             Zarr.writeblock!(OldChunkGainMatrix3Full,CorrectedGainMatrix3,gain3loc)
             Zarr.writeblock!(OldChunkGainMatrix4Full,CorrectedGainMatrix4,gain4loc)
             Zarr.writeblock!(OldChunkLossMatrix1Full,CorrectedLossMatrix1,loss1loc)
             Zarr.writeblock!(OldChunkLossMatrix2Full,CorrectedLossMatrix2,loss2loc)
 
-            println(stdout,"written corrected data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+            println(stdout,"Completed MC loop on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
+            flush(stdout)
 
             # Update progress 
             next!(prog)

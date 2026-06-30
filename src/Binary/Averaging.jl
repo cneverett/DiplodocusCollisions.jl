@@ -83,30 +83,39 @@ where `I1` and `I1` are the old and new gain matrix element estimates and `w1` a
 """
 function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float64,7},OldChunkGainMatrix3::AbstractArray{Float64,7},ChunkGainTally3_K::AbstractArray{UInt32,7},GainTally3_N::AbstractArray{UInt32,6},OldChunkGainWeights3::AbstractArray{Float64,7},ChunkGainMatrix4::AbstractArray{Float64,7},OldChunkGainMatrix4::AbstractArray{Float64,7},ChunkGainTally4_K::AbstractArray{UInt32,7},GainTally4_N::AbstractArray{UInt32,6},OldChunkGainWeights4::AbstractArray{Float64,7})
 
-    # new weights k^2/N
-    #NewGainWeights = similar(OldChunkGainWeights3)
-    #for i in axes(ChunkGainTally3_K,1)
-    #    @view(NewGainWeights[i,:,:,:,:,:,:,:,:]) .= @view(ChunkGainTally3_K[i,:,:,:,:,:,:,:,:]) #./ ChunkGainTally3_N
-    #end
-    #replace!(NewGainWeights,NaN=>0e0)
-    NewGainWeights3 = ChunkGainTally3_K
+    # new weights k
+    @inbounds @simd for I in eachindex(OldChunkGainMatrix3)
+        neww = Float64(ChunkGainTally3_K[I]) 
+        oldw = OldChunkGainWeights3[I]
+        denom = neww + oldw
+        oldm = OldChunkGainMatrix3[I]
+        newm = ChunkGainMatrix3[I]
+        OldChunkGainMatrix3[I] = denom == 0.0 ? 0.0 : (muladd(newm, neww, oldm * oldw) / denom)
+        OldChunkGainWeights3[I] = denom
+    end
+
+    @inbounds @simd for I in eachindex(OldChunkGainMatrix4)
+        neww = Float64(ChunkGainTally4_K[I]) 
+        oldw = OldChunkGainWeights4[I]
+        denom = neww + oldw
+        oldm = OldChunkGainMatrix4[I]
+        newm = ChunkGainMatrix4[I]
+        OldChunkGainMatrix4[I] = denom == 0.0 ? 0.0 : (muladd(newm, neww, oldm * oldw) / denom)
+        OldChunkGainWeights4[I] = denom
+    end
+
+    #=NewGainWeights3 = ChunkGainTally3_K
     # weighted average
     @. OldChunkGainMatrix3 = (ChunkGainMatrix3*NewGainWeights3+OldChunkGainMatrix3*OldChunkGainWeights3)/(NewGainWeights3+OldChunkGainWeights3)
     replace!(OldChunkGainMatrix3,NaN=>0e0)
     # adjust weights for next integration step
     @. OldChunkGainWeights3 += NewGainWeights3
     
-    # repeat above for 4 to save memory 
-    #NewGainWeights = similar(OldChunkGainWeights4)
-    #for i in axes(ChunkGainTally4_K,1)
-    #    @view(NewGainWeights[i,:,:,:,:,:,:,:,:]) .= @view(ChunkGainTally4_K[i,:,:,:,:,:,:,:,:]) #./ ChunkGainTally4_N
-    #end
-    #replace!(NewGainWeights,NaN=>0e0)
     NewGainWeights4 = ChunkGainTally4_K
     # weighted average
     @. OldChunkGainMatrix4 = (ChunkGainMatrix4*NewGainWeights4+OldChunkGainMatrix4*OldChunkGainWeights4)/(NewGainWeights4+OldChunkGainWeights4)
     replace!(OldChunkGainMatrix4,NaN=>0e0)
-    @. OldChunkGainWeights4 += NewGainWeights4
+    @. OldChunkGainWeights4 += NewGainWeights4=#
 
 end
 
@@ -114,18 +123,24 @@ function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float64
 
     # Version for if mu3 == mu4
 
-    # new weights k^2/N
-    #NewGainWeights = similar(OldChunkGainWeights3)
-    #for i in axes(ChunkGainTally3_K,1)
-    #    @view(NewGainWeights[i,:,:,:,:,:,:,:,:]) .= @view(ChunkGainTally3_K[i,:,:,:,:,:,:,:,:]) #./ ChunkGainTally3_N
-    #end
-    #replace!(NewGainWeights,NaN=>0e0)
+    # new weights k
+    @inbounds @simd for I in eachindex(OldChunkGainMatrix3)
+        neww = Float64(ChunkGainTally3_K[I]) 
+        oldw = OldChunkGainWeights3[I]
+        denom = neww + oldw
+        oldm = OldChunkGainMatrix3[I]
+        newm = ChunkGainMatrix3[I]
+        OldChunkGainMatrix3[I] = denom == 0.0 ? 0.0 : (muladd(newm, neww, oldm * oldw) / denom)
+        OldChunkGainWeights3[I] = denom
+    end
+
+    #=# new weights k^2/N
     NewGainWeights3 = ChunkGainTally3_K
     # weighted average
     @. OldChunkGainMatrix3 = (ChunkGainMatrix3*NewGainWeights3+OldChunkGainMatrix3*OldChunkGainWeights3)/(NewGainWeights3+OldChunkGainWeights3)
     replace!(OldChunkGainMatrix3,NaN=>0e0)
     # adjust weights for next integration step
-    @. OldChunkGainWeights3 += NewGainWeights3
+    @. OldChunkGainWeights3 += NewGainWeights3=#
 
 end
 
