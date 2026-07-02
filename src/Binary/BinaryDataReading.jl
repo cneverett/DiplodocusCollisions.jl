@@ -57,40 +57,39 @@ Loads just the Gain and Loss Matrices stored in `fileName` stored at `fileLocati
 
 # Example
 ```julia-repl
-    (Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = BinaryFileLoad_Matrix(fileLocation,fileName);
+    (Parameters,GainMatrix3,GainMatrix4,LossMatrix) = BinaryFileLoad_Matrix(fileLocation,fileName);
 ```
 Returns a tuple of the data stored in the file. The fields are as follows:
 - `Parameters` : A tuple of the parameters used in the evaluation.
 - `GainMatrix3` : A 9D matrix of the emission spectrum for 12->34 interaction.
 - `GainMatrix4` : A 9D matrix of the emission spectrum for 12->43 interaction.
-- `LossMatrix1` : A 6D matrix of the absorption spectrum for 12->34 interaction.
-- `LossMatrix2` : A 6D matrix of the absorption spectrum for 21->34 interaction i.e. by permutation of GainMatrix1 and correct application of phase space factors if species 1 != species 2.
+- `LossMatrix` : A 6D matrix of the absorption spectrum for 12->34 interaction.
 """
 function BinaryFileLoad_Matrix(fileLocation::String,fileName::String;corrected::Bool=false)
         
     filePath = joinpath(fileLocation,fileName)
-    fileExist = isfile(filePath)
+    fileExist = isdir(filePath)
 
     if fileExist
-        f = jldopen(filePath,"r+");
-        Parameters = f["Parameters"]
+        f = zopen(filePath,"r");
         if corrected
             GainMatrix3 = f["CorrectedGainMatrix3"];
             GainMatrix4 = f["CorrectedGainMatrix4"];
-            LossMatrix1 = f["CorrectedLossMatrix1"];
-            LossMatrix2 = f["CorrectedLossMatrix2"];
+            LossMatrix = f["CorrectedLossMatrix"];
         else
             GainMatrix3 = f["GainMatrix3"];
             GainMatrix4 = f["GainMatrix4"];
-            LossMatrix1 = f["LossMatrix1"];
-            LossMatrix2 = f["LossMatrix2"]; 
+            LossMatrix = f["LossMatrix"];
         end
-        close(f)  
+        #close(f) 
+        j = jldopen(filePath*"/data.jld2","r") 
+        Parameters = j["Parameters"]
+        close(j) 
     else
         error("no file with name $fileName found at location $fileLocation")
     end
 
-    return (Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2)
+    return (Parameters,GainMatrix3,GainMatrix4,LossMatrix)
 
 end
 
