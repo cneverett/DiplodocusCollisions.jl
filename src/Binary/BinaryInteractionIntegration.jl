@@ -59,7 +59,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 
         filePath = joinpath(fileLocation,fileName)
 
-        (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix1,CorrectedChunkLossMatrix2) = OldMonteCarloArraysBinary(Parameters,filePath)
+        (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix) = OldMonteCarloArraysBinary(Parameters,filePath)
 
         #(GainTotal3,GainTotal4,LossTotal,GainTally3,GainTally4,LossTally,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2) = MonteCarloArraysBinary(Parameters)
 
@@ -110,13 +110,13 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 numProgress = length_indices
                 prog = Progress(numProgress)
                 # Run in serial if only one thread, easier to use for debugging
-                BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix1,CorrectedChunkLossMatrix2,sigma,dsigmadt,Parameters,numLoss,numGain,indices[1:end],scale,prog,1)
+                BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix,sigma,dsigmadt,Parameters,numLoss,numGain,indices[1:end],scale,prog,1)
                 finish!(prog)
             else
                 #numProgress = length(indices[index_range[1]+1:index_range[1+1]])
                 numProgress = length_indices
                 prog = Progress(numProgress)
-                workers = [BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix1,CorrectedChunkLossMatrix2,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale,prog,thread) for thread in 1:(length(index_range)-1)]
+                workers = [BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale,prog,thread) for thread in 1:(length(index_range)-1)]
                 wait.(workers) # Allow all workers to finish
                 finish!(prog)
             end
@@ -242,7 +242,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
         flush(stdout)
 
         # TODO: update 
-        ErrorOutput =  DoesConserve((Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2))
+        ErrorOutput =  DoesConserve((Parameters,OldGainMatrix3,OldGainMatrix4,OldLossMatrix))
 
     # ===================================== #
 

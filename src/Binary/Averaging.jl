@@ -81,7 +81,7 @@ Computes the integral estimate by weighted average of the old and new chunk gain
 ```
 where `I1` and `I1` are the old and new gain matrix element estimates and `w1` and `w2` are the corresponding weights. Here the weights are taken to be `w=k`
 """
-function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float64,7},OldChunkGainMatrix3::AbstractArray{Float64,7},ChunkGainTally3_K::AbstractArray{UInt32,7},GainTally3_N::AbstractArray{UInt32,6},OldChunkGainWeights3::AbstractArray{Float64,7},ChunkGainMatrix4::AbstractArray{Float64,7},OldChunkGainMatrix4::AbstractArray{Float64,7},ChunkGainTally4_K::AbstractArray{UInt32,7},GainTally4_N::AbstractArray{UInt32,6},OldChunkGainWeights4::AbstractArray{Float64,7})
+function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float32,7},OldChunkGainMatrix3::AbstractArray{Float32,7},ChunkGainTally3_K::AbstractArray{UInt32,7},GainTally3_N::AbstractArray{UInt32,6},OldChunkGainWeights3::AbstractArray{Float32,7},ChunkGainMatrix4::AbstractArray{Float32,7},OldChunkGainMatrix4::AbstractArray{Float32,7},ChunkGainTally4_K::AbstractArray{UInt32,7},GainTally4_N::AbstractArray{UInt32,6},OldChunkGainWeights4::AbstractArray{Float32,7})
 
     # new weights k
     @inbounds @simd for I in eachindex(OldChunkGainMatrix3)
@@ -90,7 +90,7 @@ function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float64
         denom = neww + oldw
         oldm = OldChunkGainMatrix3[I]
         newm = ChunkGainMatrix3[I]
-        OldChunkGainMatrix3[I] = denom == 0.0 ? 0.0 : (muladd(newm, neww, oldm * oldw) / denom)
+        OldChunkGainMatrix3[I] = denom == 0f0 ? 0f0 : Float32(muladd(newm, neww, oldm * oldw) / denom)
         OldChunkGainWeights3[I] = denom
     end
 
@@ -100,26 +100,13 @@ function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float64
         denom = neww + oldw
         oldm = OldChunkGainMatrix4[I]
         newm = ChunkGainMatrix4[I]
-        OldChunkGainMatrix4[I] = denom == 0.0 ? 0.0 : (muladd(newm, neww, oldm * oldw) / denom)
+        OldChunkGainMatrix4[I] = denom == 0f0 ? 0f0 : Float32(muladd(newm, neww, oldm * oldw) / denom)
         OldChunkGainWeights4[I] = denom
     end
 
-    #=NewGainWeights3 = ChunkGainTally3_K
-    # weighted average
-    @. OldChunkGainMatrix3 = (ChunkGainMatrix3*NewGainWeights3+OldChunkGainMatrix3*OldChunkGainWeights3)/(NewGainWeights3+OldChunkGainWeights3)
-    replace!(OldChunkGainMatrix3,NaN=>0e0)
-    # adjust weights for next integration step
-    @. OldChunkGainWeights3 += NewGainWeights3
-    
-    NewGainWeights4 = ChunkGainTally4_K
-    # weighted average
-    @. OldChunkGainMatrix4 = (ChunkGainMatrix4*NewGainWeights4+OldChunkGainMatrix4*OldChunkGainWeights4)/(NewGainWeights4+OldChunkGainWeights4)
-    replace!(OldChunkGainMatrix4,NaN=>0e0)
-    @. OldChunkGainWeights4 += NewGainWeights4=#
-
 end
 
-function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float64,7},OldChunkGainMatrix3::AbstractArray{Float64,7},ChunkGainTally3_K::AbstractArray{UInt32,7},ChunkGainTally3_N::AbstractArray{UInt32,6},OldChunkGainWeights3::AbstractArray{Float64,7})
+function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float32,7},OldChunkGainMatrix3::AbstractArray{Float32,7},ChunkGainTally3_K::AbstractArray{UInt32,7},ChunkGainTally3_N::AbstractArray{UInt32,6},OldChunkGainWeights3::AbstractArray{Float32,7})
 
     # Version for if mu3 == mu4
 
@@ -130,17 +117,9 @@ function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float64
         denom = neww + oldw
         oldm = OldChunkGainMatrix3[I]
         newm = ChunkGainMatrix3[I]
-        OldChunkGainMatrix3[I] = denom == 0.0 ? 0.0 : (muladd(newm, neww, oldm * oldw) / denom)
+        OldChunkGainMatrix3[I] = denom == 0f0 ? 0f0 : (muladd(newm, neww, oldm * oldw) / denom)
         OldChunkGainWeights3[I] = denom
     end
-
-    #=# new weights k^2/N
-    NewGainWeights3 = ChunkGainTally3_K
-    # weighted average
-    @. OldChunkGainMatrix3 = (ChunkGainMatrix3*NewGainWeights3+OldChunkGainMatrix3*OldChunkGainWeights3)/(NewGainWeights3+OldChunkGainWeights3)
-    replace!(OldChunkGainMatrix3,NaN=>0e0)
-    # adjust weights for next integration step
-    @. OldChunkGainWeights3 += NewGainWeights3=#
 
 end
 
@@ -149,12 +128,13 @@ end
 
 Computes the integral estimate by weighted average of the old and new gain matrices. Mutating the old gain and tally terms.
 """
-function WeightedAverageLossBinaryChunk!(ChunkLossMatrix::AbstractArray{Float64,4},OldChunkLossMatrix::AbstractArray{Float64,4},ChunkLossTally::AbstractArray{UInt32,4},OldChunkLossTally::AbstractArray{UInt32,4})
+function WeightedAverageLossBinaryChunk!(ChunkLossMatrix::AbstractArray{Float32,4},OldChunkLossMatrix::AbstractArray{Float32,4},ChunkLossTally::AbstractArray{UInt32,4},OldChunkLossTally::AbstractArray{UInt32,4})
 
     # weighted average 
     @. OldChunkLossMatrix = (ChunkLossMatrix*ChunkLossTally+OldChunkLossMatrix*OldChunkLossTally)/(ChunkLossTally+OldChunkLossTally)
 
-    replace!(OldChunkLossMatrix,NaN=>0e0)
+    # TODO: replace with a more memory efficient method
+    replace!(OldChunkLossMatrix,NaN=>0f0)
 
     # adding tallies
     @. OldChunkLossTally += ChunkLossTally

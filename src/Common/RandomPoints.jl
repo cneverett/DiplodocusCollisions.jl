@@ -11,7 +11,7 @@ Assumes ``f(x,p,μ)=f(x,\\vec{p})*(2πp^2)=const`` in bin, therefore momentum sp
 
 If instead ``f(x,\\vec{p})=const`` in bin, momentum space volume element is ``p^2 \\mathrm{d}p`` and uniform sampling corresponds to ``(10^pu)*\\sqrt[3]{U+(1-U)*10^{3pl-3pu}}`` where ``U`` is a uniform random number between 0 and 1.
 """
-function RPointLogMomentum!(pv::Vector{Float64},pu::Float64,pl::Float64,num::Int64) 
+@inline function RPointLogMomentum!(pv::Vector{Float64},pu::Float64,pl::Float64,num::Int64) 
     # Inputs a momentum vector and momentum bounds and mutates first of said vector
     bin = rand(1:num)
     l = (pl + (pu-pl)*(bin-1)/num)
@@ -25,7 +25,7 @@ function RPointLogMomentum!(pv::Vector{Float64},pu::Float64,pl::Float64,num::Int
     
 end
 
-function RPointLogMomentum!(pv::Vector{Float64},pu::Float64,pl::Float64,num::Int64,bin::Int64) 
+@inline function RPointLogMomentum!(pv::Vector{Float64},pu::Float64,pl::Float64,num::Int64,bin::Int64) 
     # Inputs a momentum vector and momentum bounds and mutates first of said vector
     l = (pl + (pu-pl)*(bin-1)/num)
     u = (pl + (pu-pl)*(bin)/num)
@@ -43,7 +43,7 @@ end
 
 Assigns the second (cos(theta)) and third (phi) elements of 'a' with a randomly, uniformly sampled values of spherical angles cos(theta) and phi (phi normalised by pi). 
 """
-function RPointSphereCosThetaPhi!(a::Vector{Float64}) 
+@inline function RPointSphereCosThetaPhi!(a::Vector{Float64}) 
     # Inputs a 4 element vector [p, cos(theta), phi/pi,theta/pi] and mutates said vector with new random values using form given in https://mathworld.wolfram.com/SpherePointPicking.html (with theta and phi changed places)
     # phi points are normalised by pi
 
@@ -63,7 +63,7 @@ end
 
 Assigns the second (cos(theta)) and third (phi) elements of 'a' with a randomly, uniformly sampled values of spherical angles cos(theta) and phi (phi normalised by pi), within the bounds of ``u_low ≤ u ≤ u_up`` and ``h_low ≤ h ≤ h_up``. 
 """
-function RPointSphereCosThetaPhiBounds!(a::Vector{Float64},u_low,u_up,h_low,h_up) 
+@inline function RPointSphereCosThetaPhiBounds!(a::Vector{Float64},u_low,u_up,h_low,h_up) 
     # Inputs a 4 element vector [p, cos(theta), phi/pi,theta/pi] and mutates said vector with new random values using form given in https://mathworld.wolfram.com/SpherePointPicking.html (with theta and phi changed places)
     # phi points are normalised by pi
 
@@ -83,7 +83,7 @@ end
 
 Assigns the second (cos(theta)) element of 'a' with a randomly, uniformly sampled values of spherical angles cos(theta). 
 """
-function RPointSphereCosTheta!(a::Vector{Float64}) 
+@inline function RPointSphereCosTheta!(a::Vector{Float64}) 
     # Inputs a 3 element vector [p, cos(theta)] and mutates said vector with new random values using form given in https://mathworld.wolfram.com/SpherePointPicking.html (with theta)
     # phi points are normalised by pi
 
@@ -100,7 +100,7 @@ end
 
 Mutates the components of the centre of momentum velocity vector `βv` with components `[β,u,phi,γ,γβ] in terms of the incident state vectors `p1v` and `p1v`
 """
-function betaVec!(βv::Vector{Float64},p1v,p2v,m1,m2)
+@inline function betaVec!(βv::Vector{Float64},p1v,p2v,m1,m2)
 
     p1 = p1v[1]
     p2 = p2v[1]
@@ -141,7 +141,7 @@ end
 
 Takes the random points on the sphere generated in the centre of momentum frame `pCv=[ct_deboosted,ct,h]` and boosts them back to the lab frame using `βv` to modify the lab frame vector `pLv`.
 """
-function RPointSphereBoost!(pLv::Vector{Float64},βv::Vector{Float64},pCv::Vector{Float64})
+@inline function RPointSphereBoost!(pLv::Vector{Float64},βv::Vector{Float64},pCv::Vector{Float64})
 
     ctC = pCv[2]
     stC = sqrt(1-ctC^2)
@@ -170,7 +170,7 @@ end
 
 returns the probability of sampling a point given by `pCv` dependent on the boost `βv`.
 """
-function pdfBoost(βv::Vector{Float64},ctC::Float64)
+@inline function pdfBoost(βv::Vector{Float64},ctC::Float64)
 
     # assumes pv in lab frame is valid and un-mirrored from the boosted frame
     β=βv[1]
@@ -193,7 +193,7 @@ end
 
 Returns the weighting rapidities `w3` and `w4` and the direction an angles `t` and `h` for rotations on a sphere. Weighting rapidity can be scaled by `scale`. `t` and `h` are the angles of the COM velocity direction, and the weights `w3` and `w4` are rapidities based on the expected angular spread of the particles 3 and 4 due to the incoming states of particles 1 and 2. 
 """
-function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m2::Float64,m3::Float64,m4::Float64,sBig::Float64,sSmol::Float64,scale::Float64) 
+@inline function WeightedFactors(p1v::Vector{Float64},p2v::Vector{Float64},m1::Float64,m2::Float64,m3::Float64,m4::Float64,sBig::Float64,sSmol::Float64,scale::Float64) 
 
     p1::Float64 = p1v[1]
     p2::Float64 = p2v[1]
@@ -314,7 +314,7 @@ end
 
 Returns the weighting rapidity `w` and the direction an angles `t` and `h` for rotations on a sphere. Weighting rapidity can be scaled by `scale`. Weight is dependant on the energy of the emitting particle `p1v`. With angles `t` and `h` being the angles of the emitting particle. 
 """
-function WeightedFactorsEmission(p1v::Vector{Float64},m1::Float64,scale::Float64) 
+@inline function WeightedFactorsEmission(p1v::Vector{Float64},m1::Float64,scale::Float64) 
 
     E1::Float64 = sqrt(p1v[1]^2+m1^2)
     gamma::Float64 = E1/m1
@@ -334,7 +334,7 @@ end
 
 Assigns randomly sampled angles on the sphere (cos(theta) and phi) weighed by a doppler boosting by rapidity `w`, returning the probability `prob` for such a sample and mutating the vector `a` with elements `[p, cos(theta), phi, theta]` with angles normalised by pi. 
 """
-function RPointSphereWeighted!(a::Vector{Float64},w::Float64) 
+@inline function RPointSphereWeighted!(a::Vector{Float64},w::Float64) 
     # Inputs a 5 element vector [p, cos(theta), phi, theta, prob] and mutates said vector with new random values using form given in https://mathworld.wolfram.com/SpherePointPicking.html using the doppler boost formula as a weighting with a rapidity `w`. 
     # phi points are normalised by pi
     # prob is then the probability of sampling the random points on the sphere given the doppler boosting.
@@ -401,8 +401,7 @@ end
 
 Returns the weighting rapidity `w` and the direction an angles `t` and `h` for rotations on a sphere. Weighting rapidity can be scaled by `scale`. 
 """
-function WeightedFactorsSync(pv::Vector{Float64},m::Float64,scale::Float64) 
-
+@inline function WeightedFactorsSync(pv::Vector{Float64},m::Float64,scale::Float64) 
     E1::Float64 = sqrt(pv[1]^2+m^2) # non dimensional units energy is gamma * m
 
     w = scale*acosh(E1/m) #*rand(Float64)

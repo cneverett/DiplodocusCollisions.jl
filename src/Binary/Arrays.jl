@@ -42,18 +42,17 @@ function OldMonteCarloArraysBinary(Parameters::Tuple{String,String,String,String
         # Gain arrays have first dimension elements [w_underflow,w1,w2,w3,...,wn,w_overflow]
         store = Zarr.DirectoryStore(filePath)
         f = zgroup(store)
-        zcreate(Float64,f,"GainWeights3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float64(0));
-        zcreate(Float64,f,"GainMatrix3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float64(0.0));
-        zcreate(Float64,f,"GainWeights4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float64(0));
-        zcreate(Float64,f,"GainMatrix4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float64(0.0));
+        zcreate(Float32,f,"GainWeights3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
+        zcreate(Float32,f,"GainMatrix3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
+        zcreate(Float32,f,"GainWeights4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
+        zcreate(Float32,f,"GainMatrix4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
         zcreate(UInt32,f,"LossTally",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=UInt32(0));
-        zcreate(Float64,f,"LossMatrix1",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float64(0.0));
-        zcreate(Float64,f,"LossMatrix2",p2_num,u2_num,h2_num,p1_num,u1_num,h1_num,chunks=(1,u2_num,h2_num,1,u1_num,h1_num),fill_value=Float64(0.0));
+        zcreate(Float32,f,"LossMatrix",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
 
-        zcreate(Float64,f,"CorrectedGainMatrix3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float64(0.0));
-        zcreate(Float64,f,"CorrectedGainMatrix4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float64(0.0));
-        zcreate(Float64,f,"CorrectedLossMatrix1",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float64(0.0));
-        zcreate(Float64,f,"CorrectedLossMatrix2",p2_num,u2_num,h2_num,p1_num,u1_num,h1_num,chunks=(1,u2_num,h2_num,1,u1_num,h1_num),fill_value=Float64(0.0));
+
+        zcreate(Float32,f,"CorrectedGainMatrix3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
+        zcreate(Float32,f,"CorrectedGainMatrix4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
+        zcreate(Float32,f,"CorrectedLossMatrix",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
         
     end
 
@@ -62,14 +61,12 @@ function OldMonteCarloArraysBinary(Parameters::Tuple{String,String,String,String
     OldGainWeights4 = f["GainWeights4"];
     OldGainMatrix4 = f["GainMatrix4"];
     OldLossTally = f["LossTally"];
-    OldLossMatrix1 = f["LossMatrix1"];
-    OldLossMatrix2 = f["LossMatrix2"];
+    OldLossMatrix = f["LossMatrix"];
 
     CorrectedGainMatrix3 = f["CorrectedGainMatrix3"];
     CorrectedGainMatrix4 = f["CorrectedGainMatrix4"];
-    CorrectedLossMatrix1 = f["CorrectedLossMatrix1"];
-    CorrectedLossMatrix2 = f["CorrectedLossMatrix2"];
+    CorrectedLossMatrix = f["CorrectedLossMatrix"];
 
-    return (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix1,OldLossMatrix2,CorrectedGainMatrix3,CorrectedGainMatrix4,CorrectedLossMatrix1,CorrectedLossMatrix2)
+    return (OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix,CorrectedGainMatrix3,CorrectedGainMatrix4,CorrectedLossMatrix)
 
 end

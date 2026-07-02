@@ -466,9 +466,9 @@ end
     GainCorrectionChunk!(Parameters,GainMatrix3,GainMatrix4,LossMatrix1,LossMatrix2)
 
 MC sampling introduces noise that can lead to poor number and energy conservation. `GainCorrection` provides a corrective step to ensure number and energy conservation to numerical precision. If there is no GainMatrix element then the value of the LossMatrix is applied to the same bin as the input state (if they are identical particles); if not identical particles if there is no GainMatrix element then the value of the LossMatrix is set to zero to ensure particle conservation (with good MC sampling this should rarely occur).
-This version corrects the input arrays `GainMatrix3`, `GainMatrix4`, `LossMatrix1`, and `LossMatrix2` in place.
+This version corrects the input arrays `GainMatrix3`, `GainMatrix4`, and `LossMatrix` in place.
 """
-function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::AbstractArray{Float64, 7}, GainMatrix4::AbstractArray{Float64, 7}, LossMatrix1::AbstractArray{Float64, 4}, LossMatrix2::AbstractArray{Float64, 4},p1::Int64,p2::Int64)
+function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::AbstractArray{Float32, 7}, GainMatrix4::AbstractArray{Float32, 7}, LossMatrix::AbstractArray{Float32, 4},p1::Int64,p2::Int64)
 
     
     #= Different possible combinations of identical and different particles that affect how to apply conservation corrections:
@@ -495,6 +495,8 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
     else
         CorrType = 2
     end
+
+    Indistinguishable_12::Bool = name1 == name2
 
     #CorrectedGainMatrix3 = similar(GainMatrix3)
     #CorrectedGainMatrix4 = similar(GainMatrix4)
@@ -572,17 +574,21 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
         partialsortperm!(high_inds4,reshape(E4_d .* GainMatrix4Filtered,((p4_num+2)*u4_num*h4_num)), 1:(p4_num+2)*u4_num*h4_num; rev=true)
         cart_inds4 = CartesianIndices(GainMatrix4Filtered)[high_inds4]
         
-        LossSumN1 = LossMatrix1[u1,h1,u2,h2]
-        LossSumN2 = LossMatrix2[u2,h2,u1,h1]
-        if name1 != name2 # Indistinguishable_12==false so LossMatrix2 is non-zero
-            LossSumE1 = LossMatrix1[u1,h1,u2,h2]*E1_d[p1]
-            LossSumE2 = LossMatrix2[u2,h2,u1,h1]*E2_d[p2]
+        LossSumN1 = LossMatrix[u1,h1,u2,h2]
+        if !Indistinguishable_12
+            LossSumN2 = LossMatrix[u1,h1,u2,h2]
         else
-            LossSumE1 = LossMatrix1[u1,h1,u2,h2]*(E1_d[p1]+E2_d[p2])/2
-            LossSumE2 = 0.0#LossMatrix1[u1,h1,u2,h2]*(E1_d[p1]+E2_d[p2])/2
+            LossSumN2 = 0f0
+        end
+        if !Indistinguishable_12 # LossMatrix2 is non-zero
+            LossSumE1 = LossMatrix[u1,h1,u2,h2]*E1_d[p1]
+            LossSumE2 = LossMatrix[u1,h1,u2,h2]*E2_d[p2]
+        else
+            LossSumE1 = LossMatrix[u1,h1,u2,h2]*(E1_d[p1]+E2_d[p2])/2
+            LossSumE2 = 0f0#LossMatrix1[u1,h1,u2,h2]*(E1_d[p1]+E2_d[p2])/2
         end
 
-        if LossSumN1 + LossSumN2 == 0e0
+        if LossSumN1 + LossSumN2 == 0f0
             # no loss term so no interaction at these incoming states
 
             num_right += 1
@@ -763,8 +769,7 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     alpha1 = 0.0
                     alpha2 = 0.0
                     beta = 0.0
-                    LossMatrix1[u1,h1,u2,h2] = 0e0
-                    LossMatrix2[u2,h2,u1,h1] = 0e0
+                    LossMatrix[u1,h1,u2,h2] = 0f0
 
                     num_wrong += 1
 
@@ -812,8 +817,7 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     alpha1 = 0.0
                     alpha2 = 0.0
                     beta = 0.0
-                    LossMatrix1[u1,h1,u2,h2] = 0e0
-                    LossMatrix2[u2,h2,u1,h1] = 0e0
+                    LossMatrix[u1,h1,u2,h2] = 0f0
 
                     num_wrong += 1
                     
@@ -872,21 +876,21 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
         if Gain3False 
             # underflow bins adds 1 to value of p3 index compared to p1 index for same energy bin.
-            GainMatrix3[p1+1+1,u1,h1,u1,h1,u2,h2] = p2Big * b1 * beta
-            GainMatrix3[p1+1,u1,h1,u1,h1,u2,h2] = p2Big ? a1 * alpha1 : b1 * beta
-            GainMatrix3[p1-1+1,u1,h1,u1,h1,u2,h2] = !p2Big * a1 * alpha1  
+            GainMatrix3[p1+1+1,u1,h1,u1,h1,u2,h2] = Float32(p2Big * b1 * beta)
+            GainMatrix3[p1+1,u1,h1,u1,h1,u2,h2] = Float32(p2Big ? a1 * alpha1 : b1 * beta)
+            GainMatrix3[p1-1+1,u1,h1,u1,h1,u2,h2] = Float32(!p2Big * a1 * alpha1)
         else
             for p3 in axes(GainMatrix3,1)
                 for u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
                     if !p2Big && CartesianIndex(p3, u3, h3) in @view(cart_inds3[1:high_3_range]) 
                         #if GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] > tol * LossSumN1
-                            GainMatrix3[p3,u3,h3,u1,h1,u2,h2] *= beta
+                            GainMatrix3[p3,u3,h3,u1,h1,u2,h2] *= Float32(beta)
                         #else
                         #    CorrectedGainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] = 0.0
                         #end
                     else
                         #if GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] > tol * LossSumN1
-                            GainMatrix3[p3,u3,h3,u1,h1,u2,h2] *= alpha1
+                            GainMatrix3[p3,u3,h3,u1,h1,u2,h2] *= Float32(alpha1)
                         #else
                         #    CorrectedGainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] = 0.0
                         #end
@@ -897,21 +901,21 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
         if Gain4False 
             # underflow bins adds 1 to value of p4 index compared to p2 index for same energy bin.
-            GainMatrix4[p2+1+1,u2,h2,u1,h1,u2,h2] = p1Big * b2 * beta
-            GainMatrix4[p2+1,u2,h2,u1,h1,u2,h2] = p1Big ? a2 * alpha2 : b2 * beta
-            GainMatrix4[p2-1+1,u2,h2,u1,h1,u2,h2] = !p1Big * a2 * alpha2
+            GainMatrix4[p2+1+1,u2,h2,u1,h1,u2,h2] = Float32(p1Big * b2 * beta)
+            GainMatrix4[p2+1,u2,h2,u1,h1,u2,h2] = Float32(p1Big ? a2 * alpha2 : b2 * beta)
+            GainMatrix4[p2-1+1,u2,h2,u1,h1,u2,h2] = Float32(!p1Big * a2 * alpha2)
         else
             for p4 in axes(GainMatrix4,1)
                 for u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
                     if !p1Big && CartesianIndex(p4, u4, h4) in @view(cart_inds4[1:high_4_range])
                         #if GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] > tol * LossSumN2
-                            GainMatrix4[p4,u4,h4,u1,h1,u2,h2] *= beta
+                            GainMatrix4[p4,u4,h4,u1,h1,u2,h2] *= Float32(beta)
                         #else
                         #    CorrectedGainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] = 0.0
                         #end
                     else
                         #if GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] > tol * LossSumN2
-                            GainMatrix4[p4,u4,h4,u1,h1,u2,h2] *= alpha2
+                            GainMatrix4[p4,u4,h4,u1,h1,u2,h2] *= Float32(alpha2)
                         #else
                         #    CorrectedGainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] = 0.0
                         #end
@@ -937,8 +941,8 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
         #println("$(sum(CorrectedGainMatrix3[:,:,:,p1,u1,h1,p2,u2,h2])) , $(sum(CorrectedGainMatrix4[:,:,:,p1,u1,h1,p2,u2,h2])) , $(CorrectedLossMatrix1[p1,u1,h1,p2,u2,h2]) , $(CorrectedLossMatrix2[p2,u2,h2,p1,u1,h1])")
 
     end
-    println("Number of bins that couldn't be corrected = $num_wrong")
-    println("Number of bins corrected = $num_right")
+    #println("Number of bins that couldn't be corrected = $num_wrong")
+    #println("Number of bins corrected = $num_right")
 
     return nothing #CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2
 
