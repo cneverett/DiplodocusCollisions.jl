@@ -81,13 +81,15 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             shuffle!(indices) # better balances workload between threads
             length_indices::Int64 = length(indices)
 
-            if length_indices/numThreads > 1.0
-                length_div_threads::Int64 = ceil(Int64,length_indices/numThreads)
-                index_range = Vector(0:length_div_threads:numThreads*length_div_threads)
-                index_range[end] = length_indices
-            else 
-                index_range = Vector(0:length_indices)
-            end
+            indices_chunks = [indices[r] for r in index_chunks(indices;n=numThreads)] # split indices into chunks for each thread
+
+            ##if length_indices/numThreads > 1.0
+            #    length_div_threads::Int64 = ceil(Int64,length_indices/numThreads)
+            #    index_range = Vector(0:length_div_threads:numThreads*length_div_threads)
+            #    index_range[end] = length_indices
+            #else 
+            #    index_range = Vector(0:length_indices)
+            #end
 
             # reset arrays
             #=fill!(GainTotal3,Float64(0))
@@ -110,13 +112,13 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
                 numProgress = length_indices
                 prog = Progress(numProgress)
                 # Run in serial if only one thread, easier to use for debugging
-                BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix,sigma,dsigmadt,Parameters,numLoss,numGain,indices[1:end],scale,prog,1)
+                BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix,sigma,dsigmadt,Parameters,numLoss,numGain,indices_chunks[1],scale,prog,1)
                 finish!(prog)
             else
                 #numProgress = length(indices[index_range[1]+1:index_range[1+1]])
                 numProgress = length_indices
                 prog = Progress(numProgress)
-                workers = [BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix,sigma,dsigmadt,Parameters,numLoss,numGain,indices[index_range[thread]+1:index_range[thread+1]],scale,prog,thread) for thread in 1:(length(index_range)-1)]
+                workers = [BinaryMonteCarlo!(OldGainWeights3,OldGainWeights4,OldLossTally,OldGainMatrix3,OldGainMatrix4,OldLossMatrix,CorrectedChunkGainMatrix3,CorrectedChunkGainMatrix4,CorrectedChunkLossMatrix,sigma,dsigmadt,Parameters,numLoss,numGain,indices_chunks[thread],scale,prog,thread) for thread in 1:numThreads]
                 wait.(workers) # Allow all workers to finish
                 finish!(prog)
             end

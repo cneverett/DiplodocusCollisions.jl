@@ -12,6 +12,7 @@ export UserBinaryParameters, UserEmissionParameters
     using Random: shuffle!
     using LinearAlgebra
     using Statistics
+    using ChunkSplitters
     using Zarr
     Zarr.Blosc.set_num_threads(1)
 
