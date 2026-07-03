@@ -91,7 +91,7 @@ function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float32
         oldm = OldChunkGainMatrix3[I]
         newm = ChunkGainMatrix3[I]
         OldChunkGainMatrix3[I] = denom == 0f0 ? 0f0 : Float32(muladd(newm, neww, oldm * oldw) / denom)
-        OldChunkGainWeights3[I] = denom
+        OldChunkGainWeights3[I] = Float32(denom)
     end
 
     @inbounds @simd for I in eachindex(OldChunkGainMatrix4)
@@ -101,7 +101,7 @@ function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float32
         oldm = OldChunkGainMatrix4[I]
         newm = ChunkGainMatrix4[I]
         OldChunkGainMatrix4[I] = denom == 0f0 ? 0f0 : Float32(muladd(newm, neww, oldm * oldw) / denom)
-        OldChunkGainWeights4[I] = denom
+        OldChunkGainWeights4[I] = Float32(denom)
     end
 
 end
@@ -117,8 +117,8 @@ function WeightedAverageGainBinaryChunk!(ChunkGainMatrix3::AbstractArray{Float32
         denom = neww + oldw
         oldm = OldChunkGainMatrix3[I]
         newm = ChunkGainMatrix3[I]
-        OldChunkGainMatrix3[I] = denom == 0f0 ? 0f0 : (muladd(newm, neww, oldm * oldw) / denom)
-        OldChunkGainWeights3[I] = denom
+        OldChunkGainMatrix3[I] = denom == 0f0 ? 0f0 : Float32(muladd(newm, neww, oldm * oldw) / denom)
+        OldChunkGainWeights3[I] = Float32(denom)
     end
 
 end

@@ -551,6 +551,9 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
     #cart_inds3 = CartesianIndices(@view(GainMatrix3[:,:,:,1,1,1,1]))[high_inds3]
     #cart_inds4 = CartesianIndices(@view(GainMatrix4[:,:,:,1,1,1,1]))[high_inds4]
 
+    tmpvec3 = zeros(Float32,(p3_num+2))
+    tmpvec4 = zeros(Float32,(p4_num+2))
+
     for h2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,6), h1 in axes(GainMatrix3,5), u1 in axes(GainMatrix3,4)
 
         # generate filtered gain matrices to smooth out spectrum
@@ -560,11 +563,11 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
         # Apply filters
         for u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
             # fixes points that are break monotonically increasing regions
-            fix_monotone_center_log!(@view(GainMatrix3Filtered[:,u3,h3])) 
+            fix_monotone_center_log!(@view(GainMatrix3Filtered[:,u3,h3]),tmpvec3) 
         end
         for u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
             # fixes points that are break monotonically increasing regions
-            fix_monotone_center_log!(@view(GainMatrix4Filtered[:,u4,h4])) 
+            fix_monotone_center_log!(@view(GainMatrix4Filtered[:,u4,h4]),tmpvec4) 
         end
 
         # sort by highest energy contents
