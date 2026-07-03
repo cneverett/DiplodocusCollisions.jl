@@ -524,6 +524,7 @@ end
 
 function fix_monotone_center_log!(y::AbstractVector{<:Real},z::AbstractVector{<:Real};floor::Real = 1e-300)
 
+    n = length(y)
     fill!(z,NaN)
 
     # Work in log-space; ignore zeros / nonpositive values
