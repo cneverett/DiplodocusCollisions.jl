@@ -633,6 +633,9 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
     for h2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,6), h1 in axes(GainMatrix3,5), u1 in axes(GainMatrix3,4)
 
+        high_3_range::Int64 = 1
+        high_4_range::Int64 = 1
+
         # generate filtered gain matrices to smooth out spectrum
         GainMatrix3Filtered = @view(GainMatrix3[:,:,:,u1,h1,u2,h2])
         GainMatrix4Filtered = @view(GainMatrix4[:,:,:,u1,h1,u2,h2])
@@ -707,9 +710,6 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
         p3_offset = length(axes(GainMatrix3,1))
         p4_offset = length(axes(GainMatrix4,1))
-
-        high_3_range::Int64 = 0
-        high_4_range::Int64 = 0
 
         #=if E1_d[p1] > 1e0*E2_d[p2] && m1 > m2
             p1Big = true
