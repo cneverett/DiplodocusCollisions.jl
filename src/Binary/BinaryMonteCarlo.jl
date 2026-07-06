@@ -156,23 +156,25 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
         gain4loc = CartesianIndex(1,1,1,p1loc,1,1,p2loc,1,1)
         lossloc = CartesianIndex(p1loc,1,1,p2loc,1,1)
 
-        #println(stdout,"reading data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
-        #flush(stdout)
+        # old 
+        r3 = CartesianIndices((1:(p3_num+2), 1:u3_num, 1:h3_num,p1loc:p1loc, 1:u1_num, 1:h1_num,p2loc:p2loc, 1:u2_num, 1:h2_num))
+        r4 = CartesianIndices((1:(p4_num+2), 1:u4_num, 1:h4_num,p1loc:p1loc, 1:u1_num, 1:h1_num,p2loc:p2loc, 1:u2_num, 1:h2_num))
+        r = CartesianIndices((p1loc:p1loc, 1:u1_num, 1:h1_num,p2loc:p2loc, 1:u2_num, 1:h2_num))
 
-        # Load old chunk arrays from Zarr
-        #OldChunkGainMatrix3 .= OldGainMatrix3[:,:,:,p1loc,:,:,p2loc,:,:]
-        #OldChunkGainMatrix4 .= OldGainMatrix4[:,:,:,p1loc,:,:,p2loc,:,:]
-        #OldChunkLossMatrix1 .= OldLossMatrix1[p1loc,:,:,p2loc,:,:]
-        #OldChunkGainWeights3 .= OldGainWeights3[:,:,:,p1loc,:,:,p2loc,:,:]
-        #OldChunkGainWeights4 .= OldGainWeights4[:,:,:,p1loc,:,:,p2loc,:,:]
-        #OldChunkLossTally .= OldLossTally[p1loc,:,:,p2loc,:,:]
+        Zarr.readblock!(OldChunkGainMatrix3Full,OldGainMatrix3,r3)
+        Zarr.readblock!(OldChunkGainMatrix4Full,OldGainMatrix4,r4)
+        Zarr.readblock!(OldChunkLossMatrixFull,OldLossMatrix,r)
+        Zarr.readblock!(OldChunkGainWeights3Full,OldGainWeights3,r3)
+        Zarr.readblock!(OldChunkGainWeights4Full,OldGainWeights4,r4)
+        Zarr.readblock!(OldChunkLossTallyFull,OldLossTally,r)
 
-        readblock_singlechunk!(OldChunkGainMatrix3Full,OldGainMatrix3,gain3loc)
-        readblock_singlechunk!(OldChunkGainMatrix4Full,OldGainMatrix4,gain4loc)
-        readblock_singlechunk!(OldChunkLossMatrixFull,OldLossMatrix,lossloc)
-        readblock_singlechunk!(OldChunkGainWeights3Full,OldGainWeights3,gain3loc)
-        readblock_singlechunk!(OldChunkGainWeights4Full,OldGainWeights4,gain4loc)
-        readblock_singlechunk!(OldChunkLossTallyFull,OldLossTally,lossloc)
+        # does not work, do not know why
+        #readblock_singlechunk!(OldChunkGainMatrix3Full,OldGainMatrix3,gain3loc)
+        #readblock_singlechunk!(OldChunkGainMatrix4Full,OldGainMatrix4,gain4loc)
+        #readblock_singlechunk!(OldChunkLossMatrixFull,OldLossMatrix,lossloc)
+        #readblock_singlechunk!(OldChunkGainWeights3Full,OldGainWeights3,gain3loc)
+        #readblock_singlechunk!(OldChunkGainWeights4Full,OldGainWeights4,gain4loc)
+        #readblock_singlechunk!(OldChunkLossTallyFull,OldLossTally,lossloc)
 
         #println(stdout,"read data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
         #flush(stdout)
@@ -404,6 +406,14 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
 
         # ===== Saving Unsymmetrised/Uncorrected Arrays ===== #
 
+            #Zarr.writeblock!(OldChunkGainMatrix3Full,OldGainMatrix3,r3)
+            #Zarr.writeblock!(OldChunkGainMatrix4Full,OldGainMatrix4,r4)
+            #Zarr.writeblock!(OldChunkLossMatrixFull,OldLossMatrix,r)
+            #Zarr.writeblock!(OldChunkGainWeights3Full,OldGainWeights3,r3)
+            #Zarr.writeblock!(OldChunkGainWeights4Full,OldGainWeights4,r4)
+            #Zarr.writeblock!(OldChunkLossTallyFull,OldLossTally,r)
+
+
             Zarr.write_singlechunk_fastpath!(OldGainMatrix3,OldChunkGainMatrix3Full,gain3loc)
             Zarr.write_singlechunk_fastpath!(OldGainMatrix4,OldChunkGainMatrix4Full,gain4loc)
             Zarr.write_singlechunk_fastpath!(OldLossMatrix,OldChunkLossMatrixFull,lossloc)
@@ -423,6 +433,10 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
             GainCorrectionChunk!(Parameters,OldChunkGainMatrix3,OldChunkGainMatrix4,OldChunkLossMatrix,p1loc,p2loc,GainCorrectionTmp)
 
         # ========== Save Symmetrised/Corrected Chunks to Zarr ============== #
+
+            #Zarr.writeblock!(OldChunkGainMatrix3Full,CorrectedGainMatrix3,r3)
+            #Zarr.writeblock!(OldChunkGainMatrix4Full,CorrectedGainMatrix4,r4)
+            #Zarr.writeblock!(OldChunkLossMatrixFull,CorrectedLossMatrix,r)
 
             Zarr.write_singlechunk_fastpath!(CorrectedGainMatrix3,OldChunkGainMatrix3Full,gain3loc)
             Zarr.write_singlechunk_fastpath!(CorrectedGainMatrix4,OldChunkGainMatrix4Full,gain4loc)

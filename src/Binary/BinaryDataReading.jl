@@ -606,9 +606,18 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
         gain4loc = CartesianIndex(1,1,1,p1,1,1,p2,1,1)
         lossloc = CartesianIndex(p1,1,1,p2,1,1)
 
-        readblock_singlechunk!(ChunkGainMatrix3Full,GainMatrix3,gain3loc)
-        readblock_singlechunk!(ChunkGainMatrix4Full,GainMatrix4,gain4loc)
-        readblock_singlechunk!(ChunkLossMatrixFull,LossMatrix,lossloc)
+        r3 = CartesianIndices((1:(p3_num+2), 1:u3_num, 1:h3_num,p1:p1, 1:u1_num, 1:h1_num,p2:p2, 1:u2_num, 1:h2_num))
+        r4 = CartesianIndices((1:(p4_num+2), 1:u4_num, 1:h4_num,p1:p1, 1:u1_num, 1:h1_num,p2:p2, 1:u2_num, 1:h2_num))
+        r = CartesianIndices((p1:p1, 1:u1_num, 1:h1_num,p2:p2, 1:u2_num, 1:h2_num))
+
+        Zarr.readblock!(ChunkGainMatrix3Full,GainMatrix3,r3)
+        Zarr.readblock!(ChunkGainMatrix4Full,GainMatrix4,r4)
+        Zarr.readblock!(ChunkLossMatrixFull,LossMatrix,r)
+
+        # does not work, do not know why
+        #readblock_singlechunk!(ChunkGainMatrix3Full,GainMatrix3,gain3loc)
+        #readblock_singlechunk!(ChunkGainMatrix4Full,GainMatrix4,gain4loc)
+        #readblock_singlechunk!(ChunkLossMatrixFull,LossMatrix,lossloc)
 
         @inbounds for u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
             for p3 in axes(GainMatrix3,1), u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
