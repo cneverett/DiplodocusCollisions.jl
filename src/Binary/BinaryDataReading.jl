@@ -602,13 +602,13 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
 
     @inbounds for p1 in axes(GainMatrix3, 4), p2 in axes(GainMatrix3,7)
 
-        gain3loc = CartesianIndices((1:(p3_num+2), 1:u3_num, 1:h3_num,p1:p1, 1:u1_num, 1:h1_num,p2:p2, 1:u2_num, 1:h2_num))
-        gain4loc = CartesianIndices((1:(p4_num+2), 1:u4_num, 1:h4_num,p1:p1, 1:u1_num, 1:h1_num,p2:p2, 1:u2_num, 1:h2_num))
-        lossloc = CartesianIndices((p1:p1, 1:u1_num, 1:h1_num,p2:p2, 1:u2_num, 1:h2_num))
+        gain3loc = CartesianIndex(1,1,1,p1loc,1,1,p2loc,1,1)
+        gain4loc = CartesianIndex(1,1,1,p1loc,1,1,p2loc,1,1)
+        lossloc = CartesianIndex(p1loc,1,1,p2loc,1,1)
 
-        Zarr.readblock!(ChunkGainMatrix3Full,GainMatrix3,gain3loc)
-        Zarr.readblock!(ChunkGainMatrix4Full,GainMatrix4,gain4loc)
-        Zarr.readblock!(ChunkLossMatrixFull,LossMatrix,lossloc)
+        readblock_singlechunk!(ChunkGainMatrix3Full,GainMatrix3,gain3loc)
+        readblock_singlechunk!(ChunkGainMatrix4Full,GainMatrix4,gain4loc)
+        readblock_singlechunk!(ChunkLossMatrixFull,LossMatrix,lossloc)
 
         @inbounds for u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
             for p3 in axes(GainMatrix3,1), u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
