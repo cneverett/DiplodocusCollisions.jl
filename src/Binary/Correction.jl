@@ -652,10 +652,18 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
         # sort by highest energy contents
         partialsortperm!(high_inds3,tmpsortvec3, 1:size3; rev=true)
-        cart_inds3 .= CartesianIndices(GainMatrix3Filtered)[high_inds3]
+        #cart_inds3 .= CartesianIndices(GainMatrix3Filtered)[high_inds3]
+        ci3 = CartesianIndices(GainMatrix3Filtered)
+        @inbounds for i in 1:high_3_range
+            cart_inds3[i] = ci3[high_inds3[i]]
+        end
 
         partialsortperm!(high_inds4,tmpsortvec4, 1:size4; rev=true)
-        cart_inds4 .= CartesianIndices(GainMatrix4Filtered)[high_inds4]
+        #cart_inds4 .= CartesianIndices(GainMatrix4Filtered)[high_inds4]
+        ci4 = CartesianIndices(GainMatrix4Filtered)
+        @inbounds for i in 1:high_4_range
+            cart_inds4[i] = ci4[high_inds4[i]]
+        end
 
         LossSumN1 = LossMatrix[u1,h1,u2,h2]
         if !Indistinguishable_12

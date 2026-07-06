@@ -534,7 +534,7 @@ function fix_monotone_center_log!(y::AbstractVector{<:Real},z::AbstractVector{<:
         end
     end
 
-    corrected = falses(n)
+    #corrected = falses(n)
 
     for i in 3:(n - 2)
         a, b, c, d, e = z[i-2], z[i-1], z[i], z[i+1], z[i+2]
@@ -552,7 +552,7 @@ function fix_monotone_center_log!(y::AbstractVector{<:Real},z::AbstractVector{<:
             # Center point should lie between its immediate neighbors
             if (c <= min(b, d)) || (c >= max(b, d))
                 z[i] = mean((a, b, d, e))
-                corrected[i] = true
+                #corrected[i] = true
             end
         end
     end
@@ -564,5 +564,5 @@ function fix_monotone_center_log!(y::AbstractVector{<:Real},z::AbstractVector{<:
         end
     end
 
-    return corrected
+    return nothing
 end
