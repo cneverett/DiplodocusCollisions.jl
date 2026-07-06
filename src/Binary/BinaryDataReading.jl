@@ -602,9 +602,9 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
 
     @inbounds for p1 in axes(GainMatrix3, 4), p2 in axes(GainMatrix3,7)
 
-        gain3loc = CartesianIndex(1,1,1,p1loc,1,1,p2loc,1,1)
-        gain4loc = CartesianIndex(1,1,1,p1loc,1,1,p2loc,1,1)
-        lossloc = CartesianIndex(p1loc,1,1,p2loc,1,1)
+        gain3loc = CartesianIndex(1,1,1,p1,1,1,p2,1,1)
+        gain4loc = CartesianIndex(1,1,1,p1,1,1,p2,1,1)
+        lossloc = CartesianIndex(p1,1,1,p2,1,1)
 
         readblock_singlechunk!(ChunkGainMatrix3Full,GainMatrix3,gain3loc)
         readblock_singlechunk!(ChunkGainMatrix4Full,GainMatrix4,gain4loc)
