@@ -108,7 +108,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
             #    wait.(workers) # Allow all workers to finish
             #end
 
-            if numThreads == 1
+            @time if numThreads == 1
                 numProgress = length_indices
                 prog = Progress(numProgress)
                 # Run in serial if only one thread, easier to use for debugging

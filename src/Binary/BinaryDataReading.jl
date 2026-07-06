@@ -583,15 +583,23 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
     EGainMatrix4 = zeros(Float64,size(LossMatrix))
     ELossMatrix2 = zeros(Float64,size(LossMatrix))
 
-    ChunkGainMatrix3 = zeros(Float64,p3_num+2,u3_num,h3_num,u1_num,h1_num,u2_num,h2_num)
-    ChunkGainMatrix4 = zeros(Float64,p4_num+2,u4_num,h4_num,u1_num,h1_num,u2_num,h2_num)
-    ChunkLossMatrix = zeros(Float64,u1_num,h1_num,u2_num,h2_num)
+    ChunkGainMatrix3Full = zeros(Float64,p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num)
+    ChunkGainMatrix4Full = zeros(Float64,p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num)
+    ChunkLossMatrixFull = zeros(Float64,1,u1_num,h1_num,1,u2_num,h2_num)
+
+    ChunkGainMatrix3 = @view(ChunkGainMatrix3Full[:,:,:,1,:,:,1,:,:])
+    ChunkGainMatrix4 = @view(ChunkGainMatrix4Full[:,:,:,1,:,:,1,:,:])
+    ChunkLossMatrix = @view(ChunkLossMatrixFull[1,:,:,1,:,:])
 
     @inbounds for p1 in axes(GainMatrix3, 4), p2 in axes(GainMatrix3,7)
 
-        ChunkGainMatrix3 .= GainMatrix3[:,:,:,p1,:,:,p2,:,:]
-        ChunkGainMatrix4 .= GainMatrix4[:,:,:,p1,:,:,p2,:,:]
-        ChunkLossMatrix .= LossMatrix[p1,:,:,p2,:,:]
+        gain3loc = CartesianIndices((1:(p3_num+2), 1:u3_num, 1:h3_num,p1:p1, 1:u1_num, 1:h1_num,p2:p2, 1:u2_num, 1:h2_num))
+        gain4loc = CartesianIndices((1:(p4_num+2), 1:u4_num, 1:h4_num,p1:p1, 1:u1_num, 1:h1_num,p2:p2, 1:u2_num, 1:h2_num))
+        lossloc = CartesianIndices((p1:p1, 1:u1_num, 1:h1_num,p2:p2, 1:u2_num, 1:h2_num))
+
+        Zarr.readblock!(ChunkGainMatrix3Full,GainMatrix3,gain3loc)
+        Zarr.readblock!(ChunkGainMatrix4Full,GainMatrix4,gain4loc)
+        Zarr.readblock!(ChunkLossMatrixFull,LossMatrix,lossloc)
 
         @inbounds for u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
             for p3 in axes(GainMatrix3,1), u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 

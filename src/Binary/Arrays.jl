@@ -43,16 +43,16 @@ function OldMonteCarloArraysBinary(Parameters::Tuple{String,String,String,String
         store = Zarr.DirectoryStore(filePath)
         f = zgroup(store)
         zcreate(Float32,f,"GainWeights3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
-        zcreate(Float32,f,"GainMatrix3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
+        zcreate(Float32,f,"GainMatrix3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
         zcreate(Float32,f,"GainWeights4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
-        zcreate(Float32,f,"GainMatrix4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
+        zcreate(Float32,f,"GainMatrix4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
         zcreate(UInt32,f,"LossTally",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=UInt32(0));
-        zcreate(Float32,f,"LossMatrix",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
+        zcreate(Float32,f,"LossMatrix",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
 
 
-        zcreate(Float32,f,"CorrectedGainMatrix3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
-        zcreate(Float32,f,"CorrectedGainMatrix4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
-        zcreate(Float32,f,"CorrectedLossMatrix",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0.0));
+        zcreate(Float32,f,"CorrectedGainMatrix3",p3_num+2,u3_num,h3_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
+        zcreate(Float32,f,"CorrectedGainMatrix4",p4_num+2,u4_num,h4_num,p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
+        zcreate(Float32,f,"CorrectedLossMatrix",p1_num,u1_num,h1_num,p2_num,u2_num,h2_num,chunks=(1,u1_num,h1_num,1,u2_num,h2_num),fill_value=Float32(0));
         
     end
 

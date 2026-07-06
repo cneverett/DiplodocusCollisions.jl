@@ -90,6 +90,9 @@ function BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,Ol
     u4val = bounds(u_low,u_up,u4_num,u4_grid_st)
     h3val = bounds(h_low,h_up,h3_num,h3_grid_st).*pi
     h4val = bounds(h_low,h_up,h4_num,h4_grid_st).*pi
+
+    # Struct for gain correction
+    GainCorrectionTmp = GainCorrectionStruct(Parameters)
     
     # local arrays are size of each chunk of Zarr that store data
     # for gain arrays this is p3_num+2,u3_num,h3_num,u1_num,h1_num,u2_num,h2_num
@@ -412,7 +415,7 @@ function BinaryMonteCarlo_Debug!(OldGainWeights3,OldGainWeights4,OldLossTally,Ol
 
         # ===== Generate Corrected Arrays ===== #
 
-            GainCorrectionChunk!(Parameters,OldChunkGainMatrix3,OldChunkGainMatrix4,OldChunkLossMatrix,p1loc,p2loc)
+            GainCorrectionChunk!(Parameters,OldChunkGainMatrix3,OldChunkGainMatrix4,OldChunkLossMatrix,p1loc,p2loc,GainCorrectionTmp)
 
         # ========== Save Symmetrised/Corrected Chunks to Zarr ============== #
 

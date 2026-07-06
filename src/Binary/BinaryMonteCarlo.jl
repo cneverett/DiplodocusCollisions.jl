@@ -92,6 +92,9 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
     h3val = bounds(h_low,h_up,h3_num,h3_grid_st).*pi
     h4val = bounds(h_low,h_up,h4_num,h4_grid_st).*pi
 
+    # Struct for gain correction
+    GainCorrectionTmp = GainCorrectionStruct(Parameters)
+
     # local arrays are size of each chunk of Zarr that store data
     # for gain arrays this is p3_num+2,u3_num,h3_num,u1_num,h1_num,u2_num,h2_num
     # as p1 and p2 are what define the chunks
@@ -417,7 +420,7 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
         # ===== Generate Corrected Arrays ===== #
 
             # modifies uncorrected arrays to produce corrected arrays, which are then saved to Zarr
-            GainCorrectionChunk!(Parameters,OldChunkGainMatrix3,OldChunkGainMatrix4,OldChunkLossMatrix,p1loc,p2loc)
+            GainCorrectionChunk!(Parameters,OldChunkGainMatrix3,OldChunkGainMatrix4,OldChunkLossMatrix,p1loc,p2loc,GainCorrectionTmp)
 
         # ========== Save Symmetrised/Corrected Chunks to Zarr ============== #
 

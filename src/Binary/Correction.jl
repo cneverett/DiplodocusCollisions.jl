@@ -460,6 +460,123 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
 
 end
 
+mutable struct GainCorrectionStruct <: Function 
+
+    CorrType::Int64 
+    Indistinguishable_12::Bool
+
+    E1_d::Vector{Float64}
+    E2_d::Vector{Float64}
+    E3_d::Vector{Float64}
+    E4_d::Vector{Float64}
+
+    high_inds3::Vector{Int64}
+    high_inds4::Vector{Int64}
+
+    tmpvec3::Vector{Float64}
+    tmpvec4::Vector{Float64}
+
+    tmpsortvec3::Vector{Float64}
+    tmpsortvec4::Vector{Float64}
+
+    tmpsortvec3_reshape::Array{Float64,3}
+    tmpsortvec4_reshape::Array{Float64,3}
+
+    cart_inds3::Vector{CartesianIndex{3}}
+    cart_inds4::Vector{CartesianIndex{3}}
+
+    size3::Int64
+    size4::Int64
+
+    function GainCorrectionStruct(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64})
+
+        (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
+
+        if (name1 == name3) && (name2 == name4) && (name1 != name2)
+            CorrType = 1
+        else
+            CorrType = 2
+        end
+
+        Indistinguishable_12::Bool = name1 == name2
+
+        # underflow and overflow bins are taken to have size 0 -> p1_r[1] and p1_r[end] -> 2*p1_r[end] respectively
+
+            p1_r = bounds(p1_low,p1_up,p1_num,p1_grid);
+            p1_d = deltaVector(p1_r);
+
+            p2_r = bounds(p2_low,p2_up,p2_num,p2_grid);
+            p2_d = deltaVector(p2_r);
+
+            p3_r = bounds(p3_low,p3_up,p3_num,p3_grid);
+            p3_r = [0.0 ; p3_r ; 2*p3_r[end]];
+            p3_d = deltaVector(p3_r);
+
+            p4_r = bounds(p4_low,p4_up,p4_num,p4_grid);
+            p4_r = [0.0 ; p4_r ; 2*p4_r[end]];
+            p4_d = deltaVector(p4_r);
+
+            E1_Δ = deltaEVector(p1_r,m1);
+            E1_d = E1_Δ ./ p1_d
+
+            E2_Δ = deltaEVector(p2_r,m2);
+            E2_d = E2_Δ ./ p2_d
+
+            E3_Δ = deltaEVector(p3_r,m3);
+            E3_d = E3_Δ ./ p3_d
+
+            E4_Δ = deltaEVector(p4_r,m4);
+            E4_d = E4_Δ ./ p4_d
+
+        size3 = (p3_num+2)*u3_num*h3_num
+        size4 = (p4_num+2)*u4_num*h4_num
+
+        high_inds3 = zeros(Int64,size3)
+        high_inds4 = zeros(Int64,size4)
+
+        tmpvec3 = zeros(Float64,(p3_num+2))
+        tmpvec4 = zeros(Float64,(p4_num+2))
+
+        tmpsortvec3 = zeros(Float64,size3)
+        tmpsortvec4 = zeros(Float64,size4)
+
+        tmpsortvec3_reshape = reshape(tmpsortvec3,((p3_num+2),u3_num,h3_num))
+        tmpsortvec4_reshape = reshape(tmpsortvec4,((p4_num+2),u4_num,h4_num))
+
+        cart_inds3 = Vector{CartesianIndex{3}}(undef,size3)
+        cart_inds4 = Vector{CartesianIndex{3}}(undef,size4)
+
+        # build struct 
+
+        self = new()
+        self.CorrType = CorrType
+        self.Indistinguishable_12 = Indistinguishable_12
+        self.E1_d = E1_d
+        self.E2_d = E2_d
+        self.E3_d = E3_d
+        self.E4_d = E4_d
+        self.high_inds3 = high_inds3
+        self.high_inds4 = high_inds4
+        self.tmpvec3 = tmpvec3
+        self.tmpvec4 = tmpvec4
+
+        self.tmpsortvec3 = tmpsortvec3
+        self.tmpsortvec4 = tmpsortvec4
+        self.tmpsortvec3_reshape = tmpsortvec3_reshape
+        self.tmpsortvec4_reshape = tmpsortvec4_reshape
+
+        self.cart_inds3 = cart_inds3
+        self.cart_inds4 = cart_inds4
+
+        self.size3 = size3
+        self.size4 = size4
+
+        return self
+
+    end
+
+end 
+
 # ================== chunked version ================== #
 
 """
@@ -468,7 +585,7 @@ end
 MC sampling introduces noise that can lead to poor number and energy conservation. `GainCorrection` provides a corrective step to ensure number and energy conservation to numerical precision. If there is no GainMatrix element then the value of the LossMatrix is applied to the same bin as the input state (if they are identical particles); if not identical particles if there is no GainMatrix element then the value of the LossMatrix is set to zero to ensure particle conservation (with good MC sampling this should rarely occur).
 This version corrects the input arrays `GainMatrix3`, `GainMatrix4`, and `LossMatrix` in place.
 """
-function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::AbstractArray{Float32, 7}, GainMatrix4::AbstractArray{Float32, 7}, LossMatrix::AbstractArray{Float32, 4},p1::Int64,p2::Int64)
+function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, Float64, Float64, Float64, Float64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64, Float64, Float64, String, Int64, String, Int64, String, Int64}, GainMatrix3::AbstractArray{Float32, 7}, GainMatrix4::AbstractArray{Float32, 7}, LossMatrix::AbstractArray{Float32, 4},p1::Int64,p2::Int64,GainCorrectionTmp::GainCorrectionStruct)
 
     
     #= Different possible combinations of identical and different particles that affect how to apply conservation corrections:
@@ -486,73 +603,33 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
     =#
 
-    (name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
-
     tol = sqrt(eps(Float64)) # tolerance for how low the gain terms can be compared to the loss terms, if less than this tolerance then the gain terms are set to zero and not included in the correction calculation.
 
-    if (name1 == name3) && (name2 == name4) && (name1 != name2)
-        CorrType = 1
-    else
-        CorrType = 2
-    end
+    CorrType = GainCorrectionTmp.CorrType
+    Indistinguishable_12 = GainCorrectionTmp.Indistinguishable_12
 
-    Indistinguishable_12::Bool = name1 == name2
+    E1_d = GainCorrectionTmp.E1_d
+    E2_d = GainCorrectionTmp.E2_d
+    E3_d = GainCorrectionTmp.E3_d
+    E4_d = GainCorrectionTmp.E4_d
 
-    #CorrectedGainMatrix3 = similar(GainMatrix3)
-    #CorrectedGainMatrix4 = similar(GainMatrix4)
-    #CorrectedLossMatrix1 = similar(LossMatrix1)
-    #CorrectedLossMatrix2 = similar(LossMatrix2)
-    #fill!(CorrectedGainMatrix3,Float64(0))
-    #fill!(CorrectedGainMatrix4,Float64(0))
-    #CorrectedLossMatrix1 .= LossMatrix1
-    #CorrectedLossMatrix2 .= LossMatrix2
-
-    # underflow and overflow bins are taken to have size 0 -> p1_r[1] and p1_r[end] -> 2*p1_r[end] respectively
-
-    p1_r = bounds(p1_low,p1_up,p1_num,p1_grid);
-    p1_d = deltaVector(p1_r);
-    u1_r = bounds(-1.0,1.0,u1_num,u1_grid);
-    u1_d = deltaVector(u1_r);
-
-    p2_r = bounds(p2_low,p2_up,p2_num,p2_grid);
-    p2_d = deltaVector(p2_r);
-    u2_r = bounds(-1.0,1.0,u2_num,u2_grid);
-    u2_d = deltaVector(u2_r);
-
-    p3_r = bounds(p3_low,p3_up,p3_num,p3_grid);
-    p3_r = [0.0 ; p3_r ; 2*p3_r[end]];
-    p3_d = deltaVector(p3_r);
-    u3_r = bounds(-1.0,1.0,u3_num,u3_grid);
-    u3_d = deltaVector(u3_r);
-
-    p4_r = bounds(p4_low,p4_up,p4_num,p4_grid);
-    p4_r = [0.0 ; p4_r ; 2*p4_r[end]];
-    p4_d = deltaVector(p4_r);
-    u4_r = bounds(-1.0,1.0,u4_num,u4_grid);
-    u4_d = deltaVector(u4_r);
-
-    E1_Δ = deltaEVector(p1_r,m1);
-    E1_d = E1_Δ ./ p1_d
-
-    E2_Δ = deltaEVector(p2_r,m2);
-    E2_d = E2_Δ ./ p2_d
-
-    E3_Δ = deltaEVector(p3_r,m3);
-    E3_d = E3_Δ ./ p3_d
-
-    E4_Δ = deltaEVector(p4_r,m4);
-    E4_d = E4_Δ ./ p4_d
+    high_inds3 = GainCorrectionTmp.high_inds3
+    high_inds4 = GainCorrectionTmp.high_inds4
+    tmpvec3 = GainCorrectionTmp.tmpvec3
+    tmpvec4 = GainCorrectionTmp.tmpvec4
+    tmpsortvec3 = GainCorrectionTmp.tmpsortvec3
+    tmpsortvec4 = GainCorrectionTmp.tmpsortvec4
+    tmpsortvec3_reshape = GainCorrectionTmp.tmpsortvec3_reshape
+    tmpsortvec4_reshape = GainCorrectionTmp.tmpsortvec4_reshape
+    cart_inds3 = GainCorrectionTmp.cart_inds3
+    cart_inds4 = GainCorrectionTmp.cart_inds4
+    size3 = GainCorrectionTmp.size3
+    size4 = GainCorrectionTmp.size4
 
     num_wrong = 0
     num_right = 0
-
-    high_inds3 = zeros(Int64,((p3_num+2)*u3_num*h3_num))
-    high_inds4 = zeros(Int64,((p4_num+2)*u4_num*h4_num))
     #cart_inds3 = CartesianIndices(@view(GainMatrix3[:,:,:,1,1,1,1]))[high_inds3]
     #cart_inds4 = CartesianIndices(@view(GainMatrix4[:,:,:,1,1,1,1]))[high_inds4]
-
-    tmpvec3 = zeros(Float32,(p3_num+2))
-    tmpvec4 = zeros(Float32,(p4_num+2))
 
     for h2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,6), h1 in axes(GainMatrix3,5), u1 in axes(GainMatrix3,4)
 
@@ -570,13 +647,16 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
             fix_monotone_center_log!(@view(GainMatrix4Filtered[:,u4,h4]),tmpvec4) 
         end
 
-        # sort by highest energy contents
-        partialsortperm!(high_inds3,reshape(E3_d .* GainMatrix3Filtered,((p3_num+2)*u3_num*h3_num)), 1:(p3_num+2)*u3_num*h3_num; rev=true)
-        cart_inds3 = CartesianIndices(GainMatrix3Filtered)[high_inds3]
+        tmpsortvec3_reshape .= E3_d .* GainMatrix3Filtered
+        tmpsortvec4_reshape .= E4_d .* GainMatrix4Filtered
 
-        partialsortperm!(high_inds4,reshape(E4_d .* GainMatrix4Filtered,((p4_num+2)*u4_num*h4_num)), 1:(p4_num+2)*u4_num*h4_num; rev=true)
-        cart_inds4 = CartesianIndices(GainMatrix4Filtered)[high_inds4]
-        
+        # sort by highest energy contents
+        partialsortperm!(high_inds3,tmpsortvec3, 1:size3; rev=true)
+        cart_inds3 .= CartesianIndices(GainMatrix3Filtered)[high_inds3]
+
+        partialsortperm!(high_inds4,tmpsortvec4, 1:size4; rev=true)
+        cart_inds4 .= CartesianIndices(GainMatrix4Filtered)[high_inds4]
+
         LossSumN1 = LossMatrix[u1,h1,u2,h2]
         if !Indistinguishable_12
             LossSumN2 = LossMatrix[u1,h1,u2,h2]
@@ -872,8 +952,6 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                 end
 
             end # if CorrType
-
-
 
         end # while
 
