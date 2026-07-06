@@ -1,3 +1,12 @@
+function readblock_singlechunk!(aout::AbstractArray{<:Any,N}, z::ZArray{<:Any, N}, r::CartesianIndex{N}) where {N}
+
+    # Fast path: single-chunk full-read decodes directly into `aout`, skipping the readtask channel and scratch buffer.
+    chunk_compressed = Zarr.store_readchunk(z.storage, z.path, r, z.metadata.chunk_key_encoding)
+    Zarr.uncompress_raw!(aout, z, chunk_compressed)
+
+end
+
+
 """
     BinaryFileLoad_All(fileLocation,fileName;corrected=false)
 

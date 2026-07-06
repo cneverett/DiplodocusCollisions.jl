@@ -152,9 +152,9 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
         p1loc = indices[index][1]
         p2loc = indices[index][2]
 
-        gain3loc = CartesianIndices((1:(p3_num+2), 1:u3_num, 1:h3_num,p1loc:p1loc, 1:u1_num, 1:h1_num,p2loc:p2loc, 1:u2_num, 1:h2_num))
-        gain4loc = CartesianIndices((1:(p4_num+2), 1:u4_num, 1:h4_num,p1loc:p1loc, 1:u1_num, 1:h1_num,p2loc:p2loc, 1:u2_num, 1:h2_num))
-        lossloc = CartesianIndices((p1loc:p1loc, 1:u1_num, 1:h1_num,p2loc:p2loc, 1:u2_num, 1:h2_num))
+        gain3loc = CartesianIndex(1,1,1,p1loc,1,1,p2loc,1,1)
+        gain4loc = CartesianIndex(1,1,1,p1loc,1,1,p2loc,1,1)
+        lossloc = CartesianIndex(p1loc,1,1,p2loc,1,1)
 
         #println(stdout,"reading data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
         #flush(stdout)
@@ -167,12 +167,12 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
         #OldChunkGainWeights4 .= OldGainWeights4[:,:,:,p1loc,:,:,p2loc,:,:]
         #OldChunkLossTally .= OldLossTally[p1loc,:,:,p2loc,:,:]
 
-        Zarr.readblock!(OldChunkGainMatrix3Full,OldGainMatrix3,gain3loc)
-        Zarr.readblock!(OldChunkGainMatrix4Full,OldGainMatrix4,gain4loc)
-        Zarr.readblock!(OldChunkLossMatrixFull,OldLossMatrix,lossloc)
-        Zarr.readblock!(OldChunkGainWeights3Full,OldGainWeights3,gain3loc)
-        Zarr.readblock!(OldChunkGainWeights4Full,OldGainWeights4,gain4loc)
-        Zarr.readblock!(OldChunkLossTallyFull,OldLossTally,lossloc)
+        readblock_singlechunk!(OldChunkGainMatrix3Full,OldGainMatrix3,gain3loc)
+        readblock_singlechunk!(OldChunkGainMatrix4Full,OldGainMatrix4,gain4loc)
+        readblock_singlechunk!(OldChunkLossMatrixFull,OldLossMatrix,lossloc)
+        readblock_singlechunk!(OldChunkGainWeights3Full,OldGainWeights3,gain3loc)
+        readblock_singlechunk!(OldChunkGainWeights4Full,OldGainWeights4,gain4loc)
+        readblock_singlechunk!(OldChunkLossTallyFull,OldLossTally,lossloc)
 
         #println(stdout,"read data on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
         #flush(stdout)
@@ -404,12 +404,12 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
 
         # ===== Saving Unsymmetrised/Uncorrected Arrays ===== #
 
-            Zarr.writeblock!(OldChunkGainMatrix3Full,OldGainMatrix3,gain3loc)
-            Zarr.writeblock!(OldChunkGainMatrix4Full,OldGainMatrix4,gain4loc)
-            Zarr.writeblock!(OldChunkLossMatrixFull,OldLossMatrix,lossloc)
-            Zarr.writeblock!(OldChunkGainWeights3Full,OldGainWeights3,gain3loc)
-            Zarr.writeblock!(OldChunkGainWeights4Full,OldGainWeights4,gain4loc)
-            Zarr.writeblock!(OldChunkLossTallyFull,OldLossTally,lossloc)
+            Zarr.write_singlechunk_fastpath!(OldGainMatrix3,OldChunkGainMatrix3Full,gain3loc)
+            Zarr.write_singlechunk_fastpath!(OldGainMatrix4,OldChunkGainMatrix4Full,gain4loc)
+            Zarr.write_singlechunk_fastpath!(OldLossMatrix,OldChunkLossMatrixFull,lossloc)
+            Zarr.write_singlechunk_fastpath!(OldGainWeights3,OldChunkGainWeights3Full,gain3loc)
+            Zarr.write_singlechunk_fastpath!(OldGainWeights4,OldChunkGainWeights4Full,gain4loc)
+            Zarr.write_singlechunk_fastpath!(OldLossTally,OldChunkLossTallyFull,lossloc)
         
         # ========= Apply Symmetries ========== # 
 
@@ -424,9 +424,9 @@ function BinaryMonteCarlo!(OldGainWeights3::ZArray,OldGainWeights4::ZArray,OldLo
 
         # ========== Save Symmetrised/Corrected Chunks to Zarr ============== #
 
-            Zarr.writeblock!(OldChunkGainMatrix3Full,CorrectedGainMatrix3,gain3loc)
-            Zarr.writeblock!(OldChunkGainMatrix4Full,CorrectedGainMatrix4,gain4loc)
-            Zarr.writeblock!(OldChunkLossMatrixFull,CorrectedLossMatrix,lossloc)
+            Zarr.write_singlechunk_fastpath!(CorrectedGainMatrix3,OldChunkGainMatrix3Full,gain3loc)
+            Zarr.write_singlechunk_fastpath!(CorrectedGainMatrix4,OldChunkGainMatrix4Full,gain4loc)
+            Zarr.write_singlechunk_fastpath!(CorrectedLossMatrix,OldChunkLossMatrixFull,lossloc)
 
             println(stdout,"Completed MC loop on thread $thread_id for p1loc=$p1loc, p2loc=$p2loc")
             if thread_id == 1 

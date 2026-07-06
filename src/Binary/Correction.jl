@@ -651,14 +651,14 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
         tmpsortvec4_reshape .= E4_d .* GainMatrix4Filtered
 
         # sort by highest energy contents
-        partialsortperm!(high_inds3,tmpsortvec3, 1:size3; rev=true)
+        partialsortperm_no_view!(high_inds3,tmpsortvec3, 1:size3; rev=true)
         #cart_inds3 .= CartesianIndices(GainMatrix3Filtered)[high_inds3]
         ci3 = CartesianIndices(GainMatrix3Filtered)
         @inbounds for i in eachindex(high_inds3)
             cart_inds3[i] = ci3[high_inds3[i]]
         end
 
-        partialsortperm!(high_inds4,tmpsortvec4, 1:size4; rev=true)
+        partialsortperm_no_view!(high_inds4,tmpsortvec4, 1:size4; rev=true)
         #cart_inds4 .= CartesianIndices(GainMatrix4Filtered)[high_inds4]
         ci4 = CartesianIndices(GainMatrix4Filtered)
         @inbounds for i in eachindex(high_inds4)
@@ -1035,4 +1035,31 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
     return nothing #CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2
 
+end
+
+
+"""
+    partialsortperm_no_view!(ix, v, k; by=identity, lt=isless, rev=false)
+
+Like [`partialsortperm!`](@ref), but returns nothing.
+"""
+function partialsortperm_no_view!(ix::AbstractVector{<:Integer}, v::AbstractVector,
+                          k::Union{Integer, OrdinalRange};
+                          lt::Function=isless,
+                          by::Function=identity,
+                          rev::Union{Bool,Nothing}=nothing,
+                          order::Base.Ordering=Base.Forward,
+                          initialized::Bool=false)
+    if axes(ix,1) != axes(v,1)
+        throw(ArgumentError("The index vector is used as scratch space and must have the " *
+                            "same length/indices as the source vector, $(axes(ix,1)) != $(axes(v,1))"))
+    end
+    @inbounds for i in eachindex(ix)
+        ix[i] = i
+    end
+
+    # do partial quicksort
+    Base.Sort._sort!(ix, Base.Sort.InitialOptimizations(Base.Sort.ScratchQuickSort(k)), Base.Sort.Perm(Base.Sort.ord(lt, by, rev, order), v), (;))
+
+    return nothing
 end
