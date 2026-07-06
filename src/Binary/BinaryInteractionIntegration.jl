@@ -259,7 +259,7 @@ function BinaryInteractionIntegration(Setup::Tuple{Tuple{String,String,String,St
 
     # ========== Save Error estimate and Parameters============== #
 
-        jldopen(joinpath(filePath,"/data.jld2"),"w") do f # creates file and overwrites previous file if one existed
+        jldopen(joinpath(filePath,"data.jld2"),"w") do f # creates file and overwrites previous file if one existed
             write(f,"Parameters",Parameters)
             write(f,"ErrorEstimates",ErrorOutput)
         end
