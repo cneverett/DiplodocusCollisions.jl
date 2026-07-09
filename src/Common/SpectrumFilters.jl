@@ -522,15 +522,15 @@ function detect_and_fix_spikes_log_mean!(y::AbstractVector{<:Real};
 end
 
 
-function fix_monotone_center_log!(y::AbstractVector{<:Real},z::AbstractVector{<:Real};floor::Real = 1e-300)
+function fix_monotone_center_log!(y::AbstractVector{<:Float32},z::Vector{<:Float32};floor::Float32 = 1f-45)
 
     n = length(y)
-    fill!(z,NaN)
+    fill!(z,NaN32)
 
     # Work in log-space; ignore zeros / nonpositive values
     for i in 1:n
         if y[i] > 0
-            z[i] = log(max(float(y[i]), floor))
+            z[i] = log(max(y[i], floor))
         end
     end
 
@@ -559,7 +559,7 @@ function fix_monotone_center_log!(y::AbstractVector{<:Real},z::AbstractVector{<:
 
     # Back to original scale
     for i in 1:n
-        if isfinite(z[i])
+        if !isnan(z[i])
             y[i] = exp(z[i])
         end
     end

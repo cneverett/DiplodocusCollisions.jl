@@ -214,14 +214,14 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                 b2 = GainSumN42
 
                 ac1 = GainSumE31
-                c1 = ac1 != 0.0 ? GainSumE31/GainSumN31 : 0.0
+                c1 = a1 != 0.0 ? GainSumE31/GainSumN31 : 0.0
                 bd1 = GainSumE32
-                d1 = bd1 != 0.0 ? GainSumE32/GainSumN32 : 0.0
+                d1 = b1 != 0.0 ? GainSumE32/GainSumN32 : 0.0
 
                 ac2 = GainSumE41
-                c2 = ac2 != 0.0 ? GainSumE41/GainSumN41 : 0.0
+                c2 = a2 != 0.0 ? GainSumE41/GainSumN41 : 0.0
                 bd2 = GainSumE42
-                d2 = bd2 != 0.0 ? GainSumE42/GainSumN42 : 0.0
+                d2 = b2 != 0.0 ? GainSumE42/GainSumN42 : 0.0
                 
                 if (a1+b1 == 0e0 || (max_high_bins==0 && a1==0.0 && b1!=0.0))# There is not gain term produced by MC or only a single bin
                     #c1 = p2Big ? E3_d[p1] : E3_d[p1-1]
@@ -473,9 +473,11 @@ mutable struct GainCorrectionStruct <: Function
     high_inds3::Vector{Int64}
     high_inds4::Vector{Int64}
 
-    tmpvec3::Vector{Float64}
-    tmpvec4::Vector{Float64}
+    # for spectrum filters which keeps Float32 precision
+    tmpvec3::Vector{Float32}
+    tmpvec4::Vector{Float32}
 
+    # for correction which upgrades to Float64 precision
     tmpsortvec3::Vector{Float64}
     tmpsortvec4::Vector{Float64}
 
@@ -534,8 +536,8 @@ mutable struct GainCorrectionStruct <: Function
         high_inds3 = zeros(Int64,size3)
         high_inds4 = zeros(Int64,size4)
 
-        tmpvec3 = zeros(Float64,(p3_num+2))
-        tmpvec4 = zeros(Float64,(p4_num+2))
+        tmpvec3 = zeros(Float32,(p3_num+2))
+        tmpvec4 = zeros(Float32,(p4_num+2))
 
         tmpsortvec3 = zeros(Float64,size3)
         tmpsortvec4 = zeros(Float64,size4)
@@ -626,10 +628,15 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
     size3 = GainCorrectionTmp.size3
     size4 = GainCorrectionTmp.size4
 
-    num_wrong = 0
-    num_right = 0
+    num_wrong::Int64 = 0
+    num_right::Int64 = 0
     #cart_inds3 = CartesianIndices(@view(GainMatrix3[:,:,:,1,1,1,1]))[high_inds3]
     #cart_inds4 = CartesianIndices(@view(GainMatrix4[:,:,:,1,1,1,1]))[high_inds4]
+
+    LossSumN1::Float64 = 0.0
+    LossSumN2::Float64 = 0.0
+    LossSumE1::Float64 = 0.0
+    LossSumE2::Float64 = 0.0
 
     for h2 in axes(GainMatrix3,7), u2 in axes(GainMatrix3,6), h1 in axes(GainMatrix3,5), u1 in axes(GainMatrix3,4)
 
@@ -665,21 +672,21 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
             cart_inds4[i] = ci4[high_inds4[i]]
         end
 
-        LossSumN1 = LossMatrix[u1,h1,u2,h2]
+        LossSumN1 = Float64(LossMatrix[u1,h1,u2,h2])
         if !Indistinguishable_12
-            LossSumN2 = LossMatrix[u1,h1,u2,h2]
+            LossSumN2 = Float64(LossMatrix[u1,h1,u2,h2])
         else
-            LossSumN2 = 0f0
+            LossSumN2 = 0e0
         end
         if !Indistinguishable_12 # LossMatrix2 is non-zero
-            LossSumE1 = LossMatrix[u1,h1,u2,h2]*E1_d[p1]
-            LossSumE2 = LossMatrix[u1,h1,u2,h2]*E2_d[p2]
+            LossSumE1 = Float64(LossMatrix[u1,h1,u2,h2])*E1_d[p1]
+            LossSumE2 = Float64(LossMatrix[u1,h1,u2,h2])*E2_d[p2]
         else
-            LossSumE1 = LossMatrix[u1,h1,u2,h2]*(E1_d[p1]+E2_d[p2])/2
-            LossSumE2 = 0f0#LossMatrix1[u1,h1,u2,h2]*(E1_d[p1]+E2_d[p2])/2
+            LossSumE1 = Float64(LossMatrix[u1,h1,u2,h2])*(E1_d[p1]+E2_d[p2])/2e0
+            LossSumE2 = 0e0#LossMatrix1[u1,h1,u2,h2]*(E1_d[p1]+E2_d[p2])/2
         end
 
-        if LossSumN1 + LossSumN2 == 0f0
+        if LossSumN1 + LossSumN2 == 0e0
             # no loss term so no interaction at these incoming states
 
             num_right += 1
@@ -687,23 +694,23 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
             continue
         end
         
-        wrong = true
-        nonzero_gain = true
-        max_high_bins = 0
-        Gain3False = false
-        Gain4False = false
+        wrong::Bool = true
+        nonzero_gain::Bool = true
+        max_high_bins::Int64 = 0
+        Gain3False::Bool = false
+        Gain4False::Bool = false
 
-        alpha1 = 0.0
-        alpha2 = 0.0
-        beta = 0.0
+        alpha1::Float64 = 0.0
+        alpha2::Float64 = 0.0
+        beta::Float64 = 0.0
 
-        a1 = 0.0
-        b1 = 0.0
-        a2 = 0.0
-        b2 = 0.0
+        a1::Float64 = 0.0
+        b1::Float64 = 0.0
+        a2::Float64 = 0.0
+        b2::Float64 = 0.0
 
-        p1Big = false
-        p2Big = false
+        p1Big::Bool = false
+        p2Big::Bool = false
 
         p3_offset = length(axes(GainMatrix3,1))
         p4_offset = length(axes(GainMatrix4,1))
@@ -720,18 +727,56 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
         #cart_inds3 = CartesianIndices(GainMatrix3Filtered)[(1)]
         #cart_inds4 = CartesianIndices(GainMatrix4Filtered)[(1)]
 
+        GainSumN31::Float64 = 0e0
+        GainSumN32::Float64 = 0e0
+        GainSumN41::Float64 = 0e0
+        GainSumN42::Float64 = 0e0
+        GainSumE31::Float64 = 0e0
+        GainSumE32::Float64 = 0e0
+        GainSumE41::Float64 = 0e0
+        GainSumE42::Float64 = 0e0
+
+        GainN1::Float64 = 0e0
+        GainN2::Float64 = 0e0
+        GainE1::Float64 = 0e0
+        GainE2::Float64 = 0e0
+        LossN::Float64 = 0e0
+        LossE::Float64 = 0e0
+
+        tmpN::Float64 = 0e0
+        tmpE::Float64 = 0e0
+
+        a1::Float64 = 0e0
+        b1::Float64 = 0e0
+        a2::Float64 = 0e0
+        b2::Float64 = 0e0
+        c1::Float64 = 0e0
+        d1::Float64 = 0e0
+        c2::Float64 = 0e0
+        d2::Float64 = 0e0
+        ac1::Float64 = 0e0
+        bd1::Float64 = 0e0
+        ac2::Float64 = 0e0
+        bd2::Float64 = 0e0
+        e1::Float64 = 0e0
+        e2::Float64 = 0e0
+        f::Float64 = 0e0
+        L::Float64 = 0e0
+        LE::Float64 = 0e0
+        alpha1::Float64 = 0e0
+        alpha2::Float64 = 0e0
+        beta::Float64 = 0e0
+        a::Float64 = 0e0
+        b::Float64 = 0e0
+        c::Float64 = 0e0
+        d::Float64 = 0e0
+        ac::Float64 = 0e0
+        bd::Float64 = 0e0
+        e::Float64 = 0e0
+
         while wrong && nonzero_gain
 
             #println("max_high_bins = $max_high_bins")
-
-            GainSumN31 = zero(Float64)
-            GainSumN32 = zero(Float64)
-            GainSumN41 = zero(Float64)
-            GainSumN42 = zero(Float64)
-            GainSumE31 = zero(Float64)
-            GainSumE32 = zero(Float64)
-            GainSumE41 = zero(Float64)
-            GainSumE42 = zero(Float64)
             
             # search approach is to first find the bin with the highest GainMatrix value 
             high_bins = 0
@@ -751,8 +796,8 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
             for p3 in axes(GainMatrix3,1), u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
                 #if GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] > tol * LossSumN1 # DONT add tolerance as it cuts low gain terms at low energy that might be needed for Graph Laplacian structure
-                    tmpN = GainMatrix3Filtered[p3,u3,h3]
-                    tmpE = GainMatrix3Filtered[p3,u3,h3]*E3_d[p3]
+                    tmpN = Float64(GainMatrix3Filtered[p3,u3,h3])
+                    tmpE = Float64(GainMatrix3Filtered[p3,u3,h3])*E3_d[p3]
                 #else 
                 #    continue
                 #end
@@ -770,8 +815,8 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
             for p4 in axes(GainMatrix4,1), u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
                 #if GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] > tol * LossSumN2 # DONT add tolerance as it cuts low gain terms at low energy that might be needed for Graph Laplacian structure
-                    tmpN = GainMatrix4Filtered[p4,u4,h4]
-                    tmpE = GainMatrix4Filtered[p4,u4,h4]*E4_d[p4]
+                    tmpN = Float64(GainMatrix4Filtered[p4,u4,h4])
+                    tmpE = Float64(GainMatrix4Filtered[p4,u4,h4])*E4_d[p4]
                 #else
                 #    continue
                 #end
@@ -793,14 +838,14 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                 b2 = GainSumN42
 
                 ac1 = GainSumE31
-                c1 = ac1 != 0.0 ? GainSumE31/GainSumN31 : 0.0
+                c1 = a1 != 0.0 ? GainSumE31/GainSumN31 : 0.0
                 bd1 = GainSumE32
-                d1 = bd1 != 0.0 ? GainSumE32/GainSumN32 : 0.0
+                d1 = b1 != 0.0 ? GainSumE32/GainSumN32 : 0.0
 
                 ac2 = GainSumE41
-                c2 = ac2 != 0.0 ? GainSumE41/GainSumN41 : 0.0
+                c2 = a2 != 0.0 ? GainSumE41/GainSumN41 : 0.0
                 bd2 = GainSumE42
-                d2 = bd2 != 0.0 ? GainSumE42/GainSumN42 : 0.0
+                d2 = b2 != 0.0 ? GainSumE42/GainSumN42 : 0.0
                 
                 if (a1+b1 == 0e0 || (max_high_bins==0 && a1==0.0 && b1!=0.0))# There is not gain term produced by MC or only a single bin
                     ##println("here")
@@ -822,7 +867,7 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     Gain3False = true
                 end
 
-                if (a2+b2 == 0e0 || (max_high_bins==0 && a2==0.0 && b2!=0.0))# There is not gain term produced by MC or only a single bin
+                if (a2+b2 == 0e0 || (max_high_bins==0 && a2==0e0 && b2!=0e0))# There is not gain term produced by MC or only a single bin
                     #println("there")
                     #c2 = p1Big ? E4_d[p2] : E4_d[p2-1]
                     #d2 = p1Big ? E4_d[p2+1] : E4_d[p2]
@@ -845,9 +890,9 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                 e2 = a2 + b2 - LossSumN2
                 f  = ac1 + bd1 + ac2 + bd2 - LossSumE1 - LossSumE2
 
-                alpha1 = (b2*(d2-c2)*e1+b1*(d1*e1+c2*e2-f))/(a1*(b1*(c1-d1)+b2*(c2-d2))) + 1
-                alpha2 = (b1*(d1-c1)*e2+b2*(d2*e2+c1*e1-f))/(a2*(b1*(c1-d1)+b2*(c2-d2))) + 1
-                beta = (f-c1*e1-c2*e2)/(b1*(c1-d1)+b2*(c2-d2)) + 1
+                alpha1 = (b2*(d2-c2)*e1+b1*(d1*e1+c2*e2-f))/(a1*(b1*(c1-d1)+b2*(c2-d2))) + 1e0
+                alpha2 = (b1*(d1-c1)*e2+b2*(d2*e2+c1*e1-f))/(a2*(b1*(c1-d1)+b2*(c2-d2))) + 1e0
+                beta = (f-c1*e1-c2*e2)/(b1*(c1-d1)+b2*(c2-d2)) + 1e0
 
                 if a1 <= 0e0 || a2 <= 0e0 || max_high_bins > max(size(GainMatrix3,1),size(GainMatrix4,1))# loop has not produced any corrected gain terms
 
@@ -857,9 +902,9 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     #println("GainSumN31: $GainSumN31, GainSumN32: $GainSumN32, GainSumN41: $GainSumN41, GainSumN42: $GainSumN42, LossSumN1: $LossSumN1, LossSumN2: $LossSumN2")
                     #println("GainSumE31: $GainSumE31, GainSumE32: $GainSumE32, GainSumE41: $GainSumE41, GainSumE42: $GainSumE42, LossSumE1: $LossSumE1, LossSumE2: $LossSumE2")
                     #println("alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins")
-                    alpha1 = 0.0
-                    alpha2 = 0.0
-                    beta = 0.0
+                    alpha1 = 0e0
+                    alpha2 = 0e0
+                    beta = 0e0
                     LossMatrix[u1,h1,u2,h2] = 0f0
 
                     num_wrong += 1
@@ -873,6 +918,18 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     #println("a1: $a1, b1: $b1, ac1: $ac1, bd1: $bd1, e1: $e1, a2: $a2, b2: $b2, ac2: $ac2, bd2: $bd2, e2: $e2, f: $f, c1: $c1, d1: $d1, c2: $c2, d2: $d2")
                     #println("GainSumN31: $GainSumN31, GainSumN32: $GainSumN32, GainSumN41: $GainSumN41, GainSumN42: $GainSumN42")
                     #println("alpha1: $alpha1, alpha2: $alpha2, beta: $beta")
+                    nonzero_gain = false
+
+                    # set this bin to zero to be safe
+                    alpha1 = 0e0
+                    alpha2 = 0e0
+                    beta = 0e0
+                    LossMatrix[u1,h1,u2,h2] = 0f0
+
+                    num_wrong += 1
+
+                    continue
+
                 end
 
                 if  alpha1 < 0e0 || alpha2 < 0e0 || beta < 0e0
@@ -905,9 +962,9 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     nonzero_gain = false
                     @warn "No valid correction for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2"
 
-                    alpha1 = 0.0
-                    alpha2 = 0.0
-                    beta = 0.0
+                    alpha1 = 0e0
+                    alpha2 = 0e0
+                    beta = 0e0
                     LossMatrix[u1,h1,u2,h2] = 0f0
 
                     num_wrong += 1
@@ -929,11 +986,11 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     # In this case deltaE is the approx the same for all bins involved, so energy is approx conserved if number is conserved so only one equation and one parameter needed which we take scales b
                     #alpha = -e/(a+b) + 1
                     #beta = alpha
-                    beta = -e/b +1
-                    alpha = 1.0
+                    beta = -e/b + 1e0
+                    alpha = 1e0
                 else
-                    alpha = (e*d-f)/(ac-a*d)+1
-                    beta = (e*c-f)/(bd-b*c)+1
+                    alpha = (e*d-f)/(ac-a*d) + 1e0
+                    beta = (e*c-f)/(bd-b*c) + 1e0
                 end
 
                 if isnan(alpha) || isnan(beta)
@@ -941,6 +998,13 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     #println("a: $a, b: $b, ac: $ac, bd: $bd, e: $e, f: $f, c: $c, d: $d")
                     #println("$(a+b-LossN), $(ac+bd-LossE)")
                     #println("LossE/LossN: $(LossE/LossN), bd/b: $(bd/b), ac/a: $(ac/a)")
+                    nonzero_gain = false
+                    # set this bin to zero to be safe
+                    alpha = 0e0
+                    beta = 0e0
+                    LossMatrix[u1,h1,u2,h2] = 0f0
+
+                    continue
                 end
 
                 if alpha < 0e0 || beta < 0e0
