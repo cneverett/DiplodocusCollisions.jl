@@ -27,7 +27,7 @@ ProgressMeter = "1.10"
 Random = "1.11"
 Revise = "3.12.3"
 Statistics = "1.11.1"
-Zarr = "0.10.0"
+Zarr = "0.10.1"
 julia = "1.12"
 
 [extras]

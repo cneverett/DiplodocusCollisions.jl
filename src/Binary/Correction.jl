@@ -700,15 +700,6 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
         Gain3False::Bool = false
         Gain4False::Bool = false
 
-        alpha1::Float64 = 0.0
-        alpha2::Float64 = 0.0
-        beta::Float64 = 0.0
-
-        a1::Float64 = 0.0
-        b1::Float64 = 0.0
-        a2::Float64 = 0.0
-        b2::Float64 = 0.0
-
         p1Big::Bool = false
         p2Big::Bool = false
 
