@@ -677,6 +677,13 @@ function GainLossPolarSymmetryMatrixBinaryChunk!(GainMatrix3::AbstractArray{Floa
                 GainMatrix3[p3,u3,h3,u2,h2,u1,h1] = avg
                 GainMatrix3[p3,u3_mir,h3,u2_mir,h2,u1_mir,h1] = avg
 
+                if m3 == m4 # no need to recalculate average if same mass
+                    GainMatrix4[p3,u3,h3,u1,h1,u2,h2] = avg
+                    GainMatrix4[p3,u3_mir,h3,u1_mir,h1,u2_mir,h2] = avg
+                    GainMatrix4[p3,u3,h3,u2,h2,u1,h1] = avg
+                    GainMatrix4[p3,u3_mir,h3,u2_mir,h2,u1_mir,h1] = avg
+                end
+
             elseif m1 == m2 # only second symmetry true
 
                 # 2 element averaging two are particle 12 swaps
@@ -688,6 +695,11 @@ function GainLossPolarSymmetryMatrixBinaryChunk!(GainMatrix3::AbstractArray{Floa
                 GainMatrix3[p3,u3,h3,u1,h1,u2,h2] = avg
                 GainMatrix3[p3,u3,h3,u2,h2,u1,h1] = avg
 
+                if m3 == m4 # no need to recalculate average if same mass
+                    GainMatrix4[p3,u3,h3,u1,h1,u2,h2] = avg
+                    GainMatrix4[p3,u3,h3,u2,h2,u1,h1] = avg
+                end
+
             elseif symmetric_grid # only first symmetry true
 
                 # 2 element averaging two are u angles mirrors
@@ -698,6 +710,11 @@ function GainLossPolarSymmetryMatrixBinaryChunk!(GainMatrix3::AbstractArray{Floa
 
                 GainMatrix3[p3,u3,h3,u1,h1,u2,h2] = avg
                 GainMatrix3[p3,u3_mir,h3,u1_mir,h1,u2_mir,h2] = avg
+
+                if m3 == m4 # no need to recalculate average if same mass
+                    GainMatrix4[p3,u3,h3,u1,h1,u2,h2] = avg
+                    GainMatrix4[p3,u3_mir,h3,u1_mir,h1,u2_mir,h2] = avg
+                end
 
             end
 
@@ -878,6 +895,9 @@ function GainLossAzimuthalSymmetryMatrixBinaryChunk!(GainMatrix3::AbstractArray{
                 h3 = mod(floor(Int64, (h+off3) / (num_sec123divnum_h3)),num_h3) + 1
 
                 GainMatrix3[p3,u3,h3,u1,h1,u2,h2] = val # average over number of sections/rotations times weight of each section
+                if m3 == m4 # no need to recalculate average if same mass
+                    GainMatrix4[p3,u3,h3,u1,h1,u2,h2] = val # average over number of sections/rotations times weight of each section
+                end
 
             end
 

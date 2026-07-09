@@ -1000,7 +1000,8 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     #println("LossE/LossN: $(LossE/LossN), bd/b: $(bd/b), ac/a: $(ac/a)")
                     nonzero_gain = false
                     # set this bin to zero to be safe
-                    alpha = 0e0
+                    alpha1 = 0e0
+                    alpha2 = 0e0
                     beta = 0e0
                     LossMatrix[u1,h1,u2,h2] = 0f0
 
