@@ -11,21 +11,29 @@ function MomentumSpaceFactorsEmission!(LossMatrix1,GainMatrix2,GainMatrix3::Arra
 
 end
 
-function GainLossPolarSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
+function GainLossPolarSymmetryEmission!(GainMatrix2::Array{Float64,6},GainMatrix3::Array{Float64,6},LossMatrix1::Array{Float64,3},GainTally2::Array{UInt32,6},GainTally3::Array{UInt32,6},LossTally1::Array{UInt32,3})
 
     GainMatrix2Mirror = @view(GainMatrix2[:,end:-1:1,:,:,end:-1:1,:])
     GainMatrix3Mirror = @view(GainMatrix3[:,end:-1:1,:,:,end:-1:1,:])
     LossMatrix1Mirror = @view(LossMatrix1[:,end:-1:1,:,:,end:-1:1,:])
 
+    GainTally2Mirror = @view(GainTallyN2[:,end:-1:1,:,:,end:-1:1,:])
+    GainTally3Mirror = @view(GainTallyN3[:,end:-1:1,:,:,end:-1:1,:])
+    LossTally1Mirror = @view(LossTallyN1[:,end:-1:1,:,:,end:-1:1,:])
+
     @. GainMatrix2 = (GainMatrix2Mirror + GainMatrix2) / 2
     @. GainMatrix3 = (GainMatrix3Mirror + GainMatrix3) / 2
     @. LossMatrix1 = (LossMatrix1Mirror + LossMatrix1) / 2
+
+    @. GainTally2 = GainTally2Mirror + GainTallyN2
+    @. GainTally3 = GainTally3Mirror + GainTallyN3
+    @. LossTally1 = LossTally1Mirror + LossTallyN1
 
     return nothing
 
 end # function
 
-function GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
+function GainLossAzimuthalSymmetryEmission!(GainMatrix2::Array{Float64,6},GainMatrix3::Array{Float64,6},LossMatrix1::Array{Float64,3},GainTally2::Array{UInt32,6},GainTally3::Array{UInt32,6},LossTally1::Array{UInt32,3})
 
     num_h1 = size(GainMatrix3,6)
     num_h2 = size(GainMatrix2,3)
@@ -42,6 +50,7 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
         for off3 in 0:num_sections13-1 # loop over the maximum number of azimuthal bins for the particles
             
             tmp_total = zero(Float64)
+            tmp_tally = zero(UInt32)
 
             for h in 1:num_sections13
 
@@ -49,7 +58,8 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
                 h3 = mod(floor(Int64, (h+off3) / (num_sections13 / num_h3)),num_h3) + 1
 
                 tmp_total += GainMatrix3[p3,u3,h3,p1,u1,h1]
-
+                tmp_tally += GainTally3[p3,u3,h3,p1,u1,h1]
+                
             end
 
             for h in 1:num_sections13
@@ -58,7 +68,7 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
                 h3 = mod(floor(Int64, (h+off3) / (num_sections13 / num_h3)),num_h3) + 1
 
                 GainMatrix3[p3,u3,h3,p1,u1,h1] = tmp_total / num_sections13 # average over number of sections/rotations
-
+                GainTally3[p3,u3,h3,p1,u1,h1] = tmp_tally
             end
 
         end
@@ -73,6 +83,7 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
         for off2 in 0:num_sections12-1 # loop over the maximum number of azimuthal bins for the particles
             
             tmp_total = zero(Float64)
+            tmp_tally = zero(UInt32)
 
             for h in 1:num_sections12
 
@@ -80,6 +91,7 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
                 h2 = mod(floor(Int64, (h+off2) / (num_sections12 / num_h2)),num_h2) + 1
 
                 tmp_total += GainMatrix2[p2,u2,h2,p1,u1,h1]
+                tmp_tally += GainTally2[p2,u2,h2,p1,u1,h1]
 
             end
 
@@ -89,6 +101,7 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
                 h2 = mod(floor(Int64, (h+off2) / (num_sections12 / num_h2)),num_h2) + 1
 
                 GainMatrix2[p2,u2,h2,p1,u1,h1] = tmp_total / num_sections12 # average over number of sections/rotations
+                GainTally2[p2,u2,h2,p1,u1,h1] = tmp_tally 
 
             end
 
@@ -104,12 +117,14 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
         for off1 in 0:num_sections1-1 # loop over the maximum number of azimuthal bins for the particles
 
             tmp_total = zero(Float64)
+            tmp_tally = zero(UInt32)
 
             for h in 1:num_sections1
 
                 h1 = mod(floor(Int64, h / (num_sections1 / num_h1)),num_h1) + 1
 
                 tmp_total += LossMatrix1[p1,u1,h1] # LossMatrix2 is just a permutation of LossMatrix1 so we only need to sum over one of them
+                tmp_tally += LossTally1[p1,u1,h1] # LossMatrix2 is just a permutation of LossMatrix1 so we only need to sum over one of them
                 
             end
 
@@ -118,6 +133,7 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2,GainMatrix3,LossMatrix1)
                 h1 = mod(floor(Int64, h / (num_sections1 / num_h1)),num_h1) + 1
    
                 LossMatrix1[p1,u1,h1] = tmp_total / num_sections1 # average over number of sections/rotations
+                LossTally1[p1,u1,h1] = tmp_tally 
 
             end
 
