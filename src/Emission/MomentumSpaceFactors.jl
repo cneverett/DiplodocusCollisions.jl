@@ -25,9 +25,9 @@ function GainLossPolarSymmetryEmission!(GainMatrix2::Array{Float64,6},GainMatrix
     @. GainMatrix3 = (GainMatrix3Mirror + GainMatrix3) / 2
     @. LossMatrix1 = (LossMatrix1Mirror + LossMatrix1) / 2
 
-    @. GainTally2 = GainTally2Mirror + GainTallyN2
-    @. GainTally3 = GainTally3Mirror + GainTallyN3
-    @. LossTally1 = LossTally1Mirror + LossTallyN1
+    @. GainTally2 = round(UInt32, (GainTally2Mirror + GainTallyN2) / 2)
+    @. GainTally3 = round(UInt32, (GainTally3Mirror + GainTallyN3) / 2)
+    @. LossTally1 = round(UInt32, (LossTally1Mirror + LossTallyN1) / 2)
 
     return nothing
 
@@ -68,7 +68,7 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2::Array{Float64,6},GainMa
                 h3 = mod(floor(Int64, (h+off3) / (num_sections13 / num_h3)),num_h3) + 1
 
                 GainMatrix3[p3,u3,h3,p1,u1,h1] = tmp_total / num_sections13 # average over number of sections/rotations
-                GainTally3[p3,u3,h3,p1,u1,h1] = tmp_tally
+                GainTally3[p3,u3,h3,p1,u1,h1] = round(UInt32, tmp_tally / num_sections13)
             end
 
         end
@@ -101,7 +101,7 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2::Array{Float64,6},GainMa
                 h2 = mod(floor(Int64, (h+off2) / (num_sections12 / num_h2)),num_h2) + 1
 
                 GainMatrix2[p2,u2,h2,p1,u1,h1] = tmp_total / num_sections12 # average over number of sections/rotations
-                GainTally2[p2,u2,h2,p1,u1,h1] = tmp_tally 
+                GainTally2[p2,u2,h2,p1,u1,h1] = round(UInt32, tmp_tally / num_sections12)
 
             end
 
@@ -133,7 +133,7 @@ function GainLossAzimuthalSymmetryEmission!(GainMatrix2::Array{Float64,6},GainMa
                 h1 = mod(floor(Int64, h / (num_sections1 / num_h1)),num_h1) + 1
    
                 LossMatrix1[p1,u1,h1] = tmp_total / num_sections1 # average over number of sections/rotations
-                LossTally1[p1,u1,h1] = tmp_tally 
+                LossTally1[p1,u1,h1] = round(UInt32, tmp_tally / num_sections1)
 
             end
 
