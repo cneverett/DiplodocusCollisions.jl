@@ -609,7 +609,7 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
     meanEErr2_sum = 0.0
     meanEErr_count = 0
 
-    @inbounds for p1 in axes(GainMatrix3, 4), p2 in axes(GainMatrix3,7)
+    #=@inbounds=# for p1 in axes(GainMatrix3, 4), p2 in axes(GainMatrix3,7)
 
         gain3loc = CartesianIndex(1,1,1,p1,1,1,p2,1,1)
         gain4loc = CartesianIndex(1,1,1,p1,1,1,p2,1,1)
@@ -628,7 +628,7 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
         #readblock_singlechunk!(ChunkGainMatrix4Full,GainMatrix4,gain4loc)
         #readblock_singlechunk!(ChunkLossMatrixFull,LossMatrix,lossloc)
 
-        @inbounds for u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
+        #=@inbounds=# for u1 in axes(GainMatrix3,5), h1 in axes(GainMatrix3,6), u2 in axes(GainMatrix3,8), h2 in axes(GainMatrix3,9)
             for p3 in axes(GainMatrix3,1), u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
             tmp = ChunkGainMatrix3[p3,u3,h3,u1,h1,u2,h2]
             SsumN3 += tmp
@@ -638,7 +638,7 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
             end
         end
 
-        @inbounds for u1 in axes(GainMatrix4,5), h1 in axes(GainMatrix4,6), u2 in axes(GainMatrix4,8), h2 in axes(GainMatrix4,9)
+        #=@inbounds=# for u1 in axes(GainMatrix4,5), h1 in axes(GainMatrix4,6), u2 in axes(GainMatrix4,8), h2 in axes(GainMatrix4,9)
             for p4 in axes(GainMatrix4,1), u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
             tmp = ChunkGainMatrix4[p4,u4,h4,u1,h1,u2,h2]
             SsumN4 += tmp
@@ -648,7 +648,7 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
             end
         end
 
-        @inbounds for u1 in axes(LossMatrix, 2), h1 in axes(LossMatrix,3), u2 in axes(LossMatrix,5), h2 in axes(LossMatrix,6)
+        #=@inbounds=# for u1 in axes(LossMatrix, 2), h1 in axes(LossMatrix,3), u2 in axes(LossMatrix,5), h2 in axes(LossMatrix,6)
             tmp1 = ChunkLossMatrix[u1,h1,u2,h2]
             if !Indistinguishable_12
                 tmp2 = ChunkLossMatrix[u1,h1,u2,h2]
