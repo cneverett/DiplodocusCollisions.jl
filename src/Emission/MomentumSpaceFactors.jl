@@ -17,17 +17,17 @@ function GainLossPolarSymmetryEmission!(GainMatrix2::Array{Float64,6},GainMatrix
     GainMatrix3Mirror = @view(GainMatrix3[:,end:-1:1,:,:,end:-1:1,:])
     LossMatrix1Mirror = @view(LossMatrix1[:,end:-1:1,:,:,end:-1:1,:])
 
-    GainTally2Mirror = @view(GainTallyN2[:,end:-1:1,:,:,end:-1:1,:])
-    GainTally3Mirror = @view(GainTallyN3[:,end:-1:1,:,:,end:-1:1,:])
-    LossTally1Mirror = @view(LossTallyN1[:,end:-1:1,:,:,end:-1:1,:])
+    GainTally2Mirror = @view(GainTally2[:,end:-1:1,:,:,end:-1:1,:])
+    GainTally3Mirror = @view(GainTally3[:,end:-1:1,:,:,end:-1:1,:])
+    LossTally1Mirror = @view(LossTally1[:,end:-1:1,:,:,end:-1:1,:])
 
     @. GainMatrix2 = (GainMatrix2Mirror + GainMatrix2) / 2
     @. GainMatrix3 = (GainMatrix3Mirror + GainMatrix3) / 2
     @. LossMatrix1 = (LossMatrix1Mirror + LossMatrix1) / 2
 
-    @. GainTally2 = round(UInt32, (GainTally2Mirror + GainTallyN2) / 2)
-    @. GainTally3 = round(UInt32, (GainTally3Mirror + GainTallyN3) / 2)
-    @. LossTally1 = round(UInt32, (LossTally1Mirror + LossTallyN1) / 2)
+    @. GainTally2 = round(UInt32, (GainTally2Mirror + GainTally2) / 2)
+    @. GainTally3 = round(UInt32, (GainTally3Mirror + GainTally3) / 2)
+    @. LossTally1 = round(UInt32, (LossTally1Mirror + LossTally1) / 2)
 
     return nothing
 
