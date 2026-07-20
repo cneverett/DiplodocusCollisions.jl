@@ -600,6 +600,8 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
     ChunkGainMatrix4 = @view(ChunkGainMatrix4Full[:,:,:,1,:,:,1,:,:])
     ChunkLossMatrix = @view(ChunkLossMatrixFull[1,:,:,1,:,:])
 
+    NErrMatrix = zeros(Float64,size(LossMatrix))
+    EErrMatrix = zeros(Float64,size(LossMatrix))
     meanNErr_sum = 0.0
     meanNErr2_sum = 0.0
     meanNErr_count = 0
@@ -670,13 +672,13 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
             end
         end
 
-        NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
+        NErrMatrix .= (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
         NErrList = filter(!isnan, NErrMatrix)
         meanNErr_sum += sum(NErrList)
         meanNErr2_sum += sum(NErrList.^2)
         meanNErr_count += length(NErrList)
 
-        EErrMatrix = (EGainMatrix3 .+ EGainMatrix4 .- ELossMatrix1 .- ELossMatrix2) ./ (ELossMatrix1 .+ ELossMatrix2)
+        EErrMatrix .= (EGainMatrix3 .+ EGainMatrix4 .- ELossMatrix1 .- ELossMatrix2) ./ (ELossMatrix1 .+ ELossMatrix2)
         EErrList = filter(!isnan, EErrMatrix)
         meanEErr_sum += sum(EErrList)
         meanEErr2_sum += sum(EErrList.^2)
@@ -695,7 +697,7 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
     stdE = sqrt(sum((EErrList .- meanEErr).^2)/length(EErrList))=#
 
     meanNErr = meanNErr_sum / meanNErr_count
-    stdN = sqrt(meanNErr2_sum - 2meanNerr_sum*meanNErr + meanNErr^2)/meanNErr_count
+    stdN = sqrt(meanNErr2_sum - 2meanNErr_sum*meanNErr + meanNErr^2)/meanNErr_count
     meanEErr = meanEErr_sum / meanEErr_count
     stdE = sqrt(meanEErr2_sum - 2meanEErr_sum*meanEErr + meanEErr^2)/meanEErr_count
 
