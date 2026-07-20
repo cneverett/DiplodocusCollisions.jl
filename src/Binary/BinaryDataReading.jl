@@ -553,7 +553,7 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
     E2_d = E2_Δ ./ p2_d
 
     p3_r::Vector{Float64} = bounds(p3_low,p3_up,p3_num,p3_grid);
-    p3_r::Vector{Float64} = [0.0 ; p3_r ; 2*p3_r[end]];
+    p3_r = [0.0 ; p3_r ; 2*p3_r[end]];
     p3_d::Vector{Float64} = deltaVector(p3_r);
     #p3_d_full = [p3_d; deltaVector([p3_r[end]; 2*p3_r[end]])];
     E3_Δ::Vector{Float64} = deltaEVector(p3_r,mu3);
@@ -562,7 +562,7 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
     E3_d = E3_Δ ./ p3_d
 
     p4_r::Vector{Float64} = bounds(p4_low,p4_up,p4_num,p4_grid);
-    p4_r::Vector{Float64} = [0.0 ; p4_r ; 2*p4_r[end]];
+    p4_r = [0.0 ; p4_r ; 2*p4_r[end]];
     p4_d::Vector{Float64} = deltaVector(p4_r);
     #p4_d_full = [p4_d; deltaVector([p4_r[end]; 2*p4_r[end]])];
     E4_Δ::Vector{Float64} = deltaEVector(p4_r,mu4);
@@ -674,9 +674,15 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
 
     end
 
+
     NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
     NErrList = filter(!isnan, NErrMatrix)
-    println("sum gain Matrices:",sum(NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2))
+    println("sum gain 3 Matrices:",sum(NGainMatrix3))
+    println("sum gain 4 Matrices:",sum(NGainMatrix4))
+    println("sum loss 1 Matrices:",sum(NLossMatrix1))
+    println("sum loss 2 Matrices:",sum(NLossMatrix2))
+    println("sum gain Matrices:",sum(NGainMatrix3 .+ NGainMatrix4))
+    println("sum gain-loss Matrices:",sum(NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2))
     println("sum loss Matrices:",sum(NLossMatrix1 .+ NLossMatrix2))
     println("sum NErrMatrix:",sum(NErrMatrix))
     println("sum NErrList:",sum(NErrList))
