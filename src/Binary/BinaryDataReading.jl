@@ -536,65 +536,65 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
 
     # underflow and overflow bins are taken to have size 0 -> p_r[1] and p_r[end] -> 2*p_r[end] respectively and are only needed for p3 and p4 the outgoing particles
 
-    p1_r = bounds(p1_low,p1_up,p1_num,p1_grid);
-    p1_d = deltaVector(p1_r);
+    p1_r::Vector{Float64} = bounds(p1_low,p1_up,p1_num,p1_grid);
+    p1_d::Vector{Float64} = deltaVector(p1_r);
     #p1_d_full = [p1_r[1] ; p1_d; deltaVector([p1_r[end]; 2*p1_r[end]])];
-    E1_Δ = deltaEVector(p1_r,mu1);
+    E1_Δ::Vector{Float64} = deltaEVector(p1_r,mu1);
     #E1_Δ_full = [E1_Δ; deltaEVector([p1_r[end], 2*p1_r[end]],mu1)];
     #E1_d_full = E1_Δ_full ./ p1_d_full;
     E1_d = E1_Δ ./ p1_d
 
-    p2_r = bounds(p2_low,p2_up,p2_num,p2_grid);
-    p2_d = deltaVector(p2_r);
+    p2_r::Vector{Float64} = bounds(p2_low,p2_up,p2_num,p2_grid);
+    p2_d::Vector{Float64} = deltaVector(p2_r);
     #p2_d_full = [p2_d; deltaVector([p2_r[end]; 2*p2_r[end]])];
-    E2_Δ = deltaEVector(p2_r,mu2);
+    E2_Δ::Vector{Float64} = deltaEVector(p2_r,mu2);
     #E2_Δ_full = [E2_Δ; deltaEVector([p2_r[end], 2*p2_r[end]],mu2)];
     #E2_d_full = E2_Δ_full ./ p2_d_full;
     E2_d = E2_Δ ./ p2_d
 
-    p3_r = bounds(p3_low,p3_up,p3_num,p3_grid);
-    p3_r = [0.0 ; p3_r ; 2*p3_r[end]];
-    p3_d = deltaVector(p3_r);
+    p3_r::Vector{Float64} = bounds(p3_low,p3_up,p3_num,p3_grid);
+    p3_r::Vector{Float64} = [0.0 ; p3_r ; 2*p3_r[end]];
+    p3_d::Vector{Float64} = deltaVector(p3_r);
     #p3_d_full = [p3_d; deltaVector([p3_r[end]; 2*p3_r[end]])];
-    E3_Δ = deltaEVector(p3_r,mu3);
+    E3_Δ::Vector{Float64} = deltaEVector(p3_r,mu3);
     #E3_Δ_full = [E3_Δ; deltaEVector([p3_r[end], 2*p3_r[end]],mu3)];
     #E3_d_full = E3_Δ_full ./ p3_d_full
     E3_d = E3_Δ ./ p3_d
 
-    p4_r = bounds(p4_low,p4_up,p4_num,p4_grid);
-    p4_r = [0.0 ; p4_r ; 2*p4_r[end]];
-    p4_d = deltaVector(p4_r);
+    p4_r::Vector{Float64} = bounds(p4_low,p4_up,p4_num,p4_grid);
+    p4_r::Vector{Float64} = [0.0 ; p4_r ; 2*p4_r[end]];
+    p4_d::Vector{Float64} = deltaVector(p4_r);
     #p4_d_full = [p4_d; deltaVector([p4_r[end]; 2*p4_r[end]])];
-    E4_Δ = deltaEVector(p4_r,mu4);
+    E4_Δ::Vector{Float64} = deltaEVector(p4_r,mu4);
     #E4_Δ_full = [E4_Δ; deltaEVector([p4_r[end], 2*p4_r[end]],mu4)];
     #E4_d_full = E4_Δ_full ./ p4_d_full
     E4_d = E4_Δ ./ p4_d
 
     #println("E1_d: $E1_d \n E2_d: $E2_d \n E3_d: $E3_d \n E4_d: $E4_d")
 
-    SsumN3 = 0.0
-    TsumN1 = 0.0
-    SsumE3 = 0.0
-    TsumE1 = 0.0
+    SsumN3::Float64 = 0.0
+    TsumN1::Float64 = 0.0
+    SsumE3::Float64 = 0.0
+    TsumE1::Float64 = 0.0
 
-    SsumN4 = 0.0
-    TsumN2 = 0.0
-    SsumE4 = 0.0
-    TsumE2 = 0.0
+    SsumN4::Float64 = 0.0
+    TsumN2::Float64 = 0.0
+    SsumE4::Float64 = 0.0
+    TsumE2::Float64 = 0.0
 
-    NGainMatrix3 = zeros(Float64,size(LossMatrix))
-    NLossMatrix1 = zeros(Float64,size(LossMatrix))
-    EGainMatrix3 = zeros(Float64,size(LossMatrix))
-    ELossMatrix1 = zeros(Float64,size(LossMatrix))
+    NGainMatrix3::Array{Float64,6} = zeros(Float64,size(LossMatrix))
+    NLossMatrix1::Array{Float64,6} = zeros(Float64,size(LossMatrix))
+    EGainMatrix3::Array{Float64,6} = zeros(Float64,size(LossMatrix))
+    ELossMatrix1::Array{Float64,6} = zeros(Float64,size(LossMatrix))
 
-    NGainMatrix4 = zeros(Float64,size(LossMatrix))
-    NLossMatrix2 = zeros(Float64,size(LossMatrix))
-    EGainMatrix4 = zeros(Float64,size(LossMatrix))
-    ELossMatrix2 = zeros(Float64,size(LossMatrix))
+    NGainMatrix4::Array{Float64,6} = zeros(Float64,size(LossMatrix))
+    NLossMatrix2::Array{Float64,6} = zeros(Float64,size(LossMatrix))
+    EGainMatrix4::Array{Float64,6} = zeros(Float64,size(LossMatrix))
+    ELossMatrix2::Array{Float64,6} = zeros(Float64,size(LossMatrix))
 
-    ChunkGainMatrix3Full = zeros(Float64,p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num)
-    ChunkGainMatrix4Full = zeros(Float64,p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num)
-    ChunkLossMatrixFull = zeros(Float64,1,u1_num,h1_num,1,u2_num,h2_num)
+    ChunkGainMatrix3Full::Array{Float64,9} = zeros(Float64,p3_num+2,u3_num,h3_num,1,u1_num,h1_num,1,u2_num,h2_num)
+    ChunkGainMatrix4Full::Array{Float64,9} = zeros(Float64,p4_num+2,u4_num,h4_num,1,u1_num,h1_num,1,u2_num,h2_num)
+    ChunkLossMatrixFull::Array{Float64,6} = zeros(Float64,1,u1_num,h1_num,1,u2_num,h2_num)
 
     ChunkGainMatrix3 = @view(ChunkGainMatrix3Full[:,:,:,1,:,:,1,:,:])
     ChunkGainMatrix4 = @view(ChunkGainMatrix4Full[:,:,:,1,:,:,1,:,:])
@@ -672,34 +672,22 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
             end
         end
 
-        NErrMatrix .= (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
-        NErrList = filter(!isnan, NErrMatrix)
-        meanNErr_sum += sum(NErrList)
-        meanNErr2_sum += sum(NErrList.^2)
-        meanNErr_count += length(NErrList)
-
-        EErrMatrix .= (EGainMatrix3 .+ EGainMatrix4 .- ELossMatrix1 .- ELossMatrix2) ./ (ELossMatrix1 .+ ELossMatrix2)
-        EErrList = filter(!isnan, EErrMatrix)
-        meanEErr_sum += sum(EErrList)
-        meanEErr2_sum += sum(EErrList.^2)
-        meanEErr_count += length(EErrList)
-
     end
 
-    #=NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
+    NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
     NErrList = filter(!isnan, NErrMatrix)
+    println("sum gain Matrices:",sum(NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2))
+    println("sum loss Matrices:",sum(NLossMatrix1 .+ NLossMatrix2))
+    println("sum NErrMatrix:",sum(NErrMatrix))
+    println("sum NErrList:",sum(NErrList))
+    println("length NErrList:",length(NErrList))
     meanNErr = sum(NErrList) / length(NErrList)
     stdN = sqrt(sum((NErrList .- meanNErr).^2)/length(NErrList))
 
     EErrMatrix = (EGainMatrix3 .+ EGainMatrix4 .- ELossMatrix1 .- ELossMatrix2) ./ (ELossMatrix1 .+ ELossMatrix2)
     EErrList = filter(!isnan, EErrMatrix)
     meanEErr = sum(EErrList) / length(EErrList)
-    stdE = sqrt(sum((EErrList .- meanEErr).^2)/length(EErrList))=#
-
-    meanNErr = meanNErr_sum / meanNErr_count
-    stdN = sqrt(meanNErr2_sum - 2meanNErr_sum*meanNErr + meanNErr^2)/meanNErr_count
-    meanEErr = meanEErr_sum / meanEErr_count
-    stdE = sqrt(meanEErr2_sum - 2meanEErr_sum*meanEErr + meanEErr^2)/meanEErr_count
+    stdE = sqrt(sum((EErrList .- meanEErr).^2)/length(EErrList))
 
     println("sumGainN3 = "*string(SsumN3))
     println("sumGainN4 = "*string(SsumN4))
