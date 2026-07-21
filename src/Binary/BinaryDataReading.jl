@@ -676,7 +676,7 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
 
 
     NErrMatrix = (NGainMatrix3 .+ NGainMatrix4 .- NLossMatrix1 .- NLossMatrix2) ./ (NLossMatrix1 .+ NLossMatrix2)
-    NErrList = filter(!isnan, NErrMatrix)
+    NErrList = filter(isfinite, NErrMatrix)
     println("sum gain 3 Matrices:",sum(NGainMatrix3))
     println("sum gain 4 Matrices:",sum(NGainMatrix4))
     println("sum loss 1 Matrices:",sum(NLossMatrix1))
@@ -691,7 +691,7 @@ function DoesConserve(Output::Tuple{Tuple,ZArray,ZArray,ZArray};Tuple_Output::Bo
     stdN = sqrt(sum((NErrList .- meanNErr).^2)/length(NErrList))
 
     EErrMatrix = (EGainMatrix3 .+ EGainMatrix4 .- ELossMatrix1 .- ELossMatrix2) ./ (ELossMatrix1 .+ ELossMatrix2)
-    EErrList = filter(!isnan, EErrMatrix)
+    EErrList = filter(isfinite, EErrMatrix)
     meanEErr = sum(EErrList) / length(EErrList)
     stdE = sqrt(sum((EErrList .- meanEErr).^2)/length(EErrList))
 
