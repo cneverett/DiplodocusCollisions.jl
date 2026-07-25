@@ -214,14 +214,14 @@ function GainCorrection(Parameters::Tuple{String, String, String, String, Float6
                 b2 = GainSumN42
 
                 ac1 = GainSumE31
-                c1 = a1 != 0.0 ? GainSumE31/GainSumN31 : 0.0
+                c1 = ac1 != 0.0 ? GainSumE31/GainSumN31 : 0.0
                 bd1 = GainSumE32
-                d1 = b1 != 0.0 ? GainSumE32/GainSumN32 : 0.0
+                d1 = bd1 != 0.0 ? GainSumE32/GainSumN32 : 0.0
 
                 ac2 = GainSumE41
-                c2 = a2 != 0.0 ? GainSumE41/GainSumN41 : 0.0
+                c2 = ac2 != 0.0 ? GainSumE41/GainSumN41 : 0.0
                 bd2 = GainSumE42
-                d2 = b2 != 0.0 ? GainSumE42/GainSumN42 : 0.0
+                d2 = bd2 != 0.0 ? GainSumE42/GainSumN42 : 0.0
                 
                 if (a1+b1 == 0e0 || (max_high_bins==0 && a1==0.0 && b1!=0.0))# There is not gain term produced by MC or only a single bin
                     #c1 = p2Big ? E3_d[p1] : E3_d[p1-1]
@@ -661,14 +661,14 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
         partialsortperm_no_view!(high_inds3,tmpsortvec3, 1:size3; rev=true)
         #cart_inds3 .= CartesianIndices(GainMatrix3Filtered)[high_inds3]
         ci3 = CartesianIndices(GainMatrix3Filtered)
-        @inbounds for i in eachindex(high_inds3)
+        for i in eachindex(high_inds3)
             cart_inds3[i] = ci3[high_inds3[i]]
         end
 
         partialsortperm_no_view!(high_inds4,tmpsortvec4, 1:size4; rev=true)
         #cart_inds4 .= CartesianIndices(GainMatrix4Filtered)[high_inds4]
         ci4 = CartesianIndices(GainMatrix4Filtered)
-        @inbounds for i in eachindex(high_inds4)
+        for i in eachindex(high_inds4)
             cart_inds4[i] = ci4[high_inds4[i]]
         end
 
@@ -767,6 +767,15 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
         while wrong && nonzero_gain
 
+            GainSumN31 = zero(Float64)
+            GainSumN32 = zero(Float64)
+            GainSumN41 = zero(Float64)
+            GainSumN42 = zero(Float64)
+            GainSumE31 = zero(Float64)
+            GainSumE32 = zero(Float64)
+            GainSumE41 = zero(Float64)
+            GainSumE42 = zero(Float64)
+
             #println("max_high_bins = $max_high_bins")
             
             # search approach is to first find the bin with the highest GainMatrix value 
@@ -829,14 +838,14 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                 b2 = GainSumN42
 
                 ac1 = GainSumE31
-                c1 = a1 != 0.0 ? GainSumE31/GainSumN31 : 0.0
+                c1 = ac1 != 0.0 ? GainSumE31/GainSumN31 : 0.0
                 bd1 = GainSumE32
-                d1 = b1 != 0.0 ? GainSumE32/GainSumN32 : 0.0
+                d1 = bd1 != 0.0 ? GainSumE32/GainSumN32 : 0.0
 
                 ac2 = GainSumE41
-                c2 = a2 != 0.0 ? GainSumE41/GainSumN41 : 0.0
+                c2 = ac2 != 0.0 ? GainSumE41/GainSumN41 : 0.0
                 bd2 = GainSumE42
-                d2 = b2 != 0.0 ? GainSumE42/GainSumN42 : 0.0
+                d2 = bd2 != 0.0 ? GainSumE42/GainSumN42 : 0.0
                 
                 if (a1+b1 == 0e0 || (max_high_bins==0 && a1==0.0 && b1!=0.0))# There is not gain term produced by MC or only a single bin
                     ##println("here")
@@ -1071,15 +1080,15 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
         # check correction has worked for this bin
 
-        #num_check = sum( @view(CorrectedGainMatrix3[:,:,:,u1,h1,u2,h2])) + sum(@view(CorrectedGainMatrix4[:,:,:,u1,h1,u2,h2])) - CorrectedLossMatrix1[u1,h1,u2,h2] - CorrectedLossMatrix2[u2,h2,u1,h1]
+        #num_check = sum( @view(GainMatrix3[:,:,:,u1,h1,u2,h2])) + sum(@view(GainMatrix4[:,:,:,u1,h1,u2,h2])) - 2*LossMatrix[u1,h1,u2,h2]
 
-        #eng_check = sum(E3_d .* @view(CorrectedGainMatrix3[:,:,:,u1,h1,u2,h2])) + sum(E4_d .* @view(CorrectedGainMatrix4[:,:,:,u1,h1,u2,h2])) - E1_d[p1] * CorrectedLossMatrix1[u1,h1,u2,h2] - E2_d[p2] * CorrectedLossMatrix2[u2,h2,u1,h1]
+        #eng_check = sum(E3_d .* @view(GainMatrix3[:,:,:,u1,h1,u2,h2])) + sum(E4_d .* @view(GainMatrix4[:,:,:,u1,h1,u2,h2])) - E1_d[p1] * LossMatrix[u1,h1,u2,h2] - E2_d[p2] * LossMatrix[u1,h1,u2,h2]
 
-        #=if !isapprox(num_check,0e0,atol=10sqrt(eps(Float64))) || !isapprox(eng_check,0e0,atol=10sqrt(eps(Float64)))
-            println("Correction failed for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2, Number check: $num_check, Energy check: $eng_check")
-            #println("alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins")
-            #println("a1: $a1, b1: $b1, ac1: $ac1, bd1: $bd1, e1: $e1, a2: $a2, b2: $b2, ac2: $ac2, bd2: $bd2, e2: $e2, f: $f, c1: $c1, d1: $d1, c2: $c2, d2: $d2")
-        end=#
+        #if !isapprox(num_check,0e0,atol=10sqrt(eps(Float32))) || !isapprox(eng_check,0e0,atol=10sqrt(eps(Float32)))
+        #    println("Correction failed for p1=$p1,p2=$p2, u1=$u1, u2=$u2, h1=$h1, h2=$h2, Number check: $num_check, Energy check: $eng_check")
+        #    println("alpha1: $alpha1, alpha2: $alpha2, beta: $beta, max_high_bins: $max_high_bins")
+        #    println("a1: $a1, b1: $b1, ac1: $ac1, bd1: $bd1, e1: $e1, a2: $a2, b2: $b2, ac2: $ac2, bd2: $bd2, e2: $e2, f: $f, c1: $c1, d1: $d1, c2: $c2, d2: $d2")
+        #end
 
         #println("p1=$p1,p2=$p2,u1=$u1,u2=$u2,h1=$h1, h2=$h2")
 
