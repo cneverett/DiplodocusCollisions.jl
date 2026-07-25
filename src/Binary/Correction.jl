@@ -1098,7 +1098,7 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
     #println("Number of bins that couldn't be corrected = $num_wrong")
     #println("Number of bins corrected = $num_right")
 
-    return nothing #CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2
+    #return nothing #CorrectedGainMatrix3, CorrectedGainMatrix4, CorrectedLossMatrix1, CorrectedLossMatrix2
 
 end
 
