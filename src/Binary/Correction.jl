@@ -852,8 +852,8 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     #c1 = p2Big ? E3_d[p1] : E3_d[p1-1]
                     #d1 = p2Big ? E3_d[p1+1] : E3_d[p1]
                     # underflow bins adds 1 to value of p3 index compared to p1 index for same energy bin.
-                    c1 = p2Big ? E3_d[p1+1] : E3_d[p1]
-                    d1 = p2Big ? E3_d[p1+2] : E3_d[p1+1]
+                    c1 = (E2_d[p2] > E1_d[p1] && m2 > m1)#=p2Big=# ? E3_d[p1+1] : E3_d[p1]
+                    d1 = (E2_d[p2] > E1_d[p1] && m2 > m1)#=p2Big=##=p2Big=# ? E3_d[p1+2] : E3_d[p1+1]
                     L = LossSumN1
                     LE = LossSumE1+LossSumE2
                     e2 = a2 + b2 - LossSumN2
@@ -872,8 +872,8 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
                     #c2 = p1Big ? E4_d[p2] : E4_d[p2-1]
                     #d2 = p1Big ? E4_d[p2+1] : E4_d[p2]
                     # underflow bins adds 1 to value of p4 index compared to p2 index for same energy bin.
-                    c2 = p1Big ? E4_d[p2+1] : E4_d[p2]
-                    d2 = p1Big ? E4_d[p2+2] : E4_d[p2+1]
+                    c2 = (E1_d[p1] > E2_d[p2] && m1 > m2)#=p1Big=# ? E4_d[p2+1] : E4_d[p2]
+                    d2 = (E1_d[p1] > E2_d[p2] && m1 > m2)#=p1Big=##=p1Big=# ? E4_d[p2+2] : E4_d[p2+1]
                     L = LossSumN2
                     LE = LossSumE2 + LossSumE1
                     e1 = a1 + b1 - LossSumN1
