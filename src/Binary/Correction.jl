@@ -605,7 +605,12 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
 
     =#
 
-    tol = sqrt(eps(Float64)) # tolerance for how low the gain terms can be compared to the loss terms, if less than this tolerance then the gain terms are set to zero and not included in the correction calculation.
+    #(name1,name2,name3,name4,m1,m2,m3,m4,p1_low,p1_up,p1_grid,p1_num,u1_grid,u1_num,h1_grid,h1_num,p2_low,p2_up,p2_grid,p2_num,u2_grid,u2_num,h2_grid,h2_num,p3_low,p3_up,p3_grid,p3_num,u3_grid,u3_num,h3_grid,h3_num,p4_low,p4_up,p4_grid,p4_num,u4_grid,u4_num,h4_grid,h4_num) = Parameters
+
+    m1 = Parameters[5]
+    m2 = Parameters[6]
+
+    tol = eps(Float32) # tolerance for how low the gain terms can be compared to the loss terms, if less than this tolerance then the gain terms are set to zero and not included in the correction calculation.
 
     CorrType = GainCorrectionTmp.CorrType
     Indistinguishable_12 = GainCorrectionTmp.Indistinguishable_12
@@ -795,12 +800,14 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
             #println("cart_inds3 = $cart_inds3")
 
             for p3 in axes(GainMatrix3,1), u3 in axes(GainMatrix3,2), h3 in axes(GainMatrix3,3) 
-                #if GainMatrix3[p3,u3,h3,p1,u1,h1,p2,u2,h2] > tol * LossSumN1 # DONT add tolerance as it cuts low gain terms at low energy that might be needed for Graph Laplacian structure
+                # remove small rates (both in number and energy) to avoid numerical issues and reduce array size in the correction step
+                if GainMatrix3Filtered[p3,u3,h3] < tol * (LossSumN1+LossSumN2) && GainMatrix3Filtered[p3,u3,h3]*E3_d[p3] < tol * (LossSumE1+LossSumE2)
+                    GainMatrix3Filtered[p3,u3,h3] = zero(eltype(GainMatrix3Filtered)) # remove small values
+                    continue
+                else 
                     tmpN = Float64(GainMatrix3Filtered[p3,u3,h3])
                     tmpE = Float64(GainMatrix3Filtered[p3,u3,h3])*E3_d[p3]
-                #else 
-                #    continue
-                #end
+                end
                 if !p2Big && CartesianIndex(p3, u3, h3) in @view(cart_inds3[1:high_3_range])
                     GainSumN32 += tmpN
                     GainSumE32 += tmpE
@@ -814,12 +821,14 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
             #cart_inds4 = CartesianIndices(GainMatrix4Filtered)[high_inds4]
 
             for p4 in axes(GainMatrix4,1), u4 in axes(GainMatrix4,2), h4 in axes(GainMatrix4,3) 
-                #if GainMatrix4[p4,u4,h4,p1,u1,h1,p2,u2,h2] > tol * LossSumN2 # DONT add tolerance as it cuts low gain terms at low energy that might be needed for Graph Laplacian structure
+                # remove small rates (both in number and energy) to avoid numerical issues and reduce array size in the correction step
+                if GainMatrix4Filtered[p4,u4,h4] < tol * (LossSumN1+LossSumN2) && GainMatrix4Filtered[p4,u4,h4]*E4_d[p4] < tol * (LossSumE1+LossSumE2)
+                    GainMatrix4Filtered[p4,u4,h4] = zero(eltype(GainMatrix4Filtered)) # remove small values
+                    continue
+                else
                     tmpN = Float64(GainMatrix4Filtered[p4,u4,h4])
                     tmpE = Float64(GainMatrix4Filtered[p4,u4,h4])*E4_d[p4]
-                #else
-                #    continue
-                #end
+                end
                 if !p1Big && CartesianIndex(p4, u4, h4) in @view(cart_inds4[1:high_4_range])
                     GainSumN42 += tmpN
                     GainSumE42 += tmpE
