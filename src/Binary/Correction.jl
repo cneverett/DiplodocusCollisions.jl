@@ -610,7 +610,7 @@ function GainCorrectionChunk!(Parameters::Tuple{String, String, String, String, 
     m1 = Parameters[5]
     m2 = Parameters[6]
 
-    tol = Float64.(eps(Float32) * 1f-1) # tolerance for how low the gain terms can be compared to the loss terms, if less than this tolerance then the gain terms are set to zero and not included in the correction calculation.
+    tol = Float64.(eps(Float32)) # tolerance for how low the gain terms can be compared to the loss terms, if less than this tolerance then the gain terms are set to zero and not included in the correction calculation.
 
     CorrType = GainCorrectionTmp.CorrType
     Indistinguishable_12 = GainCorrectionTmp.Indistinguishable_12
