@@ -32,7 +32,7 @@ function BinaryFileLoad_All(fileLocation::String,fileName::String;corrected::Boo
     fileExist = isfile(filePath)
 
     if fileExist
-        f = jldopen(filePath,"r+");
+        f = jldopen(filePath,"r");
 
         Parameters = f["Parameters"]
         if corrected
